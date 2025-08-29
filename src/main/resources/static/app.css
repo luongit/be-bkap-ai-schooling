@@ -1,0 +1,257 @@
+:root{
+  --bg:#fff;--paper:#f7f9fb;--text:#111827;--muted:#6b7280;
+  --primary:#16a34a;--brand:#0ea5e9;--border:#e5e7eb;
+  --radius:14px;--shadow:0 8px 24px rgba(17,24,39,.06);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:500 15px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+}
+a{color:inherit;text-decoration:none}
+
+/* Inline code (one definition) */
+p code,li code,span code,.inline-code{
+  background:#f3f4f6;color:#0f172a;padding:2px 6px;border-radius:4px;
+  font-family:'Fira Code',monospace;font-size:14px;white-space:pre-wrap;
+}
+
+/* App Grid */
+.app{
+  min-height:100vh;display:grid;
+  grid-template-columns:260px 1fr;grid-template-rows:auto 1fr auto;
+}
+
+/* Sidebar */
+.sidebar{
+  grid-row:1 / span 3;background:linear-gradient(180deg,#fbfdff,#f5f8fb);
+  border-right:1px solid var(--border);padding:16px 12px;position:sticky;top:0;
+  height:100vh;overflow:auto;
+}
+.side-head{display:flex;align-items:center;gap:10px;padding:6px 8px 14px}
+.logo{
+  width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+  background:radial-gradient(120% 140% at 10% 10%,#22c55e,#0ea5e9 70%);color:#fff;
+  font-weight:900;letter-spacing:.3px;box-shadow:var(--shadow);
+}
+.brand-name{font-weight:800}
+.small-name{font-size:12px;color:var(--muted)}
+.side-list{list-style:none;margin:8px 0;padding:0}
+.side-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;color:#374151;
+}
+.side-item:hover{background:#eef5fb}
+.side-item.active{background:#e7f3ff;color:#0b66c3}
+.side-note{margin:12px 12px 0;color:var(--muted);font-size:13px}
+.side-foot{
+  margin-top:18px;display:flex;gap:10px;padding:10px 12px;border-radius:12px;background:#eef5fb
+}
+.icon-dot{width:9px;height:9px;border-radius:3px;background:#cbd5e1;display:inline-block}
+
+/* Header */
+.header{
+  grid-column:2;position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;
+  padding:14px 18px;background:#fff;border-bottom:1px solid var(--border);
+}
+.title{font-size:28px;font-weight:800;letter-spacing:.2px}
+.promo{
+  margin-left:12px;color:#0b66c3;background:#e8f3ff;padding:8px 12px;border-radius:999px;
+  font-size:13px;display:none /* ẩn trên mobile mặc định */
+}
+.actions{margin-left:auto;display:flex;gap:10px}
+.btn{
+  border:1px solid var(--border);background:#fff;color:#0b66c3;padding:8px 12px;border-radius:999px;cursor:pointer;
+}
+.btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+
+/* Mobile burger */
+.burger{
+  display:none;width:38px;height:38px;border:1px solid var(--border);border-radius:12px;background:#fff;
+  align-items:center;justify-content:center;
+}
+.burger svg{width:22px;height:22px}
+
+/* Main */
+.main{grid-column:2;padding:22px 18px 120px}
+.hero{
+  text-align:center;margin-top:12px;width:min(940px,100%);margin-inline:auto;
+}
+.hello{font-size:40px;margin:2px 0 8px;font-weight:900;letter-spacing:.3px}
+.hello .grad{
+  background:linear-gradient(90deg,#0ea5e9,#22c55e);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.subtitle{color:var(--muted);max-width:780px;margin:0 auto 18px}
+
+/* Carousel-ish pills */
+.carousel{
+  display:flex;gap:14px;align-items:center;justify-content:center;margin:14px auto 18px;flex-wrap:wrap;
+}
+.nav-btn{
+  width:36px;height:36px;border-radius:999px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;cursor:pointer;
+}
+.pill{
+  display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);
+  border-radius:999px;padding:10px 14px;box-shadow:var(--shadow);min-width:240px;justify-content:flex-start;
+}
+.thumb{width:46px;height:28px;border-radius:8px;background:#dbe7f5;overflow:hidden}
+
+/* Explore tags */
+.explore{
+  display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:14px 0 22px
+}
+.tag{
+  padding:10px 14px;border:1px solid var(--border);border-radius:999px;background:#fff;color:#0b66c3;font-weight:600;white-space:nowrap;
+}
+
+/* Composer */
+.composer-wrap{display:flex;justify-content:center;width: 100%;}
+.composer{
+  width:min(980px,100%);background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);
+  display:flex;gap:12px;align-items:flex-end;padding:14px;backdrop-filter:saturate(140%) blur(0px);
+}
+.composer textarea{
+  flex:1;min-height:120px;resize:vertical;border:0;outline:0;font:500 16px/1.5 Inter,system-ui;color:var(--text);
+}
+.composer .right{display:flex;gap:10px;align-items:center;align-self:flex-end}
+.circle-btn{
+  width:40px;height:40px;border-radius:999px;border:1px solid var(--border);background:#fff;display:grid;place-items:center;cursor:pointer;
+}
+.circle-btn.send{background:#e7f6ee;border-color:#bbf7d0}
+
+.disclaimer{text-align:center;color:var(--muted);font-size:12px;margin:10px 0 0}
+.disclaimer a{color:#0b66c3}
+
+/* Footer spacing */
+.footer{grid-column:2;padding:24px}
+
+/* Cursor */
+.blinker{display:inline-block;width:8px;animation:blink 1s step-start 0s infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* Chat message */
+.chat-message{
+  background:var(--paper);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px 24px;margin:16px auto;width:min(980px,100%);text-align:left;box-shadow:var(--shadow);
+  font-size:16px;line-height:1.6;word-wrap:break-word;overflow-x:auto;
+}
+.chat-message p{margin:0}
+.chat-message.user{max-width:85%;float:right;padding:0 10px}
+.chat-message.user pre{padding:0 14px}
+.chat-message strong{color:var(--text);font-weight:700}
+.chat-message blockquote{
+  border-left:4px solid var(--brand);background:#f0f9ff;padding:10px 14px;margin:14px 0;color:var(--text);font-style:italic;
+}
+.chat-message h1,.chat-message h2,.chat-message h3{color:var(--primary);margin-top:1em}
+
+/* Code & tables */
+.chat-message pre{
+  background:#f3f4f6;color:#1e293b;font-family:'Fira Code',monospace;border-radius:10px;overflow:auto;position:relative;
+}
+.chat-message code{
+  background:#e2e8f0;color:#111827;padding:2px 6px;border-radius:4px;font-family:'Fira Code',monospace;
+}
+.chat-message table{display:block;max-width:100%;overflow:auto;border-collapse:collapse;table-layout:fixed}
+.chat-message table th,.chat-message table td{border:1px solid #cbd5e1;color:#1e293b;padding:.5rem .75rem}
+
+/* Code block wrapper */
+.code-block{position:relative;background:#f6f8fa;border-radius:6px;overflow-x:auto}
+.code-header{display:flex;justify-content:space-between;font-size:.8em;color:#000}
+.copy-button{background:none;border:0;color:#000;cursor:pointer}
+
+/* Feedback bar */
+.feedback-bar{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.btn-icon{
+  background:transparent;border:none;font-size:18px;cursor:pointer;color:#334155;opacity:.85;transition:opacity .2s;
+}
+.btn-icon:hover{opacity:1}
+
+/* Toast */
+.toast{
+  background:var(--primary);color:#fff;padding:10px 18px;border-radius:10px;box-shadow:var(--shadow);font-weight:500;
+  animation:fadeInOut 2s ease forwards;z-index:9999;
+}
+@keyframes fadeInOut{
+  0%{opacity:0;transform:translateX(-50%) translateY(20px)}
+  10%,90%{opacity:1;transform:translateX(-50%) translateY(0)}
+  100%{opacity:0;transform:translateX(-50%) translateY(-10px)}
+}
+
+/* Markdown base (optional) */
+.markdown-body{font-family:system-ui,sans-serif;font-size:16px;line-height:1.7;color:#1e293b}
+.markdown-body pre{background:#0f172a;color:#f8fafc;padding:12px;border-radius:6px;overflow-x:auto}
+.markdown-body pre code{background:none;padding:0}
+
+/* KaTeX safety (chống tràn ngang) */
+.katex-display{overflow-x:auto;overflow-y:hidden}
+.katex-display > .katex{white-space:normal}
+.katex{font-size:1.02em}
+
+/* Images in markdown */
+.chat-message img{max-width:100%;height:auto;border-radius:8px}
+
+/* Scrollbar subtle (WebKit) */
+.chat-message::-webkit-scrollbar,
+.chat-message pre::-webkit-scrollbar,
+.chat-message table::-webkit-scrollbar{height:10px}
+.chat-message::-webkit-scrollbar-thumb,
+.chat-message pre::-webkit-scrollbar-thumb,
+.chat-message table::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:999px}
+
+/* ============== Responsive Breakpoints ============== */
+
+/* <=1280px: hạ size tiêu đề, thu gọn padding */
+@media (max-width:1280px){
+  .hello{font-size:36px}
+  .header{padding:12px 16px}
+  .main{padding:20px 14px 110px}
+}
+
+/* <=1024px: ẩn promo, giảm min-height textarea, nới width chat */
+@media (max-width:1024px){
+  .promo{display:none}
+  .composer textarea{min-height:100px}
+  .chat-message{width:min(96vw, 980px)}
+}
+
+/* <=920px: chuyển 1 cột, sidebar off-canvas, burger hiện */
+@media (max-width:920px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;z-index:20;left:0;top:0;width:260px;height:100dvh;
+    transform:translateX(-100%);transition:.25s ease;box-shadow:var(--shadow)
+  }
+  .sidebar.open{transform:none}
+  .header,.main,.footer{grid-column:1}
+  .burger{display:flex}
+  .promo{display:none}
+  .chat-message.user{max-width:100%;float:none}  /* bỏ float để tránh chồng layout */
+}
+
+/* <=768px: hero full-width, giảm gaps, sticky composer */
+@media (max-width:768px){
+  .hero{width:100%;padding-inline:8px}
+  .hello{font-size:30px}
+  .carousel{gap:10px}
+  .pill{min-width:auto;padding:8px 12px}
+  .composer{
+    position:sticky;bottom:0;z-index:5;padding:10px;border-radius:14px;
+    backdrop-filter:saturate(140%) blur(8px);
+  }
+  .composer textarea{min-height:80px;font-size:15px}
+  .circle-btn{width:38px;height:38px}
+  .chat-message{padding:10px 14px;margin:12px auto}
+}
+
+/* <=480px: chữ nhỏ lại, icon gọn, tránh tràn */
+@media (max-width:480px){
+  .title{font-size:22px}
+  .hello{font-size:26px}
+  .chat-message{font-size:15px}
+  .btn{padding:6px 10px}
+  .nav-btn{width:32px;height:32px}
+  .composer textarea{min-height:72px}
+  .feedback-bar{justify-content:flex-start}
+}
