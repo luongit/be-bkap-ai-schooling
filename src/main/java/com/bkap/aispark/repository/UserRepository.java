@@ -22,5 +22,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(UserRole role);
 
     // Tìm theo objectType và objectId 
-    List<User> findByObjectTypeAndObjectId(ObjectType objectType, Long objectId);
+    Optional<User> findByObjectTypeAndObjectId(ObjectType objectType, Long objectId);
 }
