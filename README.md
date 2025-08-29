@@ -7,30 +7,35 @@
 * **Nhánh nhỏ, sống ngắn** (1–5 ngày), PR nhỏ (≤ 300 dòng) để review nhanh, ít conflict.
 * Luôn **đồng bộ feature branch với `master` bằng `rebase`** trước khi mở/ cập nhật PR.
 
+## Cấu trúc thư mục dự án
+```bash
+aispark\
+---- com.bkap.aispark\                  => package gốc
+----\---- com.bkap.aispark.config       => package chứa các file cấu hình mã java 
+----\---- com.bkap.aispark.controller   => package controller 
+----\---- com.bkap.aispark.entity       => package chứa các Entity maping data table 
+----\---- com.bkap.aispark.repository   => package Các interface ORM của JPA + Entity
+----\---- com.bkap.aispark.service      => Các Lớp Logic triển khai chi tiết repository nếu có
+----\---- com.bkap.aispark.helper      => Các class phục vu cho các mục đích chung, khi cần build thêm
+```
+
+---
 
 ### Bước 1: Lấy code mới nhất từ `master`
 **Nếu lần đầu tiên thì dùng lệnh clone**
 
 ```bash
-git clone https://github.com/luongit/fe-bkap-ai-schooling
+git clone https://github.com/luongit/be-bkap-ai-schooling
 ```
 
 ### Bước 2: Cài đặt dự án (Chỉ dành cho lần đàu clone dự án)
-**cd và thưc mục gốc của dự án nếu chwua ử thư mục gốc**
-```bash
-cd fe-bkap-ai-schooling
-```
-Sau đó chạy tiếp lệnh cài thư viện
-```bash
-npm install
-Hoặc: npm i
-```
+- **Mở dự án trong Eclipe hoặc Sprint tools**
+- Đơi cho nó tải thư viện xong
+- Caasus hình lại thông tin kết nối CSDL PostgreSQL
+- Tiếp theo: Chạy dự án
 
-Tiếp theo: Chạy dự án
-```bash
-npm run start
-```
-Trình duyệt sẽ tự mở trình duyệt lên: http://127.0.0.1:3000
+Mở trình duyệt lên: http://127.0.0.1:8080
+> Lưu ý: Ở bản product thì chatbot trên Java không dùng được, chỉ dùng ở local
 
 
 # 2. Hướng dẫn push dự án và merge vào nhánh chính
