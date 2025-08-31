@@ -45,7 +45,6 @@ public class SchoolApi {
         return schoolRepository.save(school);
     }
 
-
     // Sua thong tin truong qua ID
     @PutMapping("/{id}")
     public ResponseEntity<Schools> updateSchool(@PathVariable Long id, @RequestBody Schools schoolDetails) {
