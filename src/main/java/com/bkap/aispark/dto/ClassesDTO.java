@@ -9,6 +9,9 @@ public class ClassesDTO {
     private String schoolName;
     private String schoolAddress;
 
+    public ClassesDTO() {
+    }
+
     public ClassesDTO(Classes classes) {
         this.id = classes.getId();
         this.name = classes.getName();
