@@ -9,4 +9,8 @@ public class HomeController {
 	public String home() {
 		return "index";
 	}
+	@GetMapping({"/excel"})
+	public String excel() {
+		return "test_excel";
+	}
 }
