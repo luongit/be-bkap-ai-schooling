@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import com.bkap.aispark.dto.LoginRequest;
 import com.bkap.aispark.dto.LoginResponse;
 import com.bkap.aispark.entity.User;
+import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.UserRepository;
+import com.bkap.aispark.security.JwtUtil;
 
 
 
@@ -22,25 +24,23 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+    @Autowired
+    private JwtUtil jwtUtil;
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+    public String login(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        LoginResponse response = new LoginResponse();
-        response.setUserId(user.getId());
-        response.setEmail(user.getEmail());
-        response.setPhone(user.getPhone());
-        response.setRole(user.getRole().name());
-        response.setObjectType(user.getObjectType() != null ? user.getObjectType().name() : null);
-        response.setObjectId(user.getObjectId());
-        response.setStudentCode(user.getStudentCode());
-
-        return response;
+        // sinh token (email + role)
+        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
     }
 }
+
+
+
 
 
