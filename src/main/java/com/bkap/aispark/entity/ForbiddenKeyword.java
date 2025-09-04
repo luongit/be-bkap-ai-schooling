@@ -1,5 +1,7 @@
 package com.bkap.aispark.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,9 +24,10 @@ public class ForbiddenKeyword {
     private String keyword;
 
     // ✅ ánh xạ created_by -> users.id
-    @ManyToOne(fetch = FetchType.LAZY) // Một từ khóa cấm được tạo bởi một user
-    @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = true)
-    private User createdBy;
+  @ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "created_by")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+private User createdBy;
 
     // Getters and Setters
     public Long getId() {
