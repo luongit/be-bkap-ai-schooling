@@ -5,6 +5,6 @@ public enum ObjectType {
     TEACHER,
     PARENT,
     SCHOOL,
-    SYSTEM
+    SYSTEM,
 }
 
