@@ -27,6 +27,7 @@ public class Student {
     // 👉 Liên kết tới bảng classes
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "class_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Classes classEntity;
 
     @Column(nullable = true)

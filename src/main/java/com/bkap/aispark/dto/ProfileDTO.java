@@ -2,6 +2,9 @@ package com.bkap.aispark.dto;
 
 import com.bkap.aispark.entity.UserRole;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.List;
+
 import com.bkap.aispark.entity.ObjectType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -18,7 +21,7 @@ public class ProfileDTO {
     private String className;   // nếu student
     private String homeroom;  // nếu teacher
     
-    private String hobbies;
+    private List<String> hobbies;
 
     public Long getUserId() {
         return userId;
@@ -89,11 +92,12 @@ public class ProfileDTO {
     public void setHomeroom(String homeroom) {
         this.homeroom = homeroom;
     }
-	public String getHobbies() {
+	public List<String> getHobbies() {
 		return hobbies;
 	}
-	public void setHobbies(String hobbies) {
+	public void setHobbies(List<String> hobbies) {
 		this.hobbies = hobbies;
 	}
+	
     
 } 
