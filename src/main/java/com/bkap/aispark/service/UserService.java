@@ -37,10 +37,7 @@ public class UserService {
         return userRepository.findById(id).map(user -> {
             user.setEmail(updatedUser.getEmail());
             user.setPhone(updatedUser.getPhone());
-            user.setRole(updatedUser.getRole());
-            user.setStudentCode(updatedUser.getStudentCode());
             user.setIsActive(updatedUser.getIsActive());
-
             if (updatedUser.getRole() != UserRole.SYSTEM_ADMIN) {
                 user.setObjectType(updatedUser.getObjectType());
                 user.setObjectId(updatedUser.getObjectId());

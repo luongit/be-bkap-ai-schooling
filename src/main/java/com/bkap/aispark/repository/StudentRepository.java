@@ -12,4 +12,7 @@ import com.bkap.aispark.entity.Student;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByCode(String code);
+
+    boolean existsByCode(String code);
+    boolean existsByUsername(String username);
 }

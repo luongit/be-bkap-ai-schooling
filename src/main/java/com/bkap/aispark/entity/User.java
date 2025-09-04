@@ -1,12 +1,10 @@
 package com.bkap.aispark.entity;
 
-
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
-
 
 import jakarta.persistence.*;
 
@@ -14,45 +12,51 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class User {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(nullable = false)
-	private String password;
+    @Column(nullable = false)
+    private String password;
 
-	@Enumerated(EnumType.STRING)
-	@Column(columnDefinition = "user_role", nullable = false)
-	@JdbcType(PostgreSQLEnumJdbcType.class)
-	private UserRole role;
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "user_role", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    private UserRole role;
 
-	@Enumerated(EnumType.STRING)
-	@Column(columnDefinition = "object_type_enum")
-	@JdbcType(PostgreSQLEnumJdbcType.class)
-	private ObjectType objectType;
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "object_type_enum")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    private ObjectType objectType;
 
-	private Long objectId;
+    private Long objectId;
 
-	@Column(unique = true)
-	private String email;
+    @Column(unique = true)
+    private String email;
 
-	private String phone;
+    private String phone;
 
-	private String studentCode;
+    // ✅ sửa lại: dùng studentUsername thay cho studentCode
+    @Column(unique = true)
+    private String username;
+  // cho phép NULL với role khác
 
-	@Column(nullable = false)
-	private Boolean isActive = true;
+    @Column(nullable = false)
+    private Boolean isActive = true;
 
-	@CreationTimestamp
-	@Column(updatable = false)
-	private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
 
-	// Constructors
-	public User() {
-	}
+    // Constructors
+    public User() {
+    }
 
-	public User(Long id, String password, UserRole role, ObjectType objectType, Long objectId, String email,
-			String phone, String studentCode, Boolean isActive, LocalDateTime createdAt) {
+   
+
+    public User(Long id, String password, UserRole role, ObjectType objectType, Long objectId, String email,
+			String phone, String username, Boolean isActive, LocalDateTime createdAt) {
+		super();
 		this.id = id;
 		this.password = password;
 		this.role = role;
@@ -60,89 +64,97 @@ public class User {
 		this.objectId = objectId;
 		this.email = email;
 		this.phone = phone;
-		this.studentCode = studentCode;
+		this.username = username;
 		this.isActive = isActive;
 		this.createdAt = createdAt;
 	}
+
+
 
 	// Getters & Setters
-	public Long getId() {
-		return id;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
+    public ObjectType getObjectType() {
+        return objectType;
+    }
+
+    public void setObjectType(ObjectType objectType) {
+        this.objectType = objectType;
+    }
+
+    public Long getObjectId() {
+        return objectId;
+    }
+
+    public void setObjectId(Long objectId) {
+        this.objectId = objectId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+   
+
+    public String getUsername() {
+		return username;
 	}
 
-	public void setId(Long id) {
-		this.id = id;
+
+
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
-	public String getPassword() {
-		return password;
-	}
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public UserRole getRole() {
-		return role;
-	}
-
-	public void setRole(UserRole role) {
-		this.role = role;
-	}
-
-	public ObjectType getObjectType() {
-		return objectType;
-	}
-
-	public void setObjectType(ObjectType objectType) {
-		this.objectType = objectType;
-	}
-
-	public Long getObjectId() {
-		return objectId;
-	}
-
-	public void setObjectId(Long objectId) {
-		this.objectId = objectId;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getStudentCode() {
-		return studentCode;
-	}
-
-	public void setStudentCode(String studentCode) {
-		this.studentCode = studentCode;
-	}
 
 	public Boolean getIsActive() {
-		return isActive;
-	}
+        return isActive;
+    }
 
-	public void setIsActive(Boolean isActive) {
-		this.isActive = isActive;
-	}
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

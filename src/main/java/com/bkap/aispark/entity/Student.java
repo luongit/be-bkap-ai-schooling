@@ -1,126 +1,163 @@
 package com.bkap.aispark.entity;
 
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "students")
 public class Student {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(name = "name", nullable = false)
-	private String fullName;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
-	private String email;
+    @Column(unique = true, nullable = false)
+    private String username;
 
-	private String phone;
+    @Column(name = "default_password", nullable = false)
+    private String defaultPassword;
 
-	@Column(unique = true, nullable = false)
-	private String code; // Mã sinh viên/học sinh
+    @Column(unique = true, nullable = false)
+    private String code; // Mã học sinh nội bộ, backend tự sinh
 
-	private Boolean isActive = true;
-    
-	@Column(name = "class_id", nullable = false)
-	private Long classId;
+    // 👉 Liên kết tới bảng classes
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "class_id", nullable = false)
+    private Classes classEntity;
 
-	
-	@Column(updatable = false)
-	private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = true)
+    private String email;
 
-	public Student() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
+    private String phone;
 
-	
-	public Student(Long id, String fullName, String email, String phone, String code, Boolean isActive, Long classId,
-			LocalDateTime createdAt) {
-		super();
-		this.id = id;
-		this.fullName = fullName;
-		this.email = email;
-		this.phone = phone;
-		this.code = code;
-		this.isActive = isActive;
-		this.classId = classId;
-		this.createdAt = createdAt;
-	}
+    @Column(name = "hobbies")
+    private String hobbies;
 
+    private Boolean isActive = true;
 
-	public Long getId() {
-		return id;
-	}
+    private LocalDate birthdate;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    @Column(updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-	public String getFullName() {
-		return fullName;
-	}
+    public Student() {}
 
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
+    public Student(Long id, String fullName, String username, String defaultPassword, String code,
+                   Classes classEntity, String email, String phone, String hobbies,
+                   Boolean isActive, LocalDate birthdate, LocalDateTime createdAt) {
+        this.id = id;
+        this.fullName = fullName;
+        this.username = username;
+        this.defaultPassword = defaultPassword;
+        this.code = code;
+        this.classEntity = classEntity;
+        this.email = email;
+        this.phone = phone;
+        this.hobbies = hobbies;
+        this.isActive = isActive;
+        this.birthdate = birthdate;
+        this.createdAt = createdAt;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    // Getters & Setters
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public String getPhone() {
-		return phone;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    public String getFullName() {
+        return fullName;
+    }
 
-	public String getCode() {
-		return code;
-	}
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-	public void setCode(String code) {
-		this.code = code;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public Boolean getIsActive() {
-		return isActive;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setIsActive(Boolean isActive) {
-		this.isActive = isActive;
-	}
+    public String getDefaultPassword() {
+        return defaultPassword;
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public void setDefaultPassword(String defaultPassword) {
+        this.defaultPassword = defaultPassword;
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public String getCode() {
+        return code;
+    }
 
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-	public  Long getClassId() {
-		return classId;
-	}
+    public Classes getClassEntity() {
+        return classEntity;
+    }
 
+    public void setClassEntity(Classes classEntity) {
+        this.classEntity = classEntity;
+    }
 
-	public  void setClassId(Long classId) {
-		this.classId = classId;
-	}
-	
+    public String getEmail() {
+        return email;
+    }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getHobbies() {
+        return hobbies;
+    }
+
+    public void setHobbies(String hobbies) {
+        this.hobbies = hobbies;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDate getBirthdate() {
+        return birthdate;
+    }
+
+    public void setBirthdate(LocalDate birthdate) {
+        this.birthdate = birthdate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
