@@ -3,6 +3,11 @@ package com.bkap.aispark.service;
 import com.bkap.aispark.dto.ProfileDTO;
 import com.bkap.aispark.entity.*;
 import com.bkap.aispark.repository.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +39,14 @@ public class ProfileService {
                 if (student.getClassEntity() != null) {
                     dto.setClassName(student.getClassEntity().getName());
                 }
-                dto.setHobbies(student.getHobbies());
+                if (student.getHobbies() != null && !student.getHobbies().isBlank()) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    try {
+                        dto.setHobbies(mapper.readValue(student.getHobbies(), new TypeReference<List<String>>() {}));
+                    } catch (Exception e) {
+                        throw new RuntimeException("Lỗi parse hobbies: " + e.getMessage());
+                    }
+                }
                 break;
 
             case TEACHER:
@@ -56,4 +68,46 @@ public class ProfileService {
 
         return dto;
     }
+    public ProfileDTO updateProfile(Long userId, ProfileDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        // update thông tin chung (chỉ cho phép email/phone)
+        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        userRepository.save(user);
+
+        switch (user.getObjectType()) {
+            case STUDENT:
+                Student student = studentRepository.findById(user.getObjectId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
+                // chỉ cho phép update sở thích
+                if (dto.getHobbies() != null) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        String json = mapper.writeValueAsString(dto.getHobbies());
+                        student.setHobbies(json);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Lỗi khi lưu hobbies");
+                    }
+                }
+                studentRepository.save(student);
+                break;
+
+            case TEACHER:
+                Teacher teacher = teacherRepository.findById(user.getObjectId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"));
+                // không cho update homeroom
+                teacherRepository.save(teacher);
+                break;
+
+            case SCHOOL:
+            case SYSTEM:
+                throw new RuntimeException("Administrator không được cập nhật profile");
+        }
+
+        return getProfileByUserId(userId);
+    }
+    
+    
 }
