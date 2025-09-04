@@ -34,6 +34,7 @@ public class ProfileService {
                 if (student.getClassEntity() != null) {
                     dto.setClassName(student.getClassEntity().getName());
                 }
+                dto.setHobbies(student.getHobbies());
                 break;
 
             case TEACHER:

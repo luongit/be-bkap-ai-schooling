@@ -12,12 +12,13 @@ public class ProfileDTO {
     private String phone;
     private UserRole role;
     private ObjectType objectType;
-
     // Thông tin chi tiết
     private String fullName;
     private String code;
     private String className;   // nếu student
-    private String homeroom;    // nếu teacher
+    private String homeroom;  // nếu teacher
+    
+    private String hobbies;
 
     public Long getUserId() {
         return userId;
@@ -88,4 +89,11 @@ public class ProfileDTO {
     public void setHomeroom(String homeroom) {
         this.homeroom = homeroom;
     }
-}
+	public String getHobbies() {
+		return hobbies;
+	}
+	public void setHobbies(String hobbies) {
+		this.hobbies = hobbies;
+	}
+    
+} 
