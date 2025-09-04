@@ -5,8 +5,16 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.bkap.aispark.dto.ForbiddenKeywordDTO;
 import com.bkap.aispark.entity.ForbiddenKeyword;
 import com.bkap.aispark.service.ForbiddenKeywordService;
 
@@ -36,25 +44,22 @@ public class ForbiddenKeywordApi {
     }
 
     // Tạo mới keyword
-    @PostMapping
-    public ResponseEntity<ForbiddenKeyword> createForbiddenKeyword(@RequestBody ForbiddenKeyword forbiddenKeyword) {
-        ForbiddenKeyword createdKeyword = forbiddenKeywordService.createForbiddenKeyword(forbiddenKeyword);
-        return ResponseEntity
-                .created(URI.create("/api/forbidden-keywords/" + createdKeyword.getId()))
-                .body(createdKeyword);
-    }
+   @PostMapping
+public ResponseEntity<ForbiddenKeyword> createForbiddenKeyword(@RequestBody ForbiddenKeywordDTO dto) {
+    ForbiddenKeyword createdKeyword = forbiddenKeywordService.createForbiddenKeyword(dto);
+    return ResponseEntity
+            .created(URI.create("/api/forbidden-keywords/" + createdKeyword.getId()))
+            .body(createdKeyword);
+}
 
-    // Cập nhật keyword theo id
-    @PutMapping("/{id}")
-    public ResponseEntity<ForbiddenKeyword> updateForbiddenKeyword(@PathVariable Long id,
-                                                                   @RequestBody ForbiddenKeyword forbiddenKeyword) {
-        try {
-            ForbiddenKeyword updatedKeyword = forbiddenKeywordService.updateForbiddenKeyword(id, forbiddenKeyword);
-            return ResponseEntity.ok(updatedKeyword);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+@PutMapping("/{id}")
+public ResponseEntity<ForbiddenKeyword> updateForbiddenKeyword(
+        @PathVariable Long id,
+        @RequestBody ForbiddenKeywordDTO dto) {
+    ForbiddenKeyword updatedKeyword = forbiddenKeywordService.updateForbiddenKeyword(id, dto);
+    return ResponseEntity.ok(updatedKeyword);
+}
+
 
     // Xóa keyword theo id
     @DeleteMapping("/{id}")

@@ -16,7 +16,7 @@ import com.bkap.aispark.entity.Schools;
 import com.bkap.aispark.repository.SchoolsRepository;
 
 @RestController
-@RequestMapping("/schools")
+@RequestMapping("api/schools")
 public class SchoolApi {
 
     private final SchoolsRepository schoolRepository;
