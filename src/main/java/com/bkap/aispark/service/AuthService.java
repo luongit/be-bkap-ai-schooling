@@ -27,18 +27,40 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public String login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+    public LoginResponse login(String identifier, String password) {
+        User user;
+
+        if (identifier.contains("@")) {
+            // đăng nhập bằng email
+            user = userRepository.findByEmail(identifier)
+                    .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+        } else {
+            // đăng nhập bằng username
+            user = userRepository.findByUsername(identifier)
+                    .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
+        }
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        // sinh token (email + role)
-        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        // sinh JWT token
+        String subject = user.getUsername() != null ? user.getUsername() : user.getEmail();
+        String token = jwtUtil.generateToken(subject, user.getRole().name());
+
+        return new LoginResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getRole().name(),
+                user.getObjectType() != null ? user.getObjectType().name() : null,
+                user.getObjectId(),
+                token
+        );
     }
 }
+
 
 
 

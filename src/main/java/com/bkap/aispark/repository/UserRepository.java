@@ -17,7 +17,13 @@ import com.bkap.aispark.entity.UserRole;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findByPhone(String phone);
-    Optional<User> findByStudentCode(String studentCode);
+    Optional<User> findByUsername(String username);
+    
+   
+
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+    boolean existsByPhone(String phone);
     
     List<User> findByRole(UserRole role);
 
