@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bkap.aispark.dto.DefaultReplyDTO;
 import com.bkap.aispark.entity.DefaultReply;
 import com.bkap.aispark.service.DefaultReplyService;
 
@@ -27,16 +28,14 @@ public class DefaultReplyApi {
     // Lấy tất cả replies
     @GetMapping
     public ResponseEntity<List<DefaultReply>> getAllDefaultReplies() {
-        List<DefaultReply> replies = defaultReplyService.getAllDefaultReplies();
-        return ResponseEntity.ok(replies);
+        return ResponseEntity.ok(defaultReplyService.getAllDefaultReplies());
     }
 
     // Lấy reply theo id
     @GetMapping("/{id}")
     public ResponseEntity<DefaultReply> getDefaultReplyById(@PathVariable Long id) {
         try {
-            DefaultReply reply = defaultReplyService.getDefaultReplyById(id);
-            return ResponseEntity.ok(reply);
+            return ResponseEntity.ok(defaultReplyService.getDefaultReplyById(id));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -44,26 +43,26 @@ public class DefaultReplyApi {
 
     // Tạo mới reply
     @PostMapping
-    public ResponseEntity<DefaultReply> createDefaultReply(@RequestBody DefaultReply defaultReply) {
-        DefaultReply createdReply = defaultReplyService.createDefaultReply(defaultReply);
+    public ResponseEntity<DefaultReply> createDefaultReply(@RequestBody DefaultReplyDTO dto) {
+        DefaultReply createdReply = defaultReplyService.createDefaultReply(dto);
         return ResponseEntity
                 .created(URI.create("/api/default-replies/" + createdReply.getId()))
                 .body(createdReply);
     }
 
-    // Cập nhật reply theo id
+    // Cập nhật reply
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultReply> updateDefaultReply(@PathVariable Long id,
-                                                           @RequestBody DefaultReply defaultReply) {
+    public ResponseEntity<DefaultReply> updateDefaultReply(
+            @PathVariable Long id,
+            @RequestBody DefaultReplyDTO dto) {
         try {
-            DefaultReply updatedReply = defaultReplyService.updateDefaultReply(id, defaultReply);
-            return ResponseEntity.ok(updatedReply);
+            return ResponseEntity.ok(defaultReplyService.updateDefaultReply(id, dto));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Xóa reply theo id
+    // Xóa reply
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDefaultReply(@PathVariable Long id) {
         try {

@@ -15,20 +15,26 @@ public class JwtUtil {
 
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
-    // Sinh token
-    public String generateToken(String email, String role) {
+    // ✅ Sinh token có userId + email + role
+    public String generateToken(Long userId, String email, String role) {
         return Jwts.builder()
-                .setSubject(email)                 // lưu email
+                .setSubject(email)                 // email làm subject
+                .claim("userId", userId)           // thêm userId
                 .claim("role", role)               // thêm role
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(key)
                 .compact();
     }
-
+    
     // Lấy email từ token
     public String getEmail(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    // ✅ Lấy userId từ token
+    public Long getUserId(String token) {
+        return parseClaims(token).get("userId", Long.class);
     }
 
     // Lấy role từ token
@@ -45,6 +51,11 @@ public class JwtUtil {
             return false;
         }
     }
+    public String getUsername(String token) {
+        return parseClaims(token).get("username", String.class);
+    }
+
+
 
     private Claims parseClaims(String token) {
         return Jwts.parser()
@@ -53,4 +64,6 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload();
     }
+   
+
 }
