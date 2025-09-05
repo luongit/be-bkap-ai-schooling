@@ -44,9 +44,12 @@ public class AuthService {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        // sinh JWT token
-        String subject = user.getUsername() != null ? user.getUsername() : user.getEmail();
-        String token = jwtUtil.generateToken(subject, user.getRole().name());
+        // ✅ sinh JWT token có userId + email + role
+        String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
 
         return new LoginResponse(
                 user.getId(),
@@ -60,6 +63,9 @@ public class AuthService {
         );
     }
 }
+
+
+
 
 
 
