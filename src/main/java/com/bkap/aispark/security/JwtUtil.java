@@ -51,7 +51,10 @@ public class JwtUtil {
             return false;
         }
     }
-    
+    public String getUsername(String token) {
+        return parseClaims(token).get("username", String.class);
+    }
+
 
 
     private Claims parseClaims(String token) {
