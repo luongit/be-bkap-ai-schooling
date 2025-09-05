@@ -20,6 +20,7 @@ import com.bkap.aispark.repository.ClassesRepository;
 import com.bkap.aispark.repository.SchoolsRepository;
 
 @RestController
+
 @RequestMapping("api/class")
 public class ClassApi {
 
