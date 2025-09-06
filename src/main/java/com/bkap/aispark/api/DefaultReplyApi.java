@@ -25,51 +25,55 @@ public class DefaultReplyApi {
     @Autowired
     private DefaultReplyService defaultReplyService;
 
-    // Lấy tất cả replies
     @GetMapping
     public ResponseEntity<List<DefaultReply>> getAllDefaultReplies() {
         return ResponseEntity.ok(defaultReplyService.getAllDefaultReplies());
     }
 
-    // Lấy reply theo id
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultReply> getDefaultReplyById(@PathVariable Long id) {
+    public ResponseEntity<?> getDefaultReplyById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(defaultReplyService.getDefaultReplyById(id));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404).body(new ErrorResponse(e.getMessage()));
         }
     }
 
-    // Tạo mới reply
     @PostMapping
-    public ResponseEntity<DefaultReply> createDefaultReply(@RequestBody DefaultReplyDTO dto) {
-        DefaultReply createdReply = defaultReplyService.createDefaultReply(dto);
-        return ResponseEntity
-                .created(URI.create("/api/default-replies/" + createdReply.getId()))
-                .body(createdReply);
+    public ResponseEntity<?> createDefaultReply(@RequestBody DefaultReplyDTO dto) {
+        try {
+            DefaultReply createdReply = defaultReplyService.createDefaultReply(dto);
+            return ResponseEntity
+                    .created(URI.create("/api/default-replies/" + createdReply.getId()))
+                    .body(createdReply);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
     }
 
-    // Cập nhật reply
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultReply> updateDefaultReply(
-            @PathVariable Long id,
-            @RequestBody DefaultReplyDTO dto) {
+    public ResponseEntity<?> updateDefaultReply(@PathVariable Long id, @RequestBody DefaultReplyDTO dto) {
         try {
             return ResponseEntity.ok(defaultReplyService.updateDefaultReply(id, dto));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
 
-    // Xóa reply
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDefaultReply(@PathVariable Long id) {
+    public ResponseEntity<?> deleteDefaultReply(@PathVariable Long id) {
         try {
             defaultReplyService.deleteDefaultReply(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404).body(new ErrorResponse(e.getMessage()));
         }
     }
+}
+
+class ErrorResponse {
+    private String message;
+    public ErrorResponse(String message) { this.message = message; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 }
