@@ -3,6 +3,8 @@ package com.bkap.aispark.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.bkap.aispark.dto.ForbiddenKeywordDTO;
@@ -33,29 +35,33 @@ public class ForbiddenKeywordService {
 
     // Tạo mới từ khóa cấm
     public ForbiddenKeyword createForbiddenKeyword(ForbiddenKeywordDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            throw new RuntimeException("Chưa đăng nhập hoặc token không hợp lệ");
+        }
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + email));
+
         ForbiddenKeyword fk = new ForbiddenKeyword();
         fk.setKeyword(dto.getKeyword());
-
-        if (dto.getCreatedById() != null) {
-            User user = userRepository.findById(dto.getCreatedById())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + dto.getCreatedById()));
-            fk.setCreatedBy(user);
-        }
-
+        fk.setCreatedBy(user);
         return forbiddenKeywordRepository.save(fk);
     }
 
     // Cập nhật từ khóa cấm
     public ForbiddenKeyword updateForbiddenKeyword(Long id, ForbiddenKeywordDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            throw new RuntimeException("Chưa đăng nhập hoặc token không hợp lệ");
+        }
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + email));
+
         ForbiddenKeyword existingKeyword = getForbiddenKeywordById(id);
         existingKeyword.setKeyword(dto.getKeyword());
-
-        if (dto.getCreatedById() != null) {
-            User user = userRepository.findById(dto.getCreatedById())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + dto.getCreatedById()));
-            existingKeyword.setCreatedBy(user);
-        }
-
+        existingKeyword.setCreatedBy(user);
         return forbiddenKeywordRepository.save(existingKeyword);
     }
 
