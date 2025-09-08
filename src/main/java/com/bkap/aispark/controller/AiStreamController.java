@@ -138,17 +138,32 @@ public class AiStreamController {
 					String authHeader = httpRequest.getHeader("Authorization"); // ✅ dùng httpRequest
 					Long userId = null;
 					if (authHeader != null && authHeader.startsWith("Bearer ")) {
-						String token = authHeader.substring(7);
-						userId = jwtutil.getUserId(token);
+					    String token = authHeader.substring(7);
+					    userId = jwtutil.getUserId(token);
 					}
 
+					// ✅ lấy session_id từ body (nếu có)
+					UUID sessionId = null;
+					Object sid = body.get("session_id");
+					if (sid != null) {
+					    try {
+					        sessionId = UUID.fromString(sid.toString());
+					    } catch (Exception e) {
+					        throw new RuntimeException("Invalid session_id"); 
+					    }
+					} else {
+					    throw new RuntimeException("Missing session_id"); 
+					}
+
+
 					String userMessage = messagesData != null && !messagesData.isEmpty()
-							? messagesData.get(messagesData.size() - 1).get("content")
-							: "";
+					        ? messagesData.get(messagesData.size() - 1).get("content")
+					        : "";
 
 					if (userId != null) {
-						conversationLogService.saveLog(userId, userMessage, fullResponse.toString(), false);
-
+					    // ✅ gọi service với sessionId
+					    conversationLogService.saveLog(userId, userMessage, fullResponse.toString(), false, sessionId);
+					
 
 					}
 				} catch (Exception e) {

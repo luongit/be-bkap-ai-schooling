@@ -2,6 +2,7 @@ package com.bkap.aispark.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "conversation_logs")
@@ -28,13 +29,19 @@ public class ConversationLog {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column(name = "session_id", nullable = false)
+    private UUID sessionId;
 
+    
     // ===== Constructor =====
     public ConversationLog() {}
 
     
-    public ConversationLog(Long id, User user, String message, String response, Boolean violationFlag,
-			LocalDateTime createdAt) {
+   
+
+	public ConversationLog(Long id, User user, String message, String response, Boolean violationFlag,
+			LocalDateTime createdAt, UUID sessionId) {
 		super();
 		this.id = id;
 		this.user = user;
@@ -42,7 +49,10 @@ public class ConversationLog {
 		this.response = response;
 		this.violationFlag = violationFlag;
 		this.createdAt = createdAt;
+		this.sessionId = sessionId;
 	}
+
+
 
 
 	// ===== Getter/Setter =====
@@ -96,4 +106,19 @@ public class ConversationLog {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+
+
+
+	public UUID getSessionId() {
+		return sessionId;
+	}
+
+
+
+
+	public void setSessionId(UUID sessionId) {
+		this.sessionId = sessionId;
+	}
+    
 }
