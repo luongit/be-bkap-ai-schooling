@@ -34,28 +34,29 @@
 
                 if (jwtUtil.validateToken(token)) {
                     String email = jwtUtil.getEmail(token);
+                    String username = jwtUtil.getUsername(token); // cần thêm hàm getUsername trong JwtUtil
                     String role = jwtUtil.getRole(token);
 
-                    // Tạo UserDetails tạm
-                    User userDetails = new User(
-                            email,
-                            "", // không cần password ở đây
-                            Collections.singleton(() -> "ROLE_" + role.toUpperCase()) // cấp quyền
-                    );
+                    String identifier = (email != null && !email.isEmpty()) ? email : username;
 
-                    // Đưa user vào SecurityContext
-                    UsernamePasswordAuthenticationToken authentication =
+                    if (identifier != null && !identifier.isEmpty() && role != null && !role.isEmpty()) {
+                        User userDetails = new User(
+                            identifier,
+                            "",
+                            Collections.singleton(() -> "ROLE_" + role.toUpperCase())
+                        );
+
+                        UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
+                                userDetails, null, userDetails.getAuthorities()
                             );
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
 
             filterChain.doFilter(request, response);
         }
     }
+
