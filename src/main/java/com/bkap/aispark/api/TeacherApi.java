@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.dto.TeacherDTO;
+import com.bkap.aispark.dto.TeacherRequestDTO;
 import com.bkap.aispark.entity.Teacher;
 import com.bkap.aispark.service.TeacherService;
 
@@ -44,15 +45,24 @@ public class TeacherApi {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Teacher> updateTeacher(@PathVariable Long id, @RequestBody Teacher teacher) {
-        try {
-            return teacherService.updateTeacher(id, teacher)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (RuntimeException e) {
-            // TODO: handle exception
-            return ResponseEntity.badRequest().body(null);
-        }
+    public ResponseEntity<TeacherDTO> updateTeacher(
+            @PathVariable Long id,
+            @RequestBody TeacherRequestDTO dto) {
+
+        Teacher updated = teacherService.updateTeacher(id, dto);
+
+        TeacherDTO response = new TeacherDTO(
+                updated.getId(),
+                updated.getFullName(),
+                updated.getEmail(),
+                updated.getPhone(),
+                updated.getCode(),
+                updated.getIsActive(),
+                updated.getCreatedAt(),
+                updated.getHomeroomClass() != null ? updated.getHomeroomClass().getName() : null,
+                updated.getHomeroomClass() != null ? updated.getHomeroomClass().getSchool().getName() : null);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

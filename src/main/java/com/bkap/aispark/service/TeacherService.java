@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.bkap.aispark.dto.TeacherDTO;
+import com.bkap.aispark.dto.TeacherRequestDTO;
 import com.bkap.aispark.entity.Classes;
 import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.Teacher;
@@ -60,19 +61,24 @@ public class TeacherService {
         return teacherRepository.findById(id);
     }
 
-    public Optional<Teacher> updateTeacher(Long id, Teacher newTeacher) {
-        return teacherRepository.findById(id).map(teacher -> {
-            teacher.setEmail(newTeacher.getEmail());
-            teacher.setCode(newTeacher.getCode());
-            teacher.setFullName(newTeacher.getFullName());
-            teacher.setPhone(newTeacher.getPhone());
-            if (newTeacher.getHomeroomClass() != null && newTeacher.getHomeroomClass().getId() != null) {
-                Classes clazz = classRepository.findById(newTeacher.getHomeroomClass().getId())
-                        .orElseThrow(() -> new RuntimeException("Class not found"));
-                teacher.setHomeroomClass(clazz);
-            }
-            return teacherRepository.save(teacher);
-        });
+    public Teacher updateTeacher(Long id, TeacherRequestDTO dto) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        teacher.setFullName(dto.getFullName());
+        teacher.setEmail(dto.getEmail());
+        teacher.setPhone(dto.getPhone());
+        teacher.setIsActive(dto.getIsActive());
+
+        if (dto.getClassId() != null) {
+            Classes cls = classRepository.findById(dto.getClassId())
+                    .orElseThrow(() -> new RuntimeException("Class not found"));
+            teacher.setHomeroomClass(cls);
+        } else {
+            teacher.setHomeroomClass(null); // nếu bỏ chọn lớp
+        }
+
+        return teacherRepository.save(teacher);
     }
 
     @Transactional
