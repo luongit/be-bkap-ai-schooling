@@ -73,21 +73,26 @@ public class ConversationLogService {
             UUID sessionId = (UUID) row[0];
             LocalDateTime createdAt = (LocalDateTime) row[1];
 
-            // ✅ Lấy message đầu tiên của session
-            ConversationLog firstLog = conversationLogRepository
-                    .findTopByUserIdAndSessionIdOrderByCreatedAtAsc(userId, sessionId)
+            // Lấy log mới nhất khác "[Session started]"
+            ConversationLog latestLog = conversationLogRepository
+                    .findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtDesc(userId, sessionId, "[Session started]")
                     .orElse(null);
 
-            String previewMessage = firstLog != null ? firstLog.getMessage() : "(Trống)";
-            Instant createdAtInstant = createdAt.atZone(ZoneId.systemDefault()).toInstant();
+            // Nếu session chưa có chat gì thì để "(Trống)"
+            String previewMessage = (latestLog != null && latestLog.getMessage() != null)
+                    ? latestLog.getMessage()
+                    : "(Trống)";
 
-            sessions.add(new SessionDTO(sessionId, createdAtInstant, previewMessage));
+            sessions.add(new SessionDTO(
+                    sessionId,
+                    createdAt.atZone(ZoneId.systemDefault()).toInstant(),
+                    previewMessage
+            ));
         }
 
         return sessions;
     }
 
-    
  // Tạo session mới (tùy chọn: có thể lưu log "session started")
     public void createEmptySession(Long userId, UUID sessionId) {
         User user = userRepository.findById(userId)
