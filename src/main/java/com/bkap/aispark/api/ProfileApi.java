@@ -1,10 +1,20 @@
 package com.bkap.aispark.api;
 
-import com.bkap.aispark.dto.ProfileDTO;
-import com.bkap.aispark.service.ProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.bkap.aispark.dto.ProfileDTO;
+import com.bkap.aispark.security.JwtUtil;
+import com.bkap.aispark.service.ProfileService;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -13,12 +23,39 @@ public class ProfileApi {
     @Autowired
     private ProfileService profileService;
 
-    @GetMapping("/{userId}")
-    public ProfileDTO getProfile(@PathVariable Long userId) {
-        return profileService.getProfileByUserId(userId);
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    // GET /api/profile -> lấy profile dựa trên userId trong token
+    @GetMapping
+    public ResponseEntity<ProfileDTO> getProfile(HttpServletRequest request) {
+        String token = extractToken(request);
+        if (!jwtUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+        Long userId = jwtUtil.getUserId(token);
+        ProfileDTO dto = profileService.getProfileByUserId(userId);
+        return ResponseEntity.ok(dto);
     }
-    @PutMapping("/{userId}")
-    public ResponseEntity<?> updateProfile(@PathVariable Long userId, @RequestBody ProfileDTO dto) {
-        return ResponseEntity.ok(profileService.updateProfile(userId, dto));
+
+    // PUT /api/profile -> update profile cho user đang login
+    @PutMapping
+    public ResponseEntity<ProfileDTO> updateProfile(HttpServletRequest request,
+            @RequestBody ProfileDTO dto) {
+        String token = extractToken(request);
+        if (!jwtUtil.validateToken(token)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+        Long userId = jwtUtil.getUserId(token);
+        ProfileDTO updated = profileService.updateProfile(userId, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing Authorization header");
+        }
+        return header.substring(7);
     }
 }
