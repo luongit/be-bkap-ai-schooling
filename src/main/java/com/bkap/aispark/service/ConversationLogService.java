@@ -136,6 +136,16 @@ public class ConversationLogService {
 
         conversationLogRepository.save(initLog);
     }
+    
+    //Xóa
+ // Xóa toàn bộ conversation theo sessionId
+    public void deleteSession(Long userId, UUID sessionId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User không tồn tại với id=" + userId));
+
+        conversationLogRepository.deleteByUserAndSessionId(user, sessionId);
+    }
+
 
 
 

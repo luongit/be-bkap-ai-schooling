@@ -3,6 +3,7 @@ package com.bkap.aispark.api;
 import java.util.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.bkap.aispark.dto.ConversationLogDTO;
@@ -58,5 +59,18 @@ public class ConversationAPI {
         Long userId = extractUserId(authHeader);
         return conversationLogService.getSessionList(userId);
     }
+    
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<?> deleteSession(
+            @PathVariable UUID sessionId,
+            @RequestHeader("Authorization") String authHeader) {
+
+        Long userId = extractUserId(authHeader);
+        conversationLogService.deleteSession(userId, sessionId);
+
+        return ResponseEntity.ok("Đã xóa toàn bộ cuộc trò chuyện " + sessionId);
+    }
+
+
 
 }
