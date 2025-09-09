@@ -36,5 +36,9 @@ public interface ConversationLogRepository extends JpaRepository<ConversationLog
             Long userId, UUID sessionId, String message);
     Optional<ConversationLog> findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtAsc(
             Long userId, UUID sessionId, String excludedMessage);
+    
+    void deleteByUserAndSessionId(User user, UUID sessionId);
+
+
 
 }
