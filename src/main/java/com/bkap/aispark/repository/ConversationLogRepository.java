@@ -34,4 +34,7 @@ public interface ConversationLogRepository extends JpaRepository<ConversationLog
     // Lấy log cuối cùng KHÁC "[Session started]" (dùng cho preview)
     Optional<ConversationLog> findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtDesc(
             Long userId, UUID sessionId, String message);
+    Optional<ConversationLog> findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtAsc(
+            Long userId, UUID sessionId, String excludedMessage);
+
 }
