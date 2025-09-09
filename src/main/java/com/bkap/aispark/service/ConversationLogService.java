@@ -65,6 +65,33 @@ public class ConversationLogService {
                 .toList();
     }
     
+//    public List<SessionDTO> getSessionList(Long userId) {
+//        List<Object[]> results = conversationLogRepository.findDistinctSessionsByUser(userId);
+//        List<SessionDTO> sessions = new ArrayList<>();
+//
+//        for (Object[] row : results) {
+//            UUID sessionId = (UUID) row[0];
+//            LocalDateTime createdAt = (LocalDateTime) row[1];
+//
+//            // Lấy log mới nhất khác "[Session started]"
+//            ConversationLog latestLog = conversationLogRepository
+//                    .findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtDesc(userId, sessionId, "[Session started]")
+//                    .orElse(null);
+//
+//            // Nếu session chưa có chat gì thì để "(Trống)"
+//            String previewMessage = (latestLog != null && latestLog.getMessage() != null)
+//                    ? latestLog.getMessage()
+//                    : "(Trống)";
+//
+//            sessions.add(new SessionDTO(
+//                    sessionId,
+//                    createdAt.atZone(ZoneId.systemDefault()).toInstant(),
+//                    previewMessage
+//            ));
+//        }
+//
+//        return sessions;
+//    }
     public List<SessionDTO> getSessionList(Long userId) {
         List<Object[]> results = conversationLogRepository.findDistinctSessionsByUser(userId);
         List<SessionDTO> sessions = new ArrayList<>();
@@ -73,14 +100,14 @@ public class ConversationLogService {
             UUID sessionId = (UUID) row[0];
             LocalDateTime createdAt = (LocalDateTime) row[1];
 
-            // Lấy log mới nhất khác "[Session started]"
-            ConversationLog latestLog = conversationLogRepository
-                    .findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtDesc(userId, sessionId, "[Session started]")
+            // ✅ Lấy log đầu tiên khác "[Session started]"
+            ConversationLog firstLog = conversationLogRepository
+                    .findTopByUserIdAndSessionIdAndMessageNotOrderByCreatedAtAsc(userId, sessionId, "[Session started]")
                     .orElse(null);
 
             // Nếu session chưa có chat gì thì để "(Trống)"
-            String previewMessage = (latestLog != null && latestLog.getMessage() != null)
-                    ? latestLog.getMessage()
+            String previewMessage = (firstLog != null && firstLog.getMessage() != null)
+                    ? firstLog.getMessage()
                     : "(Trống)";
 
             sessions.add(new SessionDTO(
@@ -92,6 +119,7 @@ public class ConversationLogService {
 
         return sessions;
     }
+
 
  // Tạo session mới (tùy chọn: có thể lưu log "session started")
     public void createEmptySession(Long userId, UUID sessionId) {

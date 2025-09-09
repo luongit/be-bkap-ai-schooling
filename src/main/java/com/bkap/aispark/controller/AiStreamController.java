@@ -1,8 +1,11 @@
 package com.bkap.aispark.controller;
 
 import com.bkap.aispark.helper.LatexNormalizer;
+import com.bkap.aispark.repository.ForbiddenKeywordRepository;
 import com.bkap.aispark.security.JwtUtil;
+import com.bkap.aispark.service.AiChatService;
 import com.bkap.aispark.service.ConversationLogService;
+import com.bkap.aispark.service.DefaultReplyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
@@ -33,7 +36,10 @@ public class AiStreamController {
 	@Autowired
 	private JwtUtil jwtutil;
 	
-	
+
+	@Autowired
+	private AiChatService aiChatService;
+
 
 
 	/**
@@ -61,7 +67,43 @@ public class AiStreamController {
 			// 1) Lấy input & xây prompt
 			List<Map<String, String>> messagesData = (List<Map<String, String>>) body.get("messages");
 			String audience = Optional.ofNullable((String) body.get("audience")).orElse("general");
+			
+			String userMessage = messagesData != null && !messagesData.isEmpty()
+	                ? messagesData.get(messagesData.size() - 1).get("content")
+	                : "";
 
+	        // ✅ Check forbidden keyword
+	        if (aiChatService.containsForbiddenKeyword(userMessage)) {
+	            try {
+	                String reply = aiChatService.getDefaultForbiddenReply();
+
+	                Map<String, String> json = new HashMap<>();
+	                json.put("type", "chunk");
+	                json.put("role", "assistant");
+	                json.put("content", reply);
+	                emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
+
+	                Map<String, String> done = new HashMap<>();
+	                done.put("type", "done");
+	                emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
+
+	                // ✅ Lưu log
+	                String authHeader = httpRequest.getHeader("Authorization");
+	                Long userId = null;
+	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	                    String token = authHeader.substring(7);
+	                    userId = jwtutil.getUserId(token);
+	                }
+	                UUID sessionId = UUID.fromString(body.get("session_id").toString());
+	                conversationLogService.saveLog(userId, userMessage, reply, false, sessionId);
+
+	                emitter.complete();
+	            } catch (Exception e) {
+	                emitter.completeWithError(e);
+	            }
+	            return; // ⚠️ kết thúc luôn luồng này
+	        }
+			
 			List<ChatMessage> messages = new ArrayList<>();
 			messages.add(new ChatMessage("system", buildSystemPrompt(audience)));
 
@@ -156,7 +198,7 @@ public class AiStreamController {
 					}
 
 
-					String userMessage = messagesData != null && !messagesData.isEmpty()
+					 userMessage = messagesData != null && !messagesData.isEmpty()
 					        ? messagesData.get(messagesData.size() - 1).get("content")
 					        : "";
 
