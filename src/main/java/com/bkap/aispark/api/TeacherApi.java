@@ -71,4 +71,16 @@ public class TeacherApi {
         return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@org.springframework.web.bind.annotation.RequestParam String email) {
+        boolean exists = teacherService.existsByEmail(email);
+        return ResponseEntity.ok().body(java.util.Collections.singletonMap("exists", exists));
+    }
+
+    @GetMapping("/check-code")
+    public ResponseEntity<?> checkCode(@org.springframework.web.bind.annotation.RequestParam String code) {
+        boolean exists = teacherService.existsByCode(code);
+        return ResponseEntity.ok().body(java.util.Collections.singletonMap("exists", exists));
+    }
+
 }

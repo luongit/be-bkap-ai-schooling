@@ -9,14 +9,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ProfileService {
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private StudentRepository studentRepository;
-    @Autowired private TeacherRepository teacherRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private StudentRepository studentRepository;
+    @Autowired
+    private TeacherRepository teacherRepository;
 
     public ProfileDTO getProfileByUserId(Long userId) {
         User user = userRepository.findById(userId)
@@ -42,7 +47,8 @@ public class ProfileService {
                 if (student.getHobbies() != null && !student.getHobbies().isBlank()) {
                     ObjectMapper mapper = new ObjectMapper();
                     try {
-                        dto.setHobbies(mapper.readValue(student.getHobbies(), new TypeReference<List<String>>() {}));
+                        dto.setHobbies(mapper.readValue(student.getHobbies(), new TypeReference<List<String>>() {
+                        }));
                     } catch (Exception e) {
                         throw new RuntimeException("Lỗi parse hobbies: " + e.getMessage());
                     }
@@ -59,7 +65,6 @@ public class ProfileService {
                 }
                 break;
 
-
             case SCHOOL:
             case SYSTEM:
                 dto.setFullName("Administrator");
@@ -68,13 +73,16 @@ public class ProfileService {
 
         return dto;
     }
+
     public ProfileDTO updateProfile(Long userId, ProfileDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
         // update thông tin chung (chỉ cho phép email/phone)
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getEmail() != null)
+            user.setEmail(dto.getEmail());
+        if (dto.getPhone() != null)
+            user.setPhone(dto.getPhone());
         userRepository.save(user);
 
         switch (user.getObjectType()) {
@@ -103,11 +111,10 @@ public class ProfileService {
 
             case SCHOOL:
             case SYSTEM:
-                throw new RuntimeException("Administrator không được cập nhật profile");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Administrator không được cập nhật profile");
         }
 
         return getProfileByUserId(userId);
     }
-    
-    
+
 }
