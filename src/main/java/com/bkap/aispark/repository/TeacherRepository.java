@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.bkap.aispark.dto.TeacherDTO;
-import com.bkap.aispark.entity.Teacher;;
+import com.bkap.aispark.entity.Teacher;
 
 @Repository
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
@@ -21,5 +21,9 @@ public interface TeacherRepository extends JpaRepository<Teacher, Long> {
             "LEFT JOIN t.homeroomClass c " +
             "LEFT JOIN c.school s")
     List<TeacherDTO> findAllWithClassAndSchool();
+
+    boolean existsByEmail(String email);
+
+    boolean existsByCode(String code);
 
 }

@@ -94,4 +94,12 @@ public class TeacherService {
         }).orElse(false);
     }
 
+    public boolean existsByEmail(String email) {
+        return teacherRepository.existsByEmail(email);
+    }
+
+    public boolean existsByCode(String code) {
+        return teacherRepository.existsByCode(code);
+    }
+
 }
