@@ -14,4 +14,9 @@ public class HomeController {
 	public String excel() {
 		return "test_excel";
 	}
+	@GetMapping("/auth/login")
+	public String loginPage() {
+	    return "login"; 
+	}
+
 }
