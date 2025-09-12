@@ -1,5 +1,7 @@
 package com.bkap.aispark.api;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,10 +18,12 @@ import com.bkap.aispark.dto.UserDTO;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.service.AuthService;
-
+import com.bkap.aispark.service.PasswordResetService;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApi {
+    @Autowired
+    private PasswordResetService passwordResetService;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -44,6 +48,28 @@ public class AuthApi {
             return ResponseEntity.ok(new UserDTO(user.getId(), user.getUsername(), user.getEmail()));
         } catch (Exception e) {
             return ResponseEntity.status(404).body(new ErrorResponse("Không tìm thấy người dùng: " + e.getMessage()));
+        }
+    }
+     @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
+        try {
+            String email = req.get("email");
+            String otp = passwordResetService.createPasswordResetToken(email);
+            return ResponseEntity.ok(Map.of("message", "Đã gửi OTP vào email", "otp", otp)); // otp để test
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
+        try {
+            String otp = req.get("token");
+            String newPassword = req.get("newPassword");
+            passwordResetService.resetPassword(otp, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }
