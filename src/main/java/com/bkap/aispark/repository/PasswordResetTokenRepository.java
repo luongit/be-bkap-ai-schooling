@@ -1,10 +1,11 @@
 package com.bkap.aispark.repository;
 
-import com.bkap.aispark.entity.PasswordResetToken;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import com.bkap.aispark.entity.PasswordResetToken;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
     Optional<PasswordResetToken> findByToken(String token);
