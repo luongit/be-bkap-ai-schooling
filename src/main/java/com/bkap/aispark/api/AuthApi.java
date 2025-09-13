@@ -1,5 +1,6 @@
 package com.bkap.aispark.api;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bkap.aispark.dto.LoginRequest;
 import com.bkap.aispark.dto.LoginResponse;
 import com.bkap.aispark.dto.UserDTO;
+import com.bkap.aispark.entity.PasswordResetToken;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.service.AuthService;
 import com.bkap.aispark.service.PasswordResetService;
+import com.bkap.aispark.repository.PasswordResetTokenRepository;    
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApi {
+    @Autowired
+    private PasswordResetTokenRepository tokenRepo;
     @Autowired
     private PasswordResetService passwordResetService;
     @Autowired
@@ -50,12 +55,15 @@ public class AuthApi {
             return ResponseEntity.status(404).body(new ErrorResponse("Không tìm thấy người dùng: " + e.getMessage()));
         }
     }
-     @PostMapping("/forgot-password")
+    @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
         try {
             String email = req.get("email");
-            String otp = passwordResetService.createPasswordResetToken(email);
-            return ResponseEntity.ok(Map.of("message", "Đã gửi OTP vào email", "otp", otp)); // otp để test
+            String otp = passwordResetService.createPasswordResetToken(email); // ✅ nhận OTP
+            return ResponseEntity.ok(Map.of(
+                    "message", "Đã gửi OTP vào email",
+                    "otp", otp // ⚠️ chỉ dùng để test
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
@@ -72,4 +80,22 @@ public class AuthApi {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        try {
+            PasswordResetToken resetToken = tokenRepo.findByToken(token)
+                    .orElseThrow(() -> new RuntimeException("OTP không hợp lệ"));
+
+            if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+                throw new RuntimeException("OTP đã hết hạn");
+            }
+
+            return ResponseEntity.ok(Map.of("message", "OTP hợp lệ"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
 }

@@ -36,10 +36,11 @@ public class User {
 
     private String phone;
 
-    // ✅ sửa lại: dùng studentUsername thay cho studentCode
     @Column(unique = true)
     private String username;
-  // cho phép NULL với role khác
+
+    @Column(name = "fcm_token", length = 500)
+    private String fcmToken; // Thêm field cho FCM token
 
     @Column(nullable = false)
     private Boolean isActive = true;
@@ -52,26 +53,22 @@ public class User {
     public User() {
     }
 
-   
-
     public User(Long id, String password, UserRole role, ObjectType objectType, Long objectId, String email,
-			String phone, String username, Boolean isActive, LocalDateTime createdAt) {
-		super();
-		this.id = id;
-		this.password = password;
-		this.role = role;
-		this.objectType = objectType;
-		this.objectId = objectId;
-		this.email = email;
-		this.phone = phone;
-		this.username = username;
-		this.isActive = isActive;
-		this.createdAt = createdAt;
-	}
+                String phone, String username, String fcmToken, Boolean isActive, LocalDateTime createdAt) {
+        this.id = id;
+        this.password = password;
+        this.role = role;
+        this.objectType = objectType;
+        this.objectId = objectId;
+        this.email = email;
+        this.phone = phone;
+        this.username = username;
+        this.fcmToken = fcmToken;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+    }
 
-
-
-	// Getters & Setters
+    // Getters & Setters
     public Long getId() {
         return id;
     }
@@ -128,21 +125,23 @@ public class User {
         this.phone = phone;
     }
 
-   
-
     public String getUsername() {
-		return username;
-	}
+        return username;
+    }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
+    public String getFcmToken() {
+        return fcmToken;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
 
-
-
-	public Boolean getIsActive() {
+    public Boolean getIsActive() {
         return isActive;
     }
 
