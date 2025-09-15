@@ -18,5 +18,10 @@ public class HomeController {
 	public String loginPage() {
 	    return "login"; 
 	}
+	
+	@GetMapping("/otp")
+	public String verify() {
+		return "forgot-password";
+	}
 
 }

@@ -21,81 +21,83 @@ import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.service.AuthService;
 import com.bkap.aispark.service.PasswordResetService;
-import com.bkap.aispark.repository.PasswordResetTokenRepository;    
+import com.bkap.aispark.repository.PasswordResetTokenRepository;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApi {
-    @Autowired
-    private PasswordResetTokenRepository tokenRepo;
-    @Autowired
-    private PasswordResetService passwordResetService;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private AuthService authService;
+	@Autowired
+	private PasswordResetTokenRepository tokenRepo;
+	@Autowired
+	private PasswordResetService passwordResetService;
+	@Autowired
+	private UserRepository userRepository;
+	@Autowired
+	private AuthService authService;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        LoginResponse response = authService.login(request.getIdentifier(), request.getPassword());
-        return ResponseEntity.ok(response);
-    }
-    
-@GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser() {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
-                return ResponseEntity.status(401).body(new ErrorResponse("Không tìm thấy người dùng: Chưa đăng nhập hoặc token không hợp lệ"));
-            }
-            String email = authentication.getName(); // Lấy email từ token
-            User user = userRepository.findByEmail(email) // Tìm theo email
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + email));
-            return ResponseEntity.ok(new UserDTO(user.getId(), user.getUsername(), user.getEmail()));
-        } catch (Exception e) {
-            return ResponseEntity.status(404).body(new ErrorResponse("Không tìm thấy người dùng: " + e.getMessage()));
-        }
-    }
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
-        try {
-            String email = req.get("email");
-            String otp = passwordResetService.createPasswordResetToken(email); // ✅ nhận OTP
-            return ResponseEntity.ok(Map.of(
-                    "message", "Đã gửi OTP vào email",
-                    "otp", otp // ⚠️ chỉ dùng để test
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
+	@PostMapping("/login")
+	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+		LoginResponse response = authService.login(request.getIdentifier(), request.getPassword());
+		return ResponseEntity.ok(response);
+	}
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
-        try {
-            String otp = req.get("token");
-            String newPassword = req.get("newPassword");
-            passwordResetService.resetPassword(otp, newPassword);
-            return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
+	@GetMapping("/me")
+	public ResponseEntity<?> getCurrentUser() {
+		try {
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			if (authentication == null || !authentication.isAuthenticated()
+					|| "anonymousUser".equals(authentication.getName())) {
+				return ResponseEntity.status(401)
+						.body(new ErrorResponse("Không tìm thấy người dùng: Chưa đăng nhập hoặc token không hợp lệ"));
+			}
+			String email = authentication.getName(); // Lấy email từ token
+			User user = userRepository.findByEmail(email) // Tìm theo email
+					.orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với email: " + email));
+			return ResponseEntity.ok(new UserDTO(user.getId(), user.getUsername(), user.getEmail()));
+		} catch (Exception e) {
+			return ResponseEntity.status(404).body(new ErrorResponse("Không tìm thấy người dùng: " + e.getMessage()));
+		}
+	}
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
-        String token = request.get("token");
-        try {
-            PasswordResetToken resetToken = tokenRepo.findByToken(token)
-                    .orElseThrow(() -> new RuntimeException("OTP không hợp lệ"));
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
+		try {
+			String email = req.get("email");
+			String otp = passwordResetService.createPasswordResetToken(email); // ✅ nhận OTP
+			return ResponseEntity.ok(Map.of("message", "Đã gửi OTP vào email", "otp", otp // ⚠️ chỉ dùng để test
+			));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+		}
+	}
 
-            if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-                throw new RuntimeException("OTP đã hết hạn");
-            }
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
+		try {
+			String otp = req.get("token");
+			String newPassword = req.get("newPassword");
+			passwordResetService.resetPassword(otp, newPassword);
+			return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+		}
+	}
 
-            return ResponseEntity.ok(Map.of("message", "OTP hợp lệ"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
-    }
+	@PostMapping("/verify-otp")
+	public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+		String token = request.get("token");
+		try {
+			PasswordResetToken resetToken = tokenRepo.findByToken(token)
+					.orElseThrow(() -> new RuntimeException("OTP không hợp lệ"));
+
+			if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+				throw new RuntimeException("OTP đã hết hạn");
+			}
+
+			return ResponseEntity.ok(Map.of("message", "OTP hợp lệ"));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+		}
+	}
 
 }
