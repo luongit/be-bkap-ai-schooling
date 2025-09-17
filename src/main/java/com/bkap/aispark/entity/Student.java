@@ -3,6 +3,8 @@ package com.bkap.aispark.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -39,7 +41,9 @@ public class Student {
     private String hobbies;
 
     private Boolean isActive = true;
+     
 
+   
     private LocalDate birthdate;
 
     @Column(updatable = false)
