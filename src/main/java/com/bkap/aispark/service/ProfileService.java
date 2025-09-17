@@ -34,6 +34,7 @@ public class ProfileService {
         dto.setPhone(user.getPhone());
         dto.setRole(user.getRole());
         dto.setObjectType(user.getObjectType());
+      
 
         switch (user.getObjectType()) {
             case STUDENT:
@@ -41,6 +42,7 @@ public class ProfileService {
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
                 dto.setFullName(student.getFullName());
                 dto.setCode(student.getCode());
+                dto.setBirthdate(student.getBirthdate());
                 if (student.getClassEntity() != null) {
                     dto.setClassName(student.getClassEntity().getName());
                 }
@@ -53,6 +55,7 @@ public class ProfileService {
                         throw new RuntimeException("Lỗi parse hobbies: " + e.getMessage());
                     }
                 }
+                
                 break;
 
             case TEACHER:
@@ -99,6 +102,10 @@ public class ProfileService {
                         throw new RuntimeException("Lỗi khi lưu hobbies");
                     }
                 }
+                if (dto.getBirthdate() != null) {
+                    student.setBirthdate(dto.getBirthdate());
+                }
+
                 studentRepository.save(student);
                 break;
 

@@ -1,8 +1,10 @@
 package com.bkap.aispark.dto;
 
 import com.bkap.aispark.entity.UserRole;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.bkap.aispark.entity.ObjectType;
@@ -19,9 +21,14 @@ public class ProfileDTO {
     private String fullName;
     private String code;
     private String className;   // nếu student
-    private String homeroom;  // nếu teacher
-    
+    private String homeroom;
+// nếu teacher
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate birthdate;
+
     private List<String> hobbies;
+    
+    
 
     public Long getUserId() {
         return userId;
@@ -97,6 +104,12 @@ public class ProfileDTO {
 	}
 	public void setHobbies(List<String> hobbies) {
 		this.hobbies = hobbies;
+	}
+	public LocalDate getBirthdate() {
+		return birthdate;
+	}
+	public void setBirthdate(LocalDate birthdate) {
+		this.birthdate = birthdate;
 	}
 	
     
