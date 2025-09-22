@@ -27,20 +27,38 @@ public class StudentGoal {
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @Column(length = 100)
+    private String subject;   // môn học (Toán, Văn, Anh...)
 
+    @Column(length = 50)
+    private String level;     // mức độ (Cơ bản, Trung bình, Nâng cao...)
+
+    @Column(length = 50)
+    private String style;   
+    
     // Constructors
     public StudentGoal() {}
 
-    public StudentGoal(Long id, Student student, String goal, String status, LocalDate deadline, LocalDateTime createdAt) {
-        this.id = id;
-        this.student = student;
-        this.goal = goal;
-        this.status = status;
-        this.deadline = deadline;
-        this.createdAt = createdAt;
-    }
+    
 
-    // Getters & Setters
+    public StudentGoal(Long id, Student student, String goal, String status, LocalDate deadline,
+			LocalDateTime createdAt, String subject, String level, String style) {
+		super();
+		this.id = id;
+		this.student = student;
+		this.goal = goal;
+		this.status = status;
+		this.deadline = deadline;
+		this.createdAt = createdAt;
+		this.subject = subject;
+		this.level = level;
+		this.style = style;
+	}
+
+
+
+	// Getters & Setters
 
     public Long getId() {
         return id;
@@ -89,4 +107,41 @@ public class StudentGoal {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+
+
+	public String getSubject() {
+		return subject;
+	}
+
+
+
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+
+
+
+	public String getLevel() {
+		return level;
+	}
+
+
+
+	public void setLevel(String level) {
+		this.level = level;
+	}
+
+
+
+	public String getStyle() {
+		return style;
+	}
+
+
+
+	public void setStyle(String style) {
+		this.style = style;
+	}
+    
 }
