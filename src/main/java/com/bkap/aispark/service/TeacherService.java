@@ -13,10 +13,12 @@ import com.bkap.aispark.entity.Classes;
 import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.Teacher;
 import com.bkap.aispark.entity.User;
+import com.bkap.aispark.entity.UserCredit; // Thêm import
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.ClassesRepository;
 import com.bkap.aispark.repository.TeacherRepository;
 import com.bkap.aispark.repository.UserRepository;
+import com.bkap.aispark.repository.UserCreditRepository; // Thêm import
 
 import jakarta.transaction.Transactional;
 
@@ -28,9 +30,10 @@ public class TeacherService {
     private UserRepository userRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     @Autowired
     private ClassesRepository classRepository;
+    @Autowired
+    private UserCreditRepository userCreditRepository; // Inject repository
 
     public List<TeacherDTO> getTeachers() {
         return teacherRepository.findAllWithClassAndSchool();
@@ -42,18 +45,24 @@ public class TeacherService {
 
     @Transactional
     public Teacher addTeacher(Teacher teacher) {
+        // Lưu teacher
         Teacher saved = teacherRepository.save(teacher);
 
+        // Tạo user tương ứng
         User user = new User();
         user.setEmail(saved.getEmail());
         user.setPhone(saved.getPhone());
-        user.setPassword(passwordEncoder.encode("123456")); // mã hóa
+        user.setPassword(passwordEncoder.encode("123456")); // Mã hóa
         user.setRole(UserRole.TEACHER);
         user.setObjectType(ObjectType.TEACHER);
         user.setObjectId(saved.getId());
         user.setIsActive(true);
+        User savedUser = userRepository.save(user);
 
-        userRepository.save(user);
+        // Tạo UserCredit với 100 credit
+        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
+        userCreditRepository.save(credit);
+
         return saved;
     }
 
@@ -75,7 +84,7 @@ public class TeacherService {
                     .orElseThrow(() -> new RuntimeException("Class not found"));
             teacher.setHomeroomClass(cls);
         } else {
-            teacher.setHomeroomClass(null); // nếu bỏ chọn lớp
+            teacher.setHomeroomClass(null);
         }
 
         return teacherRepository.save(teacher);
@@ -86,7 +95,12 @@ public class TeacherService {
         return teacherRepository.findById(id).map(teacher -> {
             // Xóa user tương ứng
             userRepository.findByObjectTypeAndObjectId(ObjectType.TEACHER, teacher.getId())
-                    .ifPresent(userRepository::delete);
+                    .ifPresent(user -> {
+                        // Xóa UserCredit trước
+                        userCreditRepository.findByUserId(user.getId())
+                                .ifPresent(userCreditRepository::delete);
+                        userRepository.delete(user);
+                    });
 
             // Xóa teacher
             teacherRepository.delete(teacher);
@@ -101,5 +115,4 @@ public class TeacherService {
     public boolean existsByCode(String code) {
         return teacherRepository.existsByCode(code);
     }
-
 }

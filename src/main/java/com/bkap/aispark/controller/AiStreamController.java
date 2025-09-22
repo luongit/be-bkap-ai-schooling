@@ -5,6 +5,7 @@ import com.bkap.aispark.repository.ForbiddenKeywordRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AiChatService;
 import com.bkap.aispark.service.ConversationLogService;
+import com.bkap.aispark.service.CreditService;
 import com.bkap.aispark.service.DefaultReplyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
@@ -40,6 +41,8 @@ public class AiStreamController {
 	@Autowired
 	private AiChatService aiChatService;
 
+	@Autowired
+	private CreditService creditService;
 
 
 	/**
@@ -64,17 +67,38 @@ public class AiStreamController {
 
 		CompletableFuture.runAsync(() -> {
 			final StringBuilder fullResponse = new StringBuilder(); 
-			// 1) Lấy input & xây prompt
-			List<Map<String, String>> messagesData = (List<Map<String, String>>) body.get("messages");
-			String audience = Optional.ofNullable((String) body.get("audience")).orElse("general");
-			
-			String userMessage = messagesData != null && !messagesData.isEmpty()
-	                ? messagesData.get(messagesData.size() - 1).get("content")
-	                : "";
+			try {
+	            // 1) Lấy userId từ JWT token
+	            String authHeader = httpRequest.getHeader("Authorization");
+	            Long userId = null;
+	            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	                String token = authHeader.substring(7);
+	                userId = jwtutil.getUserId(token);
+	            } else {
+	                throw new RuntimeException("Missing or invalid Authorization header");
+	            }
 
-	        // ✅ Check forbidden keyword
-	        if (aiChatService.containsForbiddenKeyword(userMessage)) {
-	            try {
+	            // 2) Kiểm tra và trừ credit
+	            boolean hasCredit = creditService.deductCredit(userId);
+	            if (!hasCredit) {
+	                Map<String, String> error = new HashMap<>();
+	                error.put("type", "error");
+	                error.put("message", "Bạn đã hết credit, vui lòng mua thêm gói để tiếp tục");
+	                emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
+	                emitter.complete();
+	                return;
+	            }
+
+	            // 3) Lấy input & xây prompt
+	            List<Map<String, String>> messagesData = (List<Map<String, String>>) body.get("messages");
+	            String audience = Optional.ofNullable((String) body.get("audience")).orElse("general");
+
+	            String userMessage = messagesData != null && !messagesData.isEmpty()
+	                    ? messagesData.get(messagesData.size() - 1).get("content")
+	                    : "";
+
+	            // 4) Kiểm tra từ khóa bị cấm
+	            if (aiChatService.containsForbiddenKeyword(userMessage)) {
 	                String reply = aiChatService.getDefaultForbiddenReply();
 
 	                Map<String, String> json = new HashMap<>();
@@ -87,144 +111,107 @@ public class AiStreamController {
 	                done.put("type", "done");
 	                emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
 
-	                // ✅ Lưu log
-	                String authHeader = httpRequest.getHeader("Authorization");
-	                Long userId = null;
-	                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                    String token = authHeader.substring(7);
-	                    userId = jwtutil.getUserId(token);
-	                }
 	                UUID sessionId = UUID.fromString(body.get("session_id").toString());
 	                conversationLogService.saveLog(userId, userMessage, reply, false, sessionId);
 
 	                emitter.complete();
-	            } catch (Exception e) {
-	                emitter.completeWithError(e);
+	                return;
 	            }
-	            return; // ⚠️ kết thúc luôn luồng này
+
+	            // 5) Xây dựng prompt và gọi AI
+	            List<ChatMessage> messages = new ArrayList<>();
+	            messages.add(new ChatMessage("system", buildSystemPrompt(audience)));
+
+	            if (messagesData != null) {
+	                for (Map<String, String> m : messagesData) {
+	                    String role = m.get("role");
+	                    String content = m.get("content");
+	                    if (role != null && content != null) {
+	                        messages.add(new ChatMessage(role, content));
+	                    }
+	                }
+	            }
+
+	            ChatCompletionRequest request = ChatCompletionRequest.builder()
+	                    .model("gpt-4o")
+	                    .messages(messages)
+	                    .temperature(0.2)
+	                    .stream(true)
+	                    .build();
+
+	            // 6) Chuẩn hóa khi stream
+	            final StringBuilder safeBuffer = new StringBuilder();
+	            final LatexNormalizer normalizer = new LatexNormalizer();
+
+	            openAiService.streamChatCompletion(request).doOnError(err -> {
+	                try {
+	                    Map<String, String> error = new HashMap<>();
+	                    error.put("type", "error");
+	                    error.put("message", err.getMessage());
+	                    emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
+	                } catch (Exception ignored) {
+	                }
+	            }).blockingForEach(chunk -> {
+	                try {
+	                    var choices = chunk.getChoices();
+	                    if (choices == null || choices.isEmpty())
+	                        return;
+
+	                    String content = extractChoiceContent(choices.get(0));
+	                    if (content == null || content.isEmpty())
+	                        return;
+
+	                    safeBuffer.append(content);
+	                    fullResponse.append(content);
+	                    String emitChunk = normalizer.tryNormalizeAndExtractStablePrefix(safeBuffer);
+	                    if (!emitChunk.isEmpty()) {
+	                        Map<String, String> json = new HashMap<>();
+	                        json.put("type", "chunk");
+	                        json.put("role", "assistant");
+	                        json.put("content", emitChunk);
+	                        emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
+	                    }
+	                } catch (Exception e) {
+	                    emitter.completeWithError(e);
+	                }
+	            });
+
+	            // 7) Flush phần còn lại
+	            String tail = normalizer.flushAll(safeBuffer);
+	            if (!tail.isEmpty()) {
+	                fullResponse.append(tail);
+	                Map<String, String> json = new HashMap<>();
+	                json.put("type", "chunk");
+	                json.put("role", "assistant");
+	                json.put("content", tail);
+	                emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
+	            }
+
+	            // 8) Gửi tín hiệu kết thúc và số credit còn lại
+	            Map<String, Object> done = new HashMap<>();
+	            done.put("type", "done");
+	            done.put("remainingCredit", creditService.getRemainingCredit(userId));
+	            emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
+
+	            // 9) Lưu log
+	            UUID sessionId = UUID.fromString(body.get("session_id").toString());
+	            conversationLogService.saveLog(userId, userMessage, fullResponse.toString(), false, sessionId);
+
+	            emitter.complete();
+
+	        } catch (Exception e) {
+	            try {
+	                Map<String, String> error = new HashMap<>();
+	                error.put("type", "error");
+	                error.put("message", e.getMessage());
+	                emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
+	            } catch (Exception ignored) {
+	            }
+	            emitter.completeWithError(e);
 	        }
-			
-			List<ChatMessage> messages = new ArrayList<>();
-			messages.add(new ChatMessage("system", buildSystemPrompt(audience)));
+	    });
 
-			if (messagesData != null) {
-				for (Map<String, String> m : messagesData) {
-					String role = m.get("role");
-					String content = m.get("content");
-					if (role != null && content != null) {
-						messages.add(new ChatMessage(role, content));
-					}
-				}
-			}
-
-			try {
-				ChatCompletionRequest request = ChatCompletionRequest.builder().model("gpt-4o").messages(messages)
-						.temperature(0.2) // chính xác học thuật
-						.stream(true).build();
-
-				// 2) Chuẩn hoá khi stream
-				final StringBuilder safeBuffer = new StringBuilder();
-				final LatexNormalizer normalizer = new LatexNormalizer();
-
-				openAiService.streamChatCompletion(request).doOnError(err -> {
-					try {
-						Map<String, String> error = new HashMap<>();
-						error.put("type", "error");
-						error.put("message", err.getMessage());
-						emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
-					} catch (Exception ignored) {
-					}
-				}).blockingForEach(chunk -> {
-					try {
-						var choices = chunk.getChoices();
-						if (choices == null || choices.isEmpty())
-							return;
-
-						String content = extractChoiceContent(choices.get(0));
-						if (content == null || content.isEmpty())
-							return;
-
-						safeBuffer.append(content);
-						fullResponse.append(content);
-						String emitChunk = normalizer.tryNormalizeAndExtractStablePrefix(safeBuffer);
-						if (!emitChunk.isEmpty()) {
-							Map<String, String> json = new HashMap<>();
-							json.put("type", "chunk");
-							json.put("role", "assistant");
-							json.put("content", emitChunk);
-							emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
-						}
-					} catch (Exception e) {
-						emitter.completeWithError(e);
-					}
-				});
-
-				// 3) Flush phần còn lại
-				String tail = normalizer.flushAll(safeBuffer);
-				if (!tail.isEmpty()) {
-					fullResponse.append(tail);
-					Map<String, String> json = new HashMap<>();
-					json.put("type", "chunk");
-					json.put("role", "assistant");
-					json.put("content", tail);
-					emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
-				}
-
-				
-
-				// 4) Tín hiệu kết thúc
-				Map<String, String> done = new HashMap<>();
-				done.put("type", "done");
-				emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
-				try {
-					String authHeader = httpRequest.getHeader("Authorization"); // ✅ dùng httpRequest
-					Long userId = null;
-					if (authHeader != null && authHeader.startsWith("Bearer ")) {
-					    String token = authHeader.substring(7);
-					    userId = jwtutil.getUserId(token);
-					}
-
-					// ✅ lấy session_id từ body (nếu có)
-					UUID sessionId = null;
-					Object sid = body.get("session_id");
-					if (sid != null) {
-					    try {
-					        sessionId = UUID.fromString(sid.toString());
-					    } catch (Exception e) {
-					        throw new RuntimeException("Invalid session_id"); 
-					    }
-					} else {
-					    throw new RuntimeException("Missing session_id"); 
-					}
-
-
-					 userMessage = messagesData != null && !messagesData.isEmpty()
-					        ? messagesData.get(messagesData.size() - 1).get("content")
-					        : "";
-
-					if (userId != null) {
-					    // ✅ gọi service với sessionId
-					    conversationLogService.saveLog(userId, userMessage, fullResponse.toString(), false, sessionId);
-					
-
-					}
-				} catch (Exception e) {
-					System.err.println("Không lưu được log: " + e.getMessage());
-				}
-				emitter.complete();
-			} catch (Exception e) {
-				try {
-					Map<String, String> error = new HashMap<>();
-					error.put("type", "error");
-					error.put("message", e.getMessage());
-					emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
-				} catch (Exception ignored) {
-				}
-				emitter.completeWithError(e);
-			}
-		});
-
-		return emitter;
+	    return emitter;
 	}
 
 	// Prompt hệ thống

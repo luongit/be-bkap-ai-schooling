@@ -11,10 +11,12 @@ import com.bkap.aispark.entity.Classes;
 import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.Student;
 import com.bkap.aispark.entity.User;
+import com.bkap.aispark.entity.UserCredit; // Thêm import
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.ClassesRepository;
 import com.bkap.aispark.repository.StudentRepository;
 import com.bkap.aispark.repository.UserRepository;
+import com.bkap.aispark.repository.UserCreditRepository; // Thêm import
 
 import jakarta.transaction.Transactional;
 
@@ -25,6 +27,7 @@ public class StudentService {
     @Autowired private UserRepository userRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ClassesRepository classesRepository;
+    @Autowired private UserCreditRepository userCreditRepository; // Inject repository
 
     public List<Student> getAllStudent() {
         return studentRepository.findAll();
@@ -45,6 +48,7 @@ public class StudentService {
 
         student.setClassEntity(clazz);
 
+        // Lưu student
         Student saved = studentRepository.save(student);
 
         // Tạo user tương ứng
@@ -56,8 +60,11 @@ public class StudentService {
         user.setObjectType(ObjectType.STUDENT);
         user.setObjectId(saved.getId());
         user.setIsActive(true);
+        User savedUser = userRepository.save(user);
 
-        userRepository.save(user);
+        // Tạo UserCredit với 100 credit
+        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
+        userCreditRepository.save(credit);
 
         return saved;
     }
@@ -91,16 +98,21 @@ public class StudentService {
         });
     }
 
-
     @Transactional
     public Boolean deleteStudent(Long id) {
         return studentRepository.findById(id).map(student -> {
             userRepository.findByObjectTypeAndObjectId(ObjectType.STUDENT, student.getId())
-                          .ifPresent(userRepository::delete);
+                    .ifPresent(user -> {
+                        // Xóa UserCredit trước
+                        userCreditRepository.findByUserId(user.getId())
+                                .ifPresent(userCreditRepository::delete);
+                        userRepository.delete(user);
+                    });
             studentRepository.delete(student);
             return true;
         }).orElse(false);
     }
+
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
@@ -112,5 +124,4 @@ public class StudentService {
     public boolean existsByPhone(String phone) {
         return userRepository.existsByPhone(phone);
     }
-
 }
