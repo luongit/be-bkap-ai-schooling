@@ -29,8 +29,7 @@ public class StudentGoalApi {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    // Tạo mới goal cho student
+ // Tạo mới goal cho student
     @PostMapping("/student/{studentId}")
     public ResponseEntity<StudentGoal> addGoal(
             @PathVariable Long studentId,
@@ -38,6 +37,9 @@ public class StudentGoalApi {
 
         StudentGoal goal = new StudentGoal();
         goal.setGoal(req.getGoal());
+        goal.setSubject(req.getSubject());
+        goal.setLevel(req.getLevel());
+        goal.setStyle(req.getStyle());
         goal.setStatus(req.getStatus());
         goal.setDeadline(req.getDeadline());
 
@@ -53,6 +55,9 @@ public class StudentGoalApi {
 
         StudentGoal goal = new StudentGoal();
         goal.setGoal(req.getGoal());
+        goal.setSubject(req.getSubject());
+        goal.setLevel(req.getLevel());
+        goal.setStyle(req.getStyle());
         goal.setStatus(req.getStatus());
         goal.setDeadline(req.getDeadline());
 
@@ -64,6 +69,7 @@ public class StudentGoalApi {
             return ResponseEntity.badRequest().body(null);
         }
     }
+
 
     // Xóa goal
     @DeleteMapping("/{id}")
