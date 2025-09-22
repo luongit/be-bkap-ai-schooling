@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.transaction.Transactional;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class SchoolService {
 
@@ -22,15 +25,17 @@ public class SchoolService {
 
     private final SchoolsRepository schoolRepo;
     private final UserRepository userRepo;
+    private final AuditLogService auditLogService;
 
-    public SchoolService(SchoolsRepository schoolRepo, UserRepository userRepo) {
+    public SchoolService(SchoolsRepository schoolRepo, UserRepository userRepo, AuditLogService auditLogService) {
         this.schoolRepo = schoolRepo;
         this.userRepo = userRepo;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
     public Schools createSchoolWithAdmin(Schools school) {
-        // 1. check email đã tồn tại?
+
         if (userRepo.existsByEmail(school.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
@@ -43,13 +48,32 @@ public class SchoolService {
         admin.setEmail(savedSchool.getEmail());
         admin.setPassword(passwordEncoder.encode("123456")); // TODO: generate random + encode
         admin.setRole(UserRole.SCHOOL_ADMIN);
+
         admin.setObjectId(savedSchool.getId().longValue());
+
         admin.setObjectType(ObjectType.SCHOOL);
         admin.setPhone(savedSchool.getPhone());
         userRepo.save(admin);
 
         // 4. Gán admin_id cho school
         savedSchool.setAdminId(admin.getId());
-        return schoolRepo.save(savedSchool);
+
+        Schools updatedSchool = schoolRepo.save(savedSchool);
+
+        // 5. Audit log
+        Map<String, Object> details = new HashMap<>();
+        details.put("schoolName", updatedSchool.getName());
+        details.put("schoolEmail", updatedSchool.getEmail());
+        details.put("adminId", admin.getId());
+
+        auditLogService.logAction(
+                admin.getId(),
+                "CREATE_SCHOOL",
+                "schools",
+                updatedSchool.getId(),
+                details);
+
+        return updatedSchool;
+
     }
 }
