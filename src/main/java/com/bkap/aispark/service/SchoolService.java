@@ -35,7 +35,7 @@ public class SchoolService {
 
     @Transactional
     public Schools createSchoolWithAdmin(Schools school) {
-        // 1. check email đã tồn tại?
+
         if (userRepo.existsByEmail(school.getEmail())) {
             throw new RuntimeException("Email đã tồn tại");
         }
@@ -48,13 +48,16 @@ public class SchoolService {
         admin.setEmail(savedSchool.getEmail());
         admin.setPassword(passwordEncoder.encode("123456")); // TODO: generate random + encode
         admin.setRole(UserRole.SCHOOL_ADMIN);
-        admin.setObjectId(savedSchool.getId());
+
+        admin.setObjectId(savedSchool.getId().longValue());
+
         admin.setObjectType(ObjectType.SCHOOL);
         admin.setPhone(savedSchool.getPhone());
         userRepo.save(admin);
 
         // 4. Gán admin_id cho school
         savedSchool.setAdminId(admin.getId());
+
         Schools updatedSchool = schoolRepo.save(savedSchool);
 
         // 5. Audit log
@@ -71,5 +74,6 @@ public class SchoolService {
                 details);
 
         return updatedSchool;
+
     }
 }

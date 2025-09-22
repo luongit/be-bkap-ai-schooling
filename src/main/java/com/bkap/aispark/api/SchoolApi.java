@@ -14,15 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.entity.Schools;
 import com.bkap.aispark.repository.SchoolsRepository;
+import com.bkap.aispark.service.SchoolService;
 
 @RestController
 @RequestMapping("api/schools")
 public class SchoolApi {
-
     private final SchoolsRepository schoolRepository;
+    private final SchoolService schoolService;
 
-    public SchoolApi(SchoolsRepository schoolRepository) {
+    public SchoolApi(SchoolsRepository schoolRepository, SchoolService schoolService) {
         this.schoolRepository = schoolRepository;
+        this.schoolService = schoolService;
     }
 
     // Lay tat ca cac truong
@@ -42,7 +44,7 @@ public class SchoolApi {
     // Them 1 truong
     @PostMapping
     public Schools createSchool(@RequestBody Schools school) {
-        return schoolRepository.save(school);
+        return schoolService.createSchoolWithAdmin(school);
     }
 
     // Sua thong tin truong qua ID
