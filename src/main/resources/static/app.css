@@ -395,3 +395,24 @@ p code,li code,span code,.inline-code{
     font-size: 0.95rem;
   }
 }
+.credit-info {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #e0f7fa;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.error-message {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 5px;
+  color: #c62828;
+  text-align: center;
+}
+
+.error-message a, .credit-info a {
+  color: #1976d2;
+  text-decoration: underline;
+}
