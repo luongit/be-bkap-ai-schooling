@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,5 +58,32 @@ public class ProfileApi {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing Authorization header");
         }
         return header.substring(7);
+    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<ProfileDTO> getUserProfile(@PathVariable Long id) {
+//        ProfileDTO dto = profileService.getProfileByUserId(id);
+//        if (dto == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+//        }
+//        return ResponseEntity.ok(dto);
+//    }
+//
+//    // PUT /api/users/{id} -> admin cập nhật profile theo id
+//    @PutMapping("/{id}")
+//    public ResponseEntity<ProfileDTO> updateUserProfile(
+//            @PathVariable Long id,
+//            @RequestBody ProfileDTO dto) {
+//        ProfileDTO updated = profileService.updateProfile(id, dto);
+//        return ResponseEntity.ok(updated);
+//    }
+
+    @GetMapping("/{id}")
+    public ProfileDTO getProfile(@PathVariable Long id) {
+        return profileService.getProfileByUserId(id);
+    }
+
+    @PutMapping("/{id}")
+    public ProfileDTO updateProfile(@PathVariable Long id, @RequestBody ProfileDTO dto) {
+        return profileService.updateProfile(id, dto);
     }
 }
