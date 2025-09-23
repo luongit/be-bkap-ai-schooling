@@ -45,11 +45,15 @@ public class StudentGoalService {
     public Optional<StudentGoal> updateGoal(Long id, StudentGoal newGoal) {
         return studentGoalRepository.findById(id).map(goal -> {
             goal.setGoal(newGoal.getGoal());
+            goal.setSubject(newGoal.getSubject());
+            goal.setLevel(newGoal.getLevel());
+            goal.setStyle(newGoal.getStyle());
             goal.setStatus(newGoal.getStatus());
             goal.setDeadline(newGoal.getDeadline());
             return studentGoalRepository.save(goal);
         });
     }
+
 
     // Xóa mục tiêu
     @Transactional

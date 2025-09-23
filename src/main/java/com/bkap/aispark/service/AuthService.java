@@ -1,7 +1,5 @@
 package com.bkap.aispark.service;
 
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,8 +10,6 @@ import com.bkap.aispark.entity.User;
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
-
-
 
 @Service
 public class AuthService {
@@ -31,20 +27,26 @@ public class AuthService {
         User user;
 
         if (identifier.contains("@")) {
-            // đăng nhập bằng email
+            // Đăng nhập bằng email
             user = userRepository.findByEmail(identifier)
                     .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
         } else {
-            // đăng nhập bằng username
+            // Đăng nhập bằng username
             user = userRepository.findByUsername(identifier)
                     .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
         }
 
+        // Kiểm tra trạng thái isActive
+        if (!user.getIsActive()) {
+            throw new RuntimeException("Tài khoản đã bị khóa");
+        }
+
+        // Kiểm tra mật khẩu
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        // ✅ sinh JWT token có userId + email + role
+        // Sinh JWT token có userId + email + role
         String token = jwtUtil.generateToken(
                 user.getId(),
                 user.getEmail(),
@@ -63,12 +65,3 @@ public class AuthService {
         );
     }
 }
-
-
-
-
-
-
-
-
-

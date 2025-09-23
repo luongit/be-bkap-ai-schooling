@@ -81,7 +81,7 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
-        // update thông tin chung (chỉ cho phép email/phone)
+        // update thông tin chung
         if (dto.getEmail() != null)
             user.setEmail(dto.getEmail());
         if (dto.getPhone() != null)
@@ -92,7 +92,13 @@ public class ProfileService {
             case STUDENT:
                 Student student = studentRepository.findById(user.getObjectId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
-                // chỉ cho phép update sở thích
+
+                if (dto.getFullName() != null) {
+                    student.setFullName(dto.getFullName());
+                }
+                if (dto.getBirthdate() != null) {
+                    student.setBirthdate(dto.getBirthdate());
+                }
                 if (dto.getHobbies() != null) {
                     try {
                         ObjectMapper mapper = new ObjectMapper();
@@ -102,9 +108,6 @@ public class ProfileService {
                         throw new RuntimeException("Lỗi khi lưu hobbies");
                     }
                 }
-                if (dto.getBirthdate() != null) {
-                    student.setBirthdate(dto.getBirthdate());
-                }
 
                 studentRepository.save(student);
                 break;
@@ -112,7 +115,12 @@ public class ProfileService {
             case TEACHER:
                 Teacher teacher = teacherRepository.findById(user.getObjectId())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"));
+
+                if (dto.getFullName() != null) {
+                    teacher.setFullName(dto.getFullName());
+                }
                 // không cho update homeroom
+
                 teacherRepository.save(teacher);
                 break;
 
@@ -123,5 +131,6 @@ public class ProfileService {
 
         return getProfileByUserId(userId);
     }
+
 
 }
