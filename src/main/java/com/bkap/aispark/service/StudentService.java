@@ -1,5 +1,6 @@
 package com.bkap.aispark.service;
 
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,8 +71,16 @@ public class StudentService {
     }
 
     private String generateStudentCode() {
-        long count = studentRepository.count();
-        return "HS" + java.time.Year.now().getValue() + "-" + String.format("%04d", count + 1);
+        int year = Year.now().getValue();
+        String maxCode = studentRepository.findMaxCodeByYear(year);
+
+        int nextNumber = 1;
+        if (maxCode != null) {
+            String[] parts = maxCode.split("-");
+            nextNumber = Integer.parseInt(parts[1]) + 1;
+        }
+
+        return "HS" + year + "-" + String.format("%04d", nextNumber);
     }
 
     public Optional<Student> getByIdStudent(Long id) {
