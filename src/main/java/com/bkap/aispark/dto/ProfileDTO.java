@@ -6,35 +6,37 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDate;
 import java.util.List;
-
 import com.bkap.aispark.entity.ObjectType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProfileDTO {
     private Long userId;
+    private Long objectId; // Thêm trường này
     private String username;
     private String email;
     private String phone;
     private UserRole role;
     private ObjectType objectType;
-    // Thông tin chi tiết
     private String fullName;
     private String code;
-    private String className;   // nếu student
+    private String className;
     private String homeroom;
-// nếu teacher
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthdate;
-
     private List<String> hobbies;
-    
-    
 
     public Long getUserId() {
         return userId;
     }
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public Long getObjectId() {
+        return objectId;
+    }
+    public void setObjectId(Long objectId) {
+        this.objectId = objectId;
     }
 
     public String getUsername() {
@@ -99,18 +101,18 @@ public class ProfileDTO {
     public void setHomeroom(String homeroom) {
         this.homeroom = homeroom;
     }
-	public List<String> getHobbies() {
-		return hobbies;
-	}
-	public void setHobbies(List<String> hobbies) {
-		this.hobbies = hobbies;
-	}
-	public LocalDate getBirthdate() {
-		return birthdate;
-	}
-	public void setBirthdate(LocalDate birthdate) {
-		this.birthdate = birthdate;
-	}
-	
-    
-} 
+
+    public List<String> getHobbies() {
+        return hobbies;
+    }
+    public void setHobbies(List<String> hobbies) {
+        this.hobbies = hobbies;
+    }
+
+    public LocalDate getBirthdate() {
+        return birthdate;
+    }
+    public void setBirthdate(LocalDate birthdate) {
+        this.birthdate = birthdate;
+    }
+}

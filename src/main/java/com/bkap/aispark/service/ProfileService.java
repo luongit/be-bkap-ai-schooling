@@ -29,12 +29,12 @@ public class ProfileService {
 
         ProfileDTO dto = new ProfileDTO();
         dto.setUserId(user.getId());
+        dto.setObjectId(user.getObjectId()); // Thêm dòng này
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setPhone(user.getPhone());
         dto.setRole(user.getRole());
         dto.setObjectType(user.getObjectType());
-      
 
         switch (user.getObjectType()) {
             case STUDENT:
@@ -55,7 +55,6 @@ public class ProfileService {
                         throw new RuntimeException("Lỗi parse hobbies: " + e.getMessage());
                     }
                 }
-                
                 break;
 
             case TEACHER:
@@ -131,6 +130,4 @@ public class ProfileService {
 
         return getProfileByUserId(userId);
     }
-
-
 }
