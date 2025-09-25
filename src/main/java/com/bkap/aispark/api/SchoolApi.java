@@ -2,6 +2,7 @@ package com.bkap.aispark.api;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bkap.aispark.dto.CreateSchoolResponse;
 import com.bkap.aispark.entity.Schools;
 import com.bkap.aispark.repository.SchoolsRepository;
 import com.bkap.aispark.service.SchoolService;
@@ -43,8 +45,9 @@ public class SchoolApi {
 
     // Them 1 truong
     @PostMapping
-    public Schools createSchool(@RequestBody Schools school) {
-        return schoolService.createSchoolWithAdmin(school);
+    public ResponseEntity<CreateSchoolResponse> createSchool(@RequestBody Schools school) {
+        CreateSchoolResponse resp = schoolService.createSchoolWithAdmin(school);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
     // Sua thong tin truong qua ID
