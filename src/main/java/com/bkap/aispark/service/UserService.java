@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +15,10 @@ import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.UserRepository;
+import com.bkap.aispark.security.JwtUtil;
+
+import jakarta.mail.internet.MimeMessage;
+
 import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.TeacherRepository;
 import com.bkap.aispark.repository.StudentRepository;
@@ -35,7 +42,10 @@ public class UserService {
     @Autowired
     private StudentRepository studentRepository; // Thêm repository
 
-
+    @Autowired
+    private JavaMailSender mailSender;
+    
+  
 
     public User createUser(Long actorId, User user) {
         User saved = userRepository.save(user);
@@ -177,4 +187,43 @@ public class UserService {
             return true;
         }).orElse(false);
     }
+    //Gửi email
+    public void resendAccountEmail(Long actorId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new RuntimeException("User does not have a valid email");
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(user.getEmail());
+            helper.setSubject("Thông tin tài khoản BkapAI");
+
+            String loginField;
+            if (user.getRole() == UserRole.STUDENT) {
+                loginField = "Tên đăng nhập (username): " + user.getUsername();
+            } else {
+                loginField = "Email đăng nhập: " + user.getEmail();
+            }
+
+            String content = "Xin chào " + 
+                             (user.getUsername() != null ? user.getUsername() : "bạn") +
+                             ",\n\nTài khoản của bạn đã được tạo." +
+                             "\n" + loginField +
+                             "\nVui lòng đổi mật khẩu sau khi đăng nhập.";
+
+            helper.setText(content, false); // false = plain text
+
+            mailSender.send(message);
+
+            auditLogService.logAction(actorId, "RESEND_EMAIL", "users", userId,
+                    Map.of("email", user.getEmail(), "role", user.getRole().toString()));
+        } catch (Exception e) {
+            throw new RuntimeException("Không thể gửi email: " + e.getMessage());
+        }
+    }
+
 }
