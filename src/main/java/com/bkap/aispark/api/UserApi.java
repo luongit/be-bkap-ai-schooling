@@ -112,4 +112,15 @@ public class UserApi {
             return ResponseEntity.status(400).body(Map.of("message", "Lỗi khi xóa người dùng: " + e.getMessage()));
         }
     }
+    @PostMapping("/{id}/resend-email")
+    public ResponseEntity<Map<String, String>> resendEmail(@PathVariable Long id,
+                                                          @RequestHeader("X-User-Id") Long actorId) {
+        try {
+            userService.resendAccountEmail(actorId, id);
+            return ResponseEntity.ok(Map.of("message", "Email đã được gửi lại thành công"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
