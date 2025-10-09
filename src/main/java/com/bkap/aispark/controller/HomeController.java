@@ -23,5 +23,10 @@ public class HomeController {
 	public String verify() {
 		return "forgot-password";
 	}
+	@GetMapping("/genimg")
+	public String genimg() {
+		return "img";
+	}
+
 
 }
