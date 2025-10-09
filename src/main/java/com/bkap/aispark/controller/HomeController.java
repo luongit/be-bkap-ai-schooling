@@ -23,5 +23,10 @@ public class HomeController {
 	public String verify() {
 		return "forgot-password";
 	}
+	@GetMapping("/test-image")
+	public String showImageForm() {
+	    return "image-generator";
+	}
+
 
 }

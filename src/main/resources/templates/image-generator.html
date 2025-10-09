@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎨 Stability AI Image Generator</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #fafafa; }
+    input, select, button { padding: 10px; margin: 6px 0; width: 100%; border: 1px solid #ccc; border-radius: 6px; }
+    button { background: #4a90e2; color: white; cursor: pointer; }
+    button:hover { background: #357ABD; }
+    img { margin-top: 20px; max-width: 100%; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h2>🧠 Stability AI Image Generator</h2>
+
+  <form id="form">
+    <label>User ID:</label>
+    <input type="number" name="userId" placeholder="Nhập ID người dùng" required>
+
+    <label>Prompt:</label>
+    <input type="text" name="prompt" placeholder="Ví dụ: A cute rabbit on the moon" required>
+
+    <label>Style:</label>
+    <input type="text" name="style" placeholder="hoạt hình, watercolor, anime">
+
+    <label>Kích thước:</label>
+    <select name="size" required>
+      <option value="small">Nhỏ (512x512)</option>
+      <option value="medium">Trung bình (768x512)</option>
+      <option value="large">Lớn (1024x1024)</option>
+    </select>
+
+    <button type="submit">Tạo ảnh 🎨</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target).entries());
+      document.getElementById("result").innerHTML = "<p>⏳ Đang tạo ảnh...</p>";
+
+      try {
+        const res = await fetch("/api/images/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const text = await res.text();
+        if (res.ok && text.startsWith("data:image")) {
+          document.getElementById("result").innerHTML =
+            `<img src="${text}" alt="Generated Image" loading="lazy">`;
+        } else {
+          document.getElementById("result").innerHTML =
+            `<p style="color:red;">❌ ${text}</p>`;
+        }
+      } catch (err) {
+        document.getElementById("result").innerHTML =
+          `<p style="color:red;">❌ Lỗi kết nối: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
