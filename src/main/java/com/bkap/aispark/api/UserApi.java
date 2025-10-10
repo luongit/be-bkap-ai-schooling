@@ -1,9 +1,7 @@
 package com.bkap.aispark.api;
 
-import com.bkap.aispark.entity.User;
-import com.bkap.aispark.security.JwtUtil;
-import com.bkap.aispark.service.CreditService;
-import com.bkap.aispark.service.UserService;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +14,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.bkap.aispark.entity.User;
+import com.bkap.aispark.security.JwtUtil;
+import com.bkap.aispark.service.CreditService;
+import com.bkap.aispark.service.UserService;
 
 @RestController
 @RequestMapping("/api/user")
@@ -40,8 +40,7 @@ public class UserApi {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(401).body(Map.of(
                         "error", "UNAUTHORIZED",
-                        "message", "Missing or invalid Authorization header"
-                ));
+                        "message", "Missing or invalid Authorization header"));
             }
             String token = authHeader.substring(7);
             Long userId = jwtUtil.getUserId(token);
@@ -50,8 +49,7 @@ public class UserApi {
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of(
                     "error", "INVALID_TOKEN",
-                    "message", "Invalid token"
-            ));
+                    "message", "Invalid token"));
         }
     }
 
@@ -70,34 +68,35 @@ public class UserApi {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user,
-                                           @RequestHeader("X-User-Id") Long actorId) {
+            @RequestHeader("X-User-Id") Long actorId) {
         return ResponseEntity.ok(userService.createUser(actorId, user));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id,
-                                           @RequestBody User updatedUser,
-                                           @RequestHeader("X-User-Id") Long actorId) {
+            @RequestBody User updatedUser,
+            @RequestHeader("X-User-Id") Long actorId) {
         return ResponseEntity.ok(userService.updateUser(actorId, id, updatedUser));
     }
 
     @PostMapping("/{id}/deactivate")
     public ResponseEntity<Void> deactivateUser(@PathVariable Long id,
-                                               @RequestHeader("X-User-Id") Long actorId) {
+            @RequestHeader("X-User-Id") Long actorId) {
         userService.deactivateUser(actorId, id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/activate")
     public ResponseEntity<Void> activateUser(@PathVariable Long id,
-                                             @RequestHeader("X-User-Id") Long actorId) {
+            @RequestHeader("X-User-Id") Long actorId) {
         userService.activateUser(actorId, id);
         return ResponseEntity.ok().build();
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id,
-                                                         @RequestHeader("X-User-Id") Long actorId,
-                                                         @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("X-User-Id") Long actorId,
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader != null && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
             boolean deleted = userService.deleteUser(actorId, id, token);
@@ -112,9 +111,10 @@ public class UserApi {
             return ResponseEntity.status(400).body(Map.of("message", "Lỗi khi xóa người dùng: " + e.getMessage()));
         }
     }
+
     @PostMapping("/{id}/resend-email")
     public ResponseEntity<Map<String, String>> resendEmail(@PathVariable Long id,
-                                                          @RequestHeader("X-User-Id") Long actorId) {
+            @RequestHeader("X-User-Id") Long actorId) {
         try {
             userService.resendAccountEmail(actorId, id);
             return ResponseEntity.ok(Map.of("message", "Email đã được gửi lại thành công"));
