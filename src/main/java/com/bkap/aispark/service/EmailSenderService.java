@@ -23,7 +23,7 @@ public class EmailSenderService {
     private JavaMailSender mailSender;
 
     // Worker chạy mỗi 1 phút
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedDelay = 60000)
     public void processPendingEmails() {
         List<EmailQueue> pending = emailQueueRepo.findByStatus(EmailStatus.PENDING);
 

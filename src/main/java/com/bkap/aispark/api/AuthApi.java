@@ -1,5 +1,6 @@
 package com.bkap.aispark.api;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -11,17 +12,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.dto.LoginRequest;
 import com.bkap.aispark.dto.LoginResponse;
+import com.bkap.aispark.dto.ParentRegisterRequest;
+import com.bkap.aispark.dto.StudentRegisterRequest;
 import com.bkap.aispark.dto.UserDTO;
 import com.bkap.aispark.entity.PasswordResetToken;
 import com.bkap.aispark.entity.User;
+import com.bkap.aispark.repository.PasswordResetTokenRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.service.AuthService;
 import com.bkap.aispark.service.PasswordResetService;
-import com.bkap.aispark.repository.PasswordResetTokenRepository;
+import com.bkap.aispark.service.UserService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,6 +41,12 @@ public class AuthApi {
 	private UserRepository userRepository;
 	@Autowired
 	private AuthService authService;
+
+	private final UserService userService;
+
+	public AuthApi(UserService userService) {
+		this.userService = userService;
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
@@ -98,6 +111,26 @@ public class AuthApi {
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
 		}
+	}
+
+	@PostMapping("/register/student")
+	public ResponseEntity<String> registerStudent(@RequestBody StudentRegisterRequest req) {
+		String msg = authService.registerStudent(req);
+		return ResponseEntity.ok(msg);
+	}
+
+	@PostMapping("/register/parent")
+	public ResponseEntity<String> registerParent(@RequestBody ParentRegisterRequest req) {
+		String msg = authService.registerParent(req);
+		return ResponseEntity.ok(msg);
+	}
+
+	@GetMapping("/verify")
+	public void verifyUser(@RequestParam String email, @RequestParam String token,
+			HttpServletResponse response) throws IOException {
+		authService.verifyUserByLink(email, token); // gọi Service đúng cách
+		// redirect về frontend login
+		response.sendRedirect("http://localhost:3000/login");
 	}
 
 }

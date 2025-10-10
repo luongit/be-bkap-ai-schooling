@@ -7,22 +7,18 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.entity.UserRole;
+import com.bkap.aispark.repository.StudentRepository;
+import com.bkap.aispark.repository.TeacherRepository;
+import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.UserRepository;
-import com.bkap.aispark.security.JwtUtil;
 
 import jakarta.mail.internet.MimeMessage;
-
-import com.bkap.aispark.repository.UserCreditRepository;
-import com.bkap.aispark.repository.TeacherRepository;
-import com.bkap.aispark.repository.StudentRepository;
-
 
 @Service
 public class UserService {
@@ -44,19 +40,31 @@ public class UserService {
 
     @Autowired
     private JavaMailSender mailSender;
-    
-  
 
     public User createUser(Long actorId, User user) {
+        // ✅ Nếu là người dùng tự đăng ký
+        if (actorId == null) {
+            // Gán mặc định các giá trị an toàn
+            user.setIsActive(true); // tự kích hoạt
+            if (user.getRole() == null) {
+                user.setRole(UserRole.STUDENT);
+            }
+        } else {
+            // ✅ Nếu là admin tạo user
+            // (có thể thêm kiểm tra quyền tại đây nếu cần)
+            user.setIsActive(true);
+        }
+
+        // ✅ Lưu user vào DB
         User saved = userRepository.save(user);
 
+        // ✅ Ghi lại log hành động (chỉ khi có actorId)
         auditLogService.logAction(
-            actorId,
-            "CREATE_USER",
-            "users",
-            saved.getId(),
-            Map.of("after", saved)
-        );
+                actorId,
+                "CREATE_USER",
+                "users",
+                saved.getId(),
+                Map.of("after", saved));
 
         return saved;
     }
@@ -72,10 +80,9 @@ public class UserService {
     public User updateUser(Long actorId, Long id, User updatedUser) {
         return userRepository.findById(id).map(user -> {
             Map<String, Object> before = Map.of(
-                "email", user.getEmail(),
-                "phone", user.getPhone(),
-                "isActive", user.getIsActive()
-            );
+                    "email", user.getEmail(),
+                    "phone", user.getPhone(),
+                    "isActive", user.getIsActive());
 
             user.setEmail(updatedUser.getEmail());
             user.setPhone(updatedUser.getPhone());
@@ -92,10 +99,9 @@ public class UserService {
             User saved = userRepository.save(user);
 
             Map<String, Object> after = Map.of(
-                "email", saved.getEmail(),
-                "phone", saved.getPhone(),
-                "isActive", saved.getIsActive()
-            );
+                    "email", saved.getEmail(),
+                    "phone", saved.getPhone(),
+                    "isActive", saved.getIsActive());
 
             auditLogService.logAction(actorId, "UPDATE_USER", "users", saved.getId(),
                     Map.of("before", before, "after", after));
@@ -144,27 +150,25 @@ public class UserService {
                         teacherRepository.findById(user.getObjectId()).ifPresent(teacher -> {
                             teacherRepository.delete(teacher);
                             auditLogService.logAction(
-                                actorId,
-                                "DELETE_TEACHER",
-                                "teachers",
-                                user.getObjectId(),
-                                Map.of("message", "Teacher deleted associated with user")
-                            );
+                                    actorId,
+                                    "DELETE_TEACHER",
+                                    "teachers",
+                                    user.getObjectId(),
+                                    Map.of("message", "Teacher deleted associated with user"));
                         });
                         break;
                     case STUDENT:
                         studentRepository.findById(user.getObjectId()).ifPresent(student -> {
                             studentRepository.delete(student);
                             auditLogService.logAction(
-                                actorId,
-                                "DELETE_STUDENT",
-                                "students",
-                                user.getObjectId(),
-                                Map.of("message", "Student deleted associated with user")
-                            );
+                                    actorId,
+                                    "DELETE_STUDENT",
+                                    "students",
+                                    user.getObjectId(),
+                                    Map.of("message", "Student deleted associated with user"));
                         });
                         break;
-                 
+
                 }
             }
 
@@ -177,17 +181,17 @@ public class UserService {
 
             // Ghi log hành động xóa user
             auditLogService.logAction(
-                actorId,
-                "DELETE_USER",
-                "users",
-                id,
-                Map.of("message", "User deleted")
-            );
+                    actorId,
+                    "DELETE_USER",
+                    "users",
+                    id,
+                    Map.of("message", "User deleted"));
 
             return true;
         }).orElse(false);
     }
-    //Gửi email
+
+    // Gửi email
     public void resendAccountEmail(Long actorId, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -209,11 +213,11 @@ public class UserService {
                 loginField = "Email đăng nhập: " + user.getEmail();
             }
 
-            String content = "Xin chào " + 
-                             (user.getUsername() != null ? user.getUsername() : "bạn") +
-                             ",\n\nTài khoản của bạn đã được tạo." +
-                             "\n" + loginField +
-                             "\nVui lòng đổi mật khẩu sau khi đăng nhập.";
+            String content = "Xin chào " +
+                    (user.getUsername() != null ? user.getUsername() : "bạn") +
+                    ",\n\nTài khoản của bạn đã được tạo." +
+                    "\n" + loginField +
+                    "\nVui lòng đổi mật khẩu sau khi đăng nhập.";
 
             helper.setText(content, false); // false = plain text
 

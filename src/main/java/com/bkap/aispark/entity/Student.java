@@ -3,9 +3,15 @@ package com.bkap.aispark.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "students")
@@ -28,8 +34,8 @@ public class Student {
 
     // 👉 Liên kết tới bảng classes
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id", nullable = false)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JoinColumn(name = "class_id", nullable = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Classes classEntity;
 
     @Column(nullable = true)
@@ -41,19 +47,18 @@ public class Student {
     private String hobbies;
 
     private Boolean isActive = true;
-     
 
-   
     private LocalDate birthdate;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public Student() {}
+    public Student() {
+    }
 
     public Student(Long id, String fullName, String username, String defaultPassword, String code,
-                   Classes classEntity, String email, String phone, String hobbies,
-                   Boolean isActive, LocalDate birthdate, LocalDateTime createdAt) {
+            Classes classEntity, String email, String phone, String hobbies,
+            Boolean isActive, LocalDate birthdate, LocalDateTime createdAt) {
         this.id = id;
         this.fullName = fullName;
         this.username = username;

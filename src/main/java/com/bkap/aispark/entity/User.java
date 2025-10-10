@@ -6,7 +6,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
@@ -43,7 +50,11 @@ public class User {
     private String fcmToken; // Thêm field cho FCM token
 
     @Column(nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive = false;
+
+    private String verificationCode;
+
+    private LocalDateTime codeExpiry;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -54,7 +65,7 @@ public class User {
     }
 
     public User(Long id, String password, UserRole role, ObjectType objectType, Long objectId, String email,
-                String phone, String username, String fcmToken, Boolean isActive, LocalDateTime createdAt) {
+            String phone, String username, String fcmToken, Boolean isActive, LocalDateTime createdAt) {
         this.id = id;
         this.password = password;
         this.role = role;
@@ -155,5 +166,21 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public LocalDateTime getCodeExpiry() {
+        return codeExpiry;
+    }
+
+    public void setCodeExpiry(LocalDateTime codeExpiry) {
+        this.codeExpiry = codeExpiry;
     }
 }
