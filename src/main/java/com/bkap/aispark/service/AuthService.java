@@ -53,7 +53,7 @@ public class AuthService {
     }
 
     private void sendVerificationEmail(String toEmail, String token) {
-        String link = "http://localhost:8080/api/auth/verify?email=" + toEmail + "&token=" + token;
+        String link = "http://bkapai.vn/api/auth/verify?email=" + toEmail + "&token=" + token;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();

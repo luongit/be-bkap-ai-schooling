@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +31,7 @@ import com.bkap.aispark.service.UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+@CrossOrigin(origins = { "http://bkapai.vn", "http://localhost:3000" })
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApi {
@@ -130,7 +132,7 @@ public class AuthApi {
 			HttpServletResponse response) throws IOException {
 		authService.verifyUserByLink(email, token); // gọi Service đúng cách
 		// redirect về frontend login
-		response.sendRedirect("http://localhost:3000/login");
+		response.sendRedirect("http://bkapai.vn/auth/login");
 	}
 
 }
