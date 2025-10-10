@@ -1,8 +1,8 @@
 package com.bkap.aispark.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
@@ -11,9 +11,9 @@ public class CorsConfig implements WebMvcConfigurer {
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**")
 				.allowedOriginPatterns("*")
-//             .allowedOrigins("*") // hoặc "*" nếu phát triển nội bộ
+				// .allowedOrigins("*") // hoặc "*" nếu phát triển nội bộ
 				.allowedMethods("*")
-				.allowedHeaders("*")	
+				.allowedHeaders("*")
 				.allowCredentials(true);
 	}
 }
