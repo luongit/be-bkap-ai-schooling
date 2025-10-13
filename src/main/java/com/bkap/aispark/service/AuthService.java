@@ -102,35 +102,46 @@ public class AuthService {
     @Transactional
     public String registerStudent(StudentRegisterRequest req) {
 
-        // ✅ Validate username không chứa dấu và khoảng trắng
+        // 1️⃣ Kiểm tra null / rỗng
+        if (req.getUsername() == null || req.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên đăng nhập là bắt buộc");
+        }
+        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email là bắt buộc");
+        }
+        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mật khẩu là bắt buộc");
+        }
+
+        // 2️⃣ Validate định dạng username (sau khi chắc chắn không null)
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
         }
 
-        if (req.getUsername() == null || req.getEmail() == null || req.getPassword() == null) {
-            throw new IllegalArgumentException("Username, email, password là bắt buộc");
-        }
+        // 3️⃣ Kiểm tra trùng
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
         }
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
+        if (userRepository.findByPhone(req.getPhone()).isPresent()) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+        }
 
-        // 1️⃣ Tạo Student entity
+        // ✅ Tiếp tục logic tạo user
         Student student = new Student();
         student.setCode(generateStudentCode());
         student.setFullName(req.getFullName());
         student.setBirthdate(req.getBirthdate());
         student.setPhone(req.getPhone());
         student.setEmail(req.getEmail());
-        student.setDefaultPassword(req.getPassword()); // đảm bảo cột này trong DB cho phép null nếu bạn không cần
+        student.setDefaultPassword(req.getPassword());
         student.setUsername(req.getUsername());
         student.setHobbies(req.getHobbies());
         Student savedStudent = studentRepository.save(student);
 
-        // 2️⃣ Tạo User inactive + token
         User user = new User();
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
@@ -155,21 +166,38 @@ public class AuthService {
     @Transactional
     public String registerParent(ParentRegisterRequest req) {
 
-        // ✅ Validate username không chứa dấu và khoảng trắng
+        // 1️⃣ Kiểm tra null / rỗng
+        if (req.getUsername() == null || req.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên đăng nhập là bắt buộc");
+        }
+        if (req.getName() == null || req.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Họ tên là bắt buộc");
+        }
+        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email là bắt buộc");
+        }
+        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mật khẩu là bắt buộc");
+        }
+
+        // 2️⃣ Validate định dạng username
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
         }
-        if (req.getName() == null || req.getEmail() == null || req.getPassword() == null) {
-            throw new IllegalArgumentException("Tên, email, mật khẩu là bắt buộc");
-        }
+
+        // 3️⃣ Kiểm tra trùng
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
         }
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
+        if (userRepository.findByPhone(req.getPhone()).isPresent()) {
+            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
+        }
 
+        // ✅ Tiếp tục logic tạo user
         Parent parent = new Parent();
         parent.setName(req.getName());
         parent.setPhone(req.getPhone());
