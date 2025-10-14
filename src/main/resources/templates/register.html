@@ -331,9 +331,13 @@
                 password: password.value.trim(),
             };
 
+            const baseUrl = window.location.origin.includes("localhost")
+                ? "http://localhost:8080"
+                : "https://bkapai.vn";
+
             const url = selectedRole === "student"
-                ? "https://bkapai.vn/api/auth/register/student"
-                : "https://bkapai.vn/api/auth/register/parent";
+                ? `${baseUrl}/api/auth/register/student`
+                : `${baseUrl}/api/auth/register/parent`;
 
             try {
                 console.log("🔹 Sending request to:", url, payload);

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,9 +17,11 @@ import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.Parent;
 import com.bkap.aispark.entity.Student;
 import com.bkap.aispark.entity.User;
+import com.bkap.aispark.entity.UserCredit;
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.ParentRepository;
 import com.bkap.aispark.repository.StudentRepository;
+import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 
@@ -47,13 +50,19 @@ public class AuthService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Autowired
+    private UserCreditRepository userCreditRepository;
+
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     // ----------------- HELPER -----------------
     private String generateVerificationToken() {
         return UUID.randomUUID().toString();
     }
 
     private void sendVerificationEmail(String toEmail, String token) {
-        String link = "http://bkapai.vn/api/auth/verify?email=" + toEmail + "&token=" + token;
+        String link = baseUrl + "/api/auth/verify?email=" + toEmail + "&token=" + token;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -156,7 +165,11 @@ public class AuthService {
         user.setVerificationCode(token);
         user.setCodeExpiry(LocalDateTime.now().plusMinutes(15));
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Tạo UserCredit với 100 credit
+        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
+        userCreditRepository.save(credit);
         sendVerificationEmail(user.getEmail(), token);
 
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
@@ -218,7 +231,11 @@ public class AuthService {
         String token = generateVerificationToken();
         user.setVerificationCode(token);
         user.setCodeExpiry(LocalDateTime.now().plusMinutes(15));
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Tạo UserCredit với 100 credit
+        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
+        userCreditRepository.save(credit);
         sendVerificationEmail(user.getEmail(), token);
 
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
