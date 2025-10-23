@@ -22,13 +22,13 @@ public class Pricing {
     private String actionName;
 
     @Column(name = "token_cost", nullable = false)
-    private int tokenCost;
+    private Integer tokenCost;
 
     @Column(name = "credit_cost", nullable = false)
-    private int creditCost;
+    private Integer creditCost;
 
     @Column(name = "vnd_cost", nullable = false)
-    private int vndCost;
+    private Integer vndCost;
 
     public Integer getId() {
         return id;
