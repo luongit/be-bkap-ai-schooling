@@ -196,7 +196,60 @@ public class AuthService {
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
     }
 
-    // ----------------- VERIFY ACCOUNT -----------------
+//    // ----------------- VERIFY ACCOUNT -----------------
+//    @Transactional
+//    public String verifyUserByLink(String email, String token) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+//
+//        if (user.getIsActive()) {
+//            return "Tài khoản đã active";
+//        }
+//
+//        if (user.getVerificationCode().equals(token)
+//                && user.getCodeExpiry().isAfter(LocalDateTime.now())) {
+//
+//            user.setIsActive(true);
+//            user.setVerificationCode(null);
+//            user.setCodeExpiry(null);
+//            userRepository.save(user);
+//
+//            String jwtToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+//            return "Xác minh thành công. Token: " + jwtToken;
+//        } else {
+//            return "Link xác nhận không hợp lệ hoặc đã hết hạn";
+//        }
+//    }
+//
+//    // ----------------- LOGIN -----------------
+//    public LoginResponse login(String identifier, String password) {
+//        User user = identifier.contains("@")
+//                ? userRepository.findByEmail(identifier)
+//                        .orElseThrow(() -> new RuntimeException("Email không tồn tại"))
+//                : userRepository.findByUsername(identifier)
+//                        .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
+//
+//        if (!user.getIsActive()) {
+//            throw new RuntimeException("Tài khoản chưa được kích hoạt");
+//        }
+//
+//        if (!passwordEncoder.matches(password, user.getPassword())) {
+//            throw new RuntimeException("Mật khẩu không đúng");
+//        }
+//
+//        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+//
+//        return new LoginResponse(
+//                user.getId(),
+//                user.getUsername(),
+//                user.getEmail(),
+//                user.getPhone(),
+//                user.getRole().name(),
+//                user.getObjectType() != null ? user.getObjectType().name() : null,
+//                user.getObjectId(),
+//                token);
+//    }
+ // ----------------- VERIFY ACCOUNT -----------------
     @Transactional
     public String verifyUserByLink(String email, String token) {
         User user = userRepository.findByEmail(email)
@@ -214,8 +267,10 @@ public class AuthService {
             user.setCodeExpiry(null);
             userRepository.save(user);
 
-            String jwtToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-            return "Xác minh thành công. Token: " + jwtToken;
+            // ✅ Sinh cả 2 token
+            String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+            return "Xác minh thành công. AccessToken: " + access + ", RefreshToken: " + refresh;
         } else {
             return "Link xác nhận không hợp lệ hoặc đã hết hạn";
         }
@@ -237,7 +292,9 @@ public class AuthService {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        // ✅ Sinh Access và Refresh Token
+        String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
 
         return new LoginResponse(
                 user.getId(),
@@ -247,6 +304,9 @@ public class AuthService {
                 user.getRole().name(),
                 user.getObjectType() != null ? user.getObjectType().name() : null,
                 user.getObjectId(),
-                token);
+                access,      // thêm field accessToken
+                refresh      // thêm field refreshToken
+        );
     }
+
 }

@@ -326,104 +326,100 @@ button:hover {
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     <script>
-        // Hiển thị/ẩn mật khẩu
-        document.getElementById('passwordToggle').addEventListener('click', function() {
-            const passwordInput = document.getElementById('password');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                this.classList.remove('fa-eye');
-                this.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                this.classList.remove('fa-eye-slash');
-                this.classList.add('fa-eye');
-            }
-        });
+ // 👁️ Toggle hiển thị mật khẩu
+    document.getElementById('passwordToggle').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            this.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            this.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
 
-        // Hàm hiển thị toast thông báo
-        function showToast(message, type = 'success') {
-            let backgroundColor = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
-            let className = 'toastify-custom';
-            
-            if (type === 'error') {
-                backgroundColor = 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)';
-                className = 'toastify-custom-error';
-            } else if (type === 'warning') {
-                backgroundColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-                className = 'toastify-custom-warning';
-            }
-            
-            Toastify({
-                text: message,
-                duration: 3000,
-                gravity: "top",
-                position: "right",
-                backgroundColor: backgroundColor,
-                className: className,
-                stopOnFocus: true,
-            }).showToast();
+    // 🔔 Toast thông báo
+    function showToast(message, type = 'success') {
+        let backgroundColor = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+        let className = 'toastify-custom';
+
+        if (type === 'error') {
+            backgroundColor = 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)';
+            className = 'toastify-custom-error';
+        } else if (type === 'warning') {
+            backgroundColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            className = 'toastify-custom-warning';
         }
 
-        // Xử lý đăng nhập
-        document.getElementById('loginBtn').addEventListener('click', async function (e) {
-            e.preventDefault();
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor,
+            className,
+            stopOnFocus: true,
+        }).showToast();
+    }
 
-            const identifier = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const loginBtn = this;
+    // 🚀 Xử lý đăng nhập
+    document.getElementById('loginBtn').addEventListener('click', async function (e) {
+        e.preventDefault();
 
-            if (!identifier || !password) {
-                showToast('Vui lòng điền đầy đủ thông tin đăng nhập!', 'warning');
-                return;
+        const identifier = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const loginBtn = this;
+
+        if (!identifier || !password) {
+            showToast('Vui lòng điền đầy đủ thông tin đăng nhập!', 'warning');
+            return;
+        }
+
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...';
+        loginBtn.disabled = true;
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                showToast(data.message || 'Sai tài khoản hoặc mật khẩu', 'error');
+                throw new Error(data.message || 'Đăng nhập thất bại');
             }
 
-            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng nhập...';
-            loginBtn.disabled = true;
+            // ✅ Lưu token mới
+            localStorage.setItem('token', data.token);             // access token
+            localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('userId', data.userId);
 
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ identifier, password })
-                });
+            showToast('Đăng nhập thành công! Đang chuyển hướng...');
 
-                if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({}));
-                    if (errorData.message === 'Tài khoản đã bị khóa') {
-                        showToast('Tài khoản đã bị khóa', 'error');
-                    } else {
-                        showToast(errorData.message || 'Sai tài khoản hoặc mật khẩu', 'error');
-                    }
-                    throw new Error(errorData.message || 'Đăng nhập thất bại');
-                }
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
 
-                const data = await res.json();
+        } catch (err) {
+            console.error('Lỗi đăng nhập:', err);
+            showToast('Đăng nhập thất bại. Vui lòng thử lại.', 'error');
+        } finally {
+            loginBtn.innerHTML = 'Đăng nhập';
+            loginBtn.disabled = false;
+        }
+    });
 
-                console.log(data);
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('username', data.username);
-                localStorage.setItem('userId', data.userId);
+    // ⌨️ Enter để đăng nhập
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('loginBtn').click();
+        }
+    });
 
-                // Hiển thị thông báo thành công
-                showToast('Đăng nhập thành công! Đang chuyển hướng...');
-
-                // Điều hướng sang React app sau 1.5 giây
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1500);
-            } catch (err) {
-                console.error('Lỗi đăng nhập:', err);
-                loginBtn.innerHTML = 'Đăng nhập';
-                loginBtn.disabled = false;
-            }
-        });
-
-        // Xử lý sự kiện nhấn Enter để đăng nhập
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('loginBtn').click();
-            }
-        });
     </script>
 </body>
 
