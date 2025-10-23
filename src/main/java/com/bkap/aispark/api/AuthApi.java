@@ -25,6 +25,7 @@ import com.bkap.aispark.entity.PasswordResetToken;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.PasswordResetTokenRepository;
 import com.bkap.aispark.repository.UserRepository;
+import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AuthService;
 import com.bkap.aispark.service.PasswordResetService;
 import com.bkap.aispark.service.UserService;
@@ -43,6 +44,9 @@ public class AuthApi {
 	private UserRepository userRepository;
 	@Autowired
 	private AuthService authService;
+	
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	private final UserService userService;
 
@@ -134,5 +138,26 @@ public class AuthApi {
 		// redirect về frontend login
 		response.sendRedirect("http://bkapai.vn/auth/login");
 	}
+	@PostMapping("/refresh")
+	public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+	    String refreshToken = body.get("refreshToken");
+	    if (refreshToken == null || !jwtUtil.validateToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+	        return ResponseEntity.status(401).body(Map.of("message", "Refresh token không hợp lệ hoặc đã hết hạn"));
+	    }
+
+	    Long userId = jwtUtil.getUserId(refreshToken);
+	    String email = jwtUtil.getEmail(refreshToken);
+	    User user = userRepository.findById(userId)
+	            .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+	    String newAccess = jwtUtil.generateAccessToken(userId, email, user.getRole().name());
+	    String newRefresh = jwtUtil.generateRefreshToken(userId, email);
+
+	    return ResponseEntity.ok(Map.of(
+	            "accessToken", newAccess,
+	            "refreshToken", newRefresh
+	    ));
+	}
+
 
 }
