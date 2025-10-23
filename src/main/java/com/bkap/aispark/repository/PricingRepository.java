@@ -7,4 +7,5 @@ import com.bkap.aispark.entity.Pricing;
 
 @Repository
 public interface PricingRepository extends JpaRepository<Pricing, Integer> {
+    boolean existsByActionCode(String actionCode);
 }
