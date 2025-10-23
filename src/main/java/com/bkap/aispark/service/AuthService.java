@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,11 +16,9 @@ import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.Parent;
 import com.bkap.aispark.entity.Student;
 import com.bkap.aispark.entity.User;
-import com.bkap.aispark.entity.UserCredit;
 import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.ParentRepository;
 import com.bkap.aispark.repository.StudentRepository;
-import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 
@@ -50,19 +47,13 @@ public class AuthService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Autowired
-    private UserCreditRepository userCreditRepository;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
-
     // ----------------- HELPER -----------------
     private String generateVerificationToken() {
         return UUID.randomUUID().toString();
     }
 
     private void sendVerificationEmail(String toEmail, String token) {
-        String link = baseUrl + "/api/auth/verify?email=" + toEmail + "&token=" + token;
+        String link = "http://bkapai.vn/api/auth/verify?email=" + toEmail + "&token=" + token;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -111,46 +102,35 @@ public class AuthService {
     @Transactional
     public String registerStudent(StudentRegisterRequest req) {
 
-        // 1️⃣ Kiểm tra null / rỗng
-        if (req.getUsername() == null || req.getUsername().trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên đăng nhập là bắt buộc");
-        }
-        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Email là bắt buộc");
-        }
-        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
-            throw new IllegalArgumentException("Mật khẩu là bắt buộc");
-        }
-
-        // 2️⃣ Validate định dạng username (sau khi chắc chắn không null)
+        // ✅ Validate username không chứa dấu và khoảng trắng
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
         }
 
-        // 3️⃣ Kiểm tra trùng
+        if (req.getUsername() == null || req.getEmail() == null || req.getPassword() == null) {
+            throw new IllegalArgumentException("Username, email, password là bắt buộc");
+        }
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
         }
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
-        if (userRepository.findByPhone(req.getPhone()).isPresent()) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-        }
 
-        // ✅ Tiếp tục logic tạo user
+        // 1️⃣ Tạo Student entity
         Student student = new Student();
         student.setCode(generateStudentCode());
         student.setFullName(req.getFullName());
         student.setBirthdate(req.getBirthdate());
         student.setPhone(req.getPhone());
         student.setEmail(req.getEmail());
-        student.setDefaultPassword(req.getPassword());
+        student.setDefaultPassword(req.getPassword()); // đảm bảo cột này trong DB cho phép null nếu bạn không cần
         student.setUsername(req.getUsername());
         student.setHobbies(req.getHobbies());
         Student savedStudent = studentRepository.save(student);
 
+        // 2️⃣ Tạo User inactive + token
         User user = new User();
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
@@ -165,11 +145,7 @@ public class AuthService {
         user.setVerificationCode(token);
         user.setCodeExpiry(LocalDateTime.now().plusMinutes(15));
 
-        User savedUser = userRepository.save(user);
-
-        // Tạo UserCredit với 100 credit
-        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
-        userCreditRepository.save(credit);
+        userRepository.save(user);
         sendVerificationEmail(user.getEmail(), token);
 
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
@@ -179,38 +155,21 @@ public class AuthService {
     @Transactional
     public String registerParent(ParentRegisterRequest req) {
 
-        // 1️⃣ Kiểm tra null / rỗng
-        if (req.getUsername() == null || req.getUsername().trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên đăng nhập là bắt buộc");
-        }
-        if (req.getName() == null || req.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Họ tên là bắt buộc");
-        }
-        if (req.getEmail() == null || req.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Email là bắt buộc");
-        }
-        if (req.getPassword() == null || req.getPassword().trim().isEmpty()) {
-            throw new IllegalArgumentException("Mật khẩu là bắt buộc");
-        }
-
-        // 2️⃣ Validate định dạng username
+        // ✅ Validate username không chứa dấu và khoảng trắng
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
         }
-
-        // 3️⃣ Kiểm tra trùng
+        if (req.getName() == null || req.getEmail() == null || req.getPassword() == null) {
+            throw new IllegalArgumentException("Tên, email, mật khẩu là bắt buộc");
+        }
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             throw new IllegalArgumentException("Username đã tồn tại");
         }
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
-        if (userRepository.findByPhone(req.getPhone()).isPresent()) {
-            throw new IllegalArgumentException("Số điện thoại đã tồn tại");
-        }
 
-        // ✅ Tiếp tục logic tạo user
         Parent parent = new Parent();
         parent.setName(req.getName());
         parent.setPhone(req.getPhone());
@@ -231,17 +190,66 @@ public class AuthService {
         String token = generateVerificationToken();
         user.setVerificationCode(token);
         user.setCodeExpiry(LocalDateTime.now().plusMinutes(15));
-        User savedUser = userRepository.save(user);
-
-        // Tạo UserCredit với 100 credit
-        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
-        userCreditRepository.save(credit);
+        userRepository.save(user);
         sendVerificationEmail(user.getEmail(), token);
 
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
     }
 
-    // ----------------- VERIFY ACCOUNT -----------------
+//    // ----------------- VERIFY ACCOUNT -----------------
+//    @Transactional
+//    public String verifyUserByLink(String email, String token) {
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+//
+//        if (user.getIsActive()) {
+//            return "Tài khoản đã active";
+//        }
+//
+//        if (user.getVerificationCode().equals(token)
+//                && user.getCodeExpiry().isAfter(LocalDateTime.now())) {
+//
+//            user.setIsActive(true);
+//            user.setVerificationCode(null);
+//            user.setCodeExpiry(null);
+//            userRepository.save(user);
+//
+//            String jwtToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+//            return "Xác minh thành công. Token: " + jwtToken;
+//        } else {
+//            return "Link xác nhận không hợp lệ hoặc đã hết hạn";
+//        }
+//    }
+//
+//    // ----------------- LOGIN -----------------
+//    public LoginResponse login(String identifier, String password) {
+//        User user = identifier.contains("@")
+//                ? userRepository.findByEmail(identifier)
+//                        .orElseThrow(() -> new RuntimeException("Email không tồn tại"))
+//                : userRepository.findByUsername(identifier)
+//                        .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
+//
+//        if (!user.getIsActive()) {
+//            throw new RuntimeException("Tài khoản chưa được kích hoạt");
+//        }
+//
+//        if (!passwordEncoder.matches(password, user.getPassword())) {
+//            throw new RuntimeException("Mật khẩu không đúng");
+//        }
+//
+//        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+//
+//        return new LoginResponse(
+//                user.getId(),
+//                user.getUsername(),
+//                user.getEmail(),
+//                user.getPhone(),
+//                user.getRole().name(),
+//                user.getObjectType() != null ? user.getObjectType().name() : null,
+//                user.getObjectId(),
+//                token);
+//    }
+ // ----------------- VERIFY ACCOUNT -----------------
     @Transactional
     public String verifyUserByLink(String email, String token) {
         User user = userRepository.findByEmail(email)
@@ -259,8 +267,10 @@ public class AuthService {
             user.setCodeExpiry(null);
             userRepository.save(user);
 
-            String jwtToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-            return "Xác minh thành công. Token: " + jwtToken;
+            // ✅ Sinh cả 2 token
+            String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+            return "Xác minh thành công. AccessToken: " + access + ", RefreshToken: " + refresh;
         } else {
             return "Link xác nhận không hợp lệ hoặc đã hết hạn";
         }
@@ -282,7 +292,9 @@ public class AuthService {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
+        // ✅ Sinh Access và Refresh Token
+        String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
 
         return new LoginResponse(
                 user.getId(),
@@ -292,6 +304,9 @@ public class AuthService {
                 user.getRole().name(),
                 user.getObjectType() != null ? user.getObjectType().name() : null,
                 user.getObjectId(),
-                token);
+                access,      // thêm field accessToken
+                refresh      // thêm field refreshToken
+        );
     }
+
 }
