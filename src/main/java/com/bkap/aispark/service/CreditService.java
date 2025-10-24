@@ -161,17 +161,17 @@ public class CreditService {
     public boolean deductByTokenUsage(Long userId, String actionCode, int totalTokens, String referenceId) {
         System.out.printf("🔍 [deductByTokenUsage] user=%d | action=%s | tokens=%d | ref=%s%n",
                 userId, actionCode, totalTokens, referenceId);
+
         Pricing pricing = pricingRepo.findByActionCode(actionCode)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy actionCode: " + actionCode));
 
         int tokenCost = pricing.getTokenCost(); // 500
         int creditCost = pricing.getCreditCost(); // 2
 
-        // 2️⃣ Tính tỷ lệ: bao nhiêu token cho 1 credit
-        // 500 token = 2 credit → 1 credit = 250 token
+        // 1️⃣ Tính tỷ lệ: 500 token = 2 credit → 1 credit = 250 token
         double tokensPerCredit = (double) tokenCost / creditCost;
 
-        // 3️⃣ Tính số credit cần trừ
+        // 2️⃣ Tính số credit cần trừ (làm tròn lên)
         int creditToDeduct = (int) Math.ceil(totalTokens / tokensPerCredit);
 
         UserCredit credit = creditRepo.findByUserId(userId)
@@ -185,18 +185,29 @@ public class CreditService {
         credit.setCredit(newBalance);
         creditRepo.save(credit);
 
-        // Ghi log chi tiết
+        // 🔹 Ghi log chi tiết vào credit_log
         CreditLog log = new CreditLog();
         log.setUserId(userId);
         log.setPricingId(pricing.getId());
         log.setCreditUsed(creditToDeduct);
         log.setTokenUsed(totalTokens);
-        log.setCreatedAt(LocalDateTime.now());
         log.setReferenceId(referenceId);
+        log.setCreatedAt(LocalDateTime.now());
         creditLogRepo.save(log);
 
-       
+        // 🔹 Ghi transaction để frontend hiển thị
+        CreditTransaction tx = new CreditTransaction();
+        tx.setUserId(userId);
+        tx.setType("debit");
+        tx.setAmount(-creditToDeduct);
+        tx.setBalanceAfter(newBalance);
+        tx.setDescription("Sử dụng chức năng: " + pricing.getActionName());
+        tx.setReferenceId(referenceId);
+        tx.setCreatedAt(LocalDateTime.now());
+        transactionRepo.save(tx);
+
         return true;
     }
+
 
 }
