@@ -7,6 +7,11 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtUtil {
@@ -22,6 +27,11 @@ public class JwtUtil {
     // Sinh Access Token (cũ gọi generateToken)
     public String generateToken(Long userId, String email, String role) {
         return generateAccessToken(userId, email, role);
+
+    }
+    @PostConstruct
+    public void debugKey() {
+        System.out.println("🔑 JWTUtil key loaded: " + key.hashCode());
     }
 
     // Lấy email từ token
@@ -87,11 +97,14 @@ public class JwtUtil {
     // ============================================================
     // 🧩 Hàm dùng chung
     // ============================================================
+   
     private Claims parseClaims(String token) {
+
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
+
 }

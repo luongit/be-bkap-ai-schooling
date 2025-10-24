@@ -36,14 +36,12 @@ public class AiStreamController {
 
 	@Autowired
 	private JwtUtil jwtutil;
-	
 
 	@Autowired
 	private AiChatService aiChatService;
 
 	@Autowired
 	private CreditService creditService;
-
 
 	/**
 	 * Body nhận: { "messages": [{ "role":"user"|"assistant"|"system",
@@ -54,182 +52,116 @@ public class AiStreamController {
 	@PostMapping(path = "/stream", produces = "application/x-ndjson")
 	public ResponseBodyEmitter stream(@RequestBody Map<String, Object> body, HttpServletRequest httpRequest,
 			HttpServletResponse resp) {
-		// —— Headers chống buffer/nén cho proxy (IIS/ARR, CDN) ——
 		resp.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
 		resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-		resp.setHeader("Pragma", "no-cache");
-		resp.setHeader("Expires", "0");
-		resp.setHeader("Connection", "keep-alive");
-		// Với Nginx hữu ích, IIS sẽ bỏ qua nhưng không hại:
 		resp.setHeader("X-Accel-Buffering", "no");
 
-		ResponseBodyEmitter emitter = new ResponseBodyEmitter(0L); // no timeout
+		ResponseBodyEmitter emitter = new ResponseBodyEmitter(0L);
 
 		CompletableFuture.runAsync(() -> {
-			final StringBuilder fullResponse = new StringBuilder(); 
+			final StringBuilder fullResponse = new StringBuilder();
 			try {
-	            // 1) Lấy userId từ JWT token
-	            String authHeader = httpRequest.getHeader("Authorization");
-	            Long userId = null;
-	            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-	                String token = authHeader.substring(7);
-	                userId = jwtutil.getUserId(token);
-	            } else {
-	                throw new RuntimeException("Missing or invalid Authorization header");
-	            }
+				// 1️⃣ Lấy userId
+				String authHeader = httpRequest.getHeader("Authorization");
+				if (authHeader == null || !authHeader.startsWith("Bearer "))
+					throw new RuntimeException("Missing Authorization header");
+				Long userId = jwtutil.getUserId(authHeader.substring(7));
 
-	            // 2) Kiểm tra và trừ credit
-	            boolean hasCredit = creditService.deductCredit(userId);
-	            if (!hasCredit) {
-	                Map<String, String> error = new HashMap<>();
-	                error.put("type", "error");
-	                error.put("message", "Bạn đã hết credit, vui lòng mua thêm gói để tiếp tục");
-	                emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
-	                emitter.complete();
-	                return;
-	            }
+				// 2️⃣ Lấy input message
+				List<Map<String, String>> messagesData = (List<Map<String, String>>) body.get("messages");
+				String userMessage = messagesData != null && !messagesData.isEmpty()
+						? messagesData.get(messagesData.size() - 1).get("content")
+						: "";
 
-	            // 3) Lấy input & xây prompt
-	            List<Map<String, String>> messagesData = (List<Map<String, String>>) body.get("messages");
-	            String audience = Optional.ofNullable((String) body.get("audience")).orElse("general");
+				// 3️⃣ Chuẩn bị prompt
+				List<ChatMessage> messages = new ArrayList<>();
+				messages.add(new ChatMessage("system", buildSystemPrompt("student")));
+				for (Map<String, String> m : messagesData) {
+					messages.add(new ChatMessage(m.get("role"), m.get("content")));
+				}
 
-	            String userMessage = messagesData != null && !messagesData.isEmpty()
-	                    ? messagesData.get(messagesData.size() - 1).get("content")
-	                    : "";
+				// 4️⃣ Gọi API OpenAI
+				ChatCompletionRequest request = ChatCompletionRequest.builder()
+						.model("gpt-4o")
+						.messages(messages)
+						.temperature(0.2)
+						.stream(false) // ❗ chuyển sang non-stream để lấy usage
+						.build();
 
-	            // 4) Kiểm tra từ khóa bị cấm
-	            if (aiChatService.containsForbiddenKeyword(userMessage)) {
-	                String reply = aiChatService.getDefaultForbiddenReply();
+				var result = openAiService.createChatCompletion(request);
+				var choice = result.getChoices().get(0);
+				String reply = choice.getMessage().getContent();
+				fullResponse.append(reply);
+				System.out.println("🔢 Prompt tokens: " + result.getUsage().getPromptTokens());
+				System.out.println("🔢 Completion tokens: " + result.getUsage().getCompletionTokens());
+				System.out.println("🔢 Total tokens: " + result.getUsage().getTotalTokens());
 
-	                Map<String, String> json = new HashMap<>();
-	                json.put("type", "chunk");
-	                json.put("role", "assistant");
-	                json.put("content", reply);
-	                emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
+				// 5️⃣ Lấy usage
+				int totalTokens = Optional.ofNullable(result.getUsage())
+						.map(u -> u.getCompletionTokens())
+						.map(Long::intValue)
+						.orElse(0);
 
-	                Map<String, String> done = new HashMap<>();
-	                done.put("type", "done");
-	                emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
+				// ✅ 6️⃣ Lấy actionCode từ FE, mặc định là CHAT_AI
+				String actionCode = (String) body.getOrDefault("actionCode", "CHAT_AI");
 
-	                UUID sessionId = UUID.fromString(body.get("session_id").toString());
-	                conversationLogService.saveLog(userId, userMessage, reply, false, sessionId);
+				// ✅ Trừ credit theo loại hành động
+				boolean ok = creditService.deductByTokenUsage(userId, actionCode, totalTokens,
+						"session-" + body.get("session_id"));
+				if (!ok) {
+					Map<String, String> error = Map.of("type", "error",
+							"message", "Không đủ credit để chat với AI!");
+					emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
+					emitter.complete();
+					return;
+				}
 
-	                emitter.complete();
-	                return;
-	            }
+				// 7️⃣ Gửi về FE
+				emitter.send(objectMapper.writeValueAsString(Map.of(
+						"type", "chunk",
+						"role", "assistant",
+						"content", reply)) + "\n", NDJSON);
 
-	            // 5) Xây dựng prompt và gọi AI
-	            List<ChatMessage> messages = new ArrayList<>();
-	            messages.add(new ChatMessage("system", buildSystemPrompt(audience)));
+				emitter.send(objectMapper.writeValueAsString(Map.of(
+						"type", "done",
+						"remainingCredit", creditService.getRemainingCredit(userId))) + "\n", NDJSON);
 
-	            if (messagesData != null) {
-	                for (Map<String, String> m : messagesData) {
-	                    String role = m.get("role");
-	                    String content = m.get("content");
-	                    if (role != null && content != null) {
-	                        messages.add(new ChatMessage(role, content));
-	                    }
-	                }
-	            }
+				// 8️⃣ Lưu log
+				UUID sessionId = UUID.fromString(body.get("session_id").toString());
+				conversationLogService.saveLog(userId, userMessage, reply, false, sessionId);
 
-	            ChatCompletionRequest request = ChatCompletionRequest.builder()
-	                    .model("gpt-4o")
-	                    .messages(messages)
-	                    .temperature(0.2)
-	                    .stream(true)
-	                    .build();
+				emitter.complete();
 
-	            // 6) Chuẩn hóa khi stream
-	            final StringBuilder safeBuffer = new StringBuilder();
-	            final LatexNormalizer normalizer = new LatexNormalizer();
+			} catch (Exception e) {
+				try {
+					emitter.send(
+							objectMapper.writeValueAsString(Map.of("type", "error", "message", e.getMessage())) + "\n",
+							NDJSON);
+				} catch (Exception ignored) {
+				}
+				emitter.completeWithError(e);
+			}
+		});
 
-	            openAiService.streamChatCompletion(request).doOnError(err -> {
-	                try {
-	                    Map<String, String> error = new HashMap<>();
-	                    error.put("type", "error");
-	                    error.put("message", err.getMessage());
-	                    emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
-	                } catch (Exception ignored) {
-	                }
-	            }).blockingForEach(chunk -> {
-	                try {
-	                    var choices = chunk.getChoices();
-	                    if (choices == null || choices.isEmpty())
-	                        return;
-
-	                    String content = extractChoiceContent(choices.get(0));
-	                    if (content == null || content.isEmpty())
-	                        return;
-
-	                    safeBuffer.append(content);
-	                    fullResponse.append(content);
-	                    String emitChunk = normalizer.tryNormalizeAndExtractStablePrefix(safeBuffer);
-	                    if (!emitChunk.isEmpty()) {
-	                        Map<String, String> json = new HashMap<>();
-	                        json.put("type", "chunk");
-	                        json.put("role", "assistant");
-	                        json.put("content", emitChunk);
-	                        emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
-	                    }
-	                } catch (Exception e) {
-	                    emitter.completeWithError(e);
-	                }
-	            });
-
-	            // 7) Flush phần còn lại
-	            String tail = normalizer.flushAll(safeBuffer);
-	            if (!tail.isEmpty()) {
-	                fullResponse.append(tail);
-	                Map<String, String> json = new HashMap<>();
-	                json.put("type", "chunk");
-	                json.put("role", "assistant");
-	                json.put("content", tail);
-	                emitter.send(objectMapper.writeValueAsString(json) + "\n", NDJSON);
-	            }
-
-	            // 8) Gửi tín hiệu kết thúc và số credit còn lại
-	            Map<String, Object> done = new HashMap<>();
-	            done.put("type", "done");
-	            done.put("remainingCredit", creditService.getRemainingCredit(userId));
-	            emitter.send(objectMapper.writeValueAsString(done) + "\n", NDJSON);
-
-	            // 9) Lưu log
-	            UUID sessionId = UUID.fromString(body.get("session_id").toString());
-	            conversationLogService.saveLog(userId, userMessage, fullResponse.toString(), false, sessionId);
-
-	            emitter.complete();
-
-	        } catch (Exception e) {
-	            try {
-	                Map<String, String> error = new HashMap<>();
-	                error.put("type", "error");
-	                error.put("message", e.getMessage());
-	                emitter.send(objectMapper.writeValueAsString(error) + "\n", NDJSON);
-	            } catch (Exception ignored) {
-	            }
-	            emitter.completeWithError(e);
-	        }
-	    });
-
-	    return emitter;
+		return emitter;
 	}
 
 	// Prompt hệ thống
 	private String buildSystemPrompt(String audience) {
 		String tone;
 		switch (audience) {
-		case "kid":
-			tone = "Giải thích thật dễ hiểu, ví dụ gần gũi, câu ngắn, dùng emoji tiết chế 👦👧.";
-			break;
-		case "student":
-			tone = "Ngắn gọn, đi thẳng ý, có ví dụ và bài tập nhỏ.";
-			break;
-		case "teacher":
-			tone = "Chuẩn xác, có định nghĩa, tính chất, ví dụ mẫu và gợi ý chấm điểm.";
-			break;
-		default:
-			tone = "Thân thiện, rõ ràng, có ví dụ minh hoạ.";
-			break;
+			case "kid":
+				tone = "Giải thích thật dễ hiểu, ví dụ gần gũi, câu ngắn, dùng emoji tiết chế 👦👧.";
+				break;
+			case "student":
+				tone = "Ngắn gọn, đi thẳng ý, có ví dụ và bài tập nhỏ.";
+				break;
+			case "teacher":
+				tone = "Chuẩn xác, có định nghĩa, tính chất, ví dụ mẫu và gợi ý chấm điểm.";
+				break;
+			default:
+				tone = "Thân thiện, rõ ràng, có ví dụ minh hoạ.";
+				break;
 		}
 
 		return String.join("\n", "Bạn là trợ lý học tập tiếng Việt phục vụ học sinh, sinh viên, trẻ nhỏ và giáo viên.",

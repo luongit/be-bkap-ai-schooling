@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.bkap.aispark.entity.Pricing;
@@ -28,4 +29,8 @@ public interface PricingVersionRepository extends JpaRepository<PricingVersion, 
     @Modifying
     @Query("UPDATE PricingVersion pv SET pv.active = false WHERE pv.pricing.id = :pricingId AND pv.id <> :activeId")
     int deactivateOthers(Integer pricingId, Integer activeId);
+
+    @Query("SELECT v FROM PricingVersion v WHERE v.pricing.id = :pricingId AND v.active = true ORDER BY v.effectiveFrom DESC LIMIT 1")
+    PricingVersion findNewestActiveByPricingId(@Param("pricingId") Integer pricingId);
+
 }

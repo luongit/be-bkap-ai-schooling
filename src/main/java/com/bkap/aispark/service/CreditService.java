@@ -1,25 +1,38 @@
 package com.bkap.aispark.service;
 
-import com.bkap.aispark.entity.UserCredit;
-import com.bkap.aispark.entity.CreditTransaction;
-import com.bkap.aispark.repository.UserCreditRepository;
-import com.bkap.aispark.repository.CreditTransactionRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bkap.aispark.entity.CreditLog;
+import com.bkap.aispark.entity.CreditTransaction;
+import com.bkap.aispark.entity.Pricing;
+import com.bkap.aispark.entity.UserCredit;
+import com.bkap.aispark.repository.CreditLogRepository;
+import com.bkap.aispark.repository.CreditTransactionRepository;
+import com.bkap.aispark.repository.PricingRepository;
+import com.bkap.aispark.repository.UserCreditRepository;
 
 @Service
 public class CreditService {
 
     private final UserCreditRepository creditRepo;
     private final CreditTransactionRepository transactionRepo;
+    private final PricingRepository pricingRepo;
+    private final CreditLogRepository creditLogRepo;
 
-    public CreditService(UserCreditRepository creditRepo, CreditTransactionRepository transactionRepo) {
+    public CreditService(
+            UserCreditRepository creditRepo,
+            CreditTransactionRepository transactionRepo,
+            PricingRepository pricingRepo,
+            CreditLogRepository creditLogRepo) {
         this.creditRepo = creditRepo;
         this.transactionRepo = transactionRepo;
+        this.pricingRepo = pricingRepo;
+        this.creditLogRepo = creditLogRepo;
     }
 
     /** ✅ Overload cho AiStreamController - mặc định trừ 1 credit */
@@ -31,7 +44,8 @@ public class CreditService {
     /** ✅ Dùng cho mọi thao tác trừ credit (tạo ảnh, video, v.v.) */
     @Transactional
     public boolean deductCredit(Long userId, int amount, String description, String referenceId) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (amount <= 0)
+            throw new IllegalArgumentException("Amount must be positive");
 
         UserCredit credit = creditRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User credit not found"));
@@ -57,11 +71,60 @@ public class CreditService {
         return true;
     }
 
+    @Transactional
+    public boolean deductByAction(Long userId, String actionCode, String referenceId) {
+        Pricing pricing = pricingRepo.findByActionCode(actionCode)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bảng giá cho hành động: " + actionCode));
+
+        int creditCost = pricing.getCreditCost();
+        int tokenCost = pricing.getTokenCost();
+
+        // Nếu giá trị là 0 thì không trừ
+        if (creditCost <= 0 && tokenCost <= 0)
+            return true;
+
+        UserCredit credit = creditRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản credit cho user ID: " + userId));
+
+        if (credit.getCredit() < creditCost) {
+            return false; // không đủ credit
+        }
+
+        // Cập nhật số dư
+        int newBalance = credit.getCredit() - creditCost;
+        credit.setCredit(newBalance);
+        creditRepo.save(credit);
+
+        // Ghi CreditTransaction
+        CreditTransaction tx = new CreditTransaction();
+        tx.setUserId(userId);
+        tx.setType("debit");
+        tx.setAmount(-creditCost);
+        tx.setBalanceAfter(newBalance);
+        tx.setDescription("Sử dụng chức năng: " + pricing.getActionName());
+        tx.setReferenceId(referenceId);
+        tx.setCreatedAt(LocalDateTime.now());
+        transactionRepo.save(tx);
+
+        // Ghi CreditLog (cho analytics / admin)
+        CreditLog log = new CreditLog();
+        log.setUserId(userId);
+        log.setPricingId(pricing.getId());
+        log.setCreditUsed(creditCost);
+        log.setTokenUsed(tokenCost);
+        log.setCreatedAt(LocalDateTime.now());
+        creditLogRepo.save(log);
+
+        return true;
+    }
+
     /** ✅ Khi user mua gói, hoặc hệ thống cộng thêm credit */
     @Transactional
     public void addCredit(Long userId, int amount, String type, String description, String referenceId) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
-        if (type == null) type = "credit"; // fallback an toàn
+        if (amount <= 0)
+            throw new IllegalArgumentException("Amount must be positive");
+        if (type == null)
+            type = "credit"; // fallback an toàn
 
         UserCredit credit = creditRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User credit not found"));
@@ -93,4 +156,47 @@ public class CreditService {
         return transactionRepo.findByUserIdOrderByCreatedAtDesc(userId)
                 .orElse(Collections.emptyList());
     }
+
+    @Transactional
+    public boolean deductByTokenUsage(Long userId, String actionCode, int totalTokens, String referenceId) {
+        System.out.printf("🔍 [deductByTokenUsage] user=%d | action=%s | tokens=%d | ref=%s%n",
+                userId, actionCode, totalTokens, referenceId);
+        Pricing pricing = pricingRepo.findByActionCode(actionCode)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy actionCode: " + actionCode));
+
+        int tokenCost = pricing.getTokenCost(); // 500
+        int creditCost = pricing.getCreditCost(); // 2
+
+        // 2️⃣ Tính tỷ lệ: bao nhiêu token cho 1 credit
+        // 500 token = 2 credit → 1 credit = 250 token
+        double tokensPerCredit = (double) tokenCost / creditCost;
+
+        // 3️⃣ Tính số credit cần trừ
+        int creditToDeduct = (int) Math.ceil(totalTokens / tokensPerCredit);
+
+        UserCredit credit = creditRepo.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy credit user"));
+
+        if (credit.getCredit() < creditToDeduct) {
+            return false;
+        }
+
+        int newBalance = credit.getCredit() - creditToDeduct;
+        credit.setCredit(newBalance);
+        creditRepo.save(credit);
+
+        // Ghi log chi tiết
+        CreditLog log = new CreditLog();
+        log.setUserId(userId);
+        log.setPricingId(pricing.getId());
+        log.setCreditUsed(creditToDeduct);
+        log.setTokenUsed(totalTokens);
+        log.setCreatedAt(LocalDateTime.now());
+        log.setReferenceId(referenceId);
+        creditLogRepo.save(log);
+
+       
+        return true;
+    }
+
 }

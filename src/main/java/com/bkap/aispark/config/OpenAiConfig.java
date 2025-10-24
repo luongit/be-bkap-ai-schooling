@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.service.OpenAiService;
+
+import java.time.Duration;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +19,10 @@ public class OpenAiConfig {
 
     @Bean
     OpenAiService openAiService() {
-        return new OpenAiService(apiKey);
+        // ✅ Tăng timeout từ 10s mặc định lên 120s
+        return new OpenAiService(apiKey, Duration.ofSeconds(120));
     }
+
     @Bean
     ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -33,6 +38,5 @@ public class OpenAiConfig {
 
         return mapper;
     }
-
 
 }

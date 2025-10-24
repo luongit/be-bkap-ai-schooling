@@ -94,7 +94,18 @@ public class PricingVersionService {
     @Transactional
     @CacheEvict(value = { "pricing", "pricing_version" }, allEntries = true)
     public int activateDueVersions() {
-        List<PricingVersion> due = pricingVersionRepository.findAllDueToActivate(LocalDateTime.now());
+        List<PricingVersion> due = pricingVersionRepository
+                .findAllDueToActivate(LocalDateTime.now())
+                .stream()
+                // ⚙️ chỉ kích hoạt version nếu tất cả version khác đều có effective_from <
+                // version.effective_from
+                // hoặc nếu chưa có version nào active mới hơn
+                .filter(v -> {
+                    PricingVersion newest = pricingVersionRepository
+                            .findNewestActiveByPricingId(v.getPricing().getId());
+                    return newest == null || newest.getEffectiveFrom().isBefore(v.getEffectiveFrom());
+                })
+                .collect(Collectors.toList());
         int activated = 0;
 
         for (PricingVersion pv : due) {
