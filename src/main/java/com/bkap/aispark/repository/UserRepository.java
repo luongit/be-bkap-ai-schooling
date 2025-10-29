@@ -28,4 +28,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Tìm theo objectType và objectId
     Optional<User> findByObjectTypeAndObjectId(ObjectType objectType, Long objectId);
+    Optional<User> findByObjectIdAndObjectType(Long objectId, ObjectType objectType);
 }

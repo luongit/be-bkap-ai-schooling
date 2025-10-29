@@ -170,15 +170,8 @@
     font-size: 14px;
     font-weight: 500;
   }
-  .side-item:hover {
-    background: #e7f3ff;
-    color: #0b66c3;
-  }
-  .side-item.active {
-    background: #e7f3ff;
-    color: #0b66c3;
-    font-weight: 600;
-  }
+
+ 
   .sidebar.collapsed .side-item {
     justify-content: center;
     gap: 0;
@@ -257,10 +250,7 @@
   .history-list .side-item:hover {
     background: #f1f3f5;
   }
-  .history-list .side-item.active {
-    background: #007bff;
-    color: #fff;
-  }
+
   .history-list .session-preview {
     flex: 1;
     white-space: nowrap;
@@ -269,30 +259,6 @@
   }
   .sidebar.collapsed .history-list {
     display: none;
-  }
-
-  /* Avatar */
-  .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: radial-gradient(120% 140% at 10% 10%, #22c55e, #0ea5e9 70%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    transition: box-shadow 0.2s ease;
-  }
-  .avatar .sidebar-icon {
-    color: #fff;
-  }
-  .avatar:hover,
-  .avatar:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
-    border: none;
   }
 
   /* Side Foot */

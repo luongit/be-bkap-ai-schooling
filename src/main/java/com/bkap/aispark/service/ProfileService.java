@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -130,4 +131,14 @@ public class ProfileService {
 
         return getProfileByUserId(userId);
     }
+    public ProfileDTO getProfileByStudentId(Long studentId) {
+        Optional<User> userOpt = userRepository.findByObjectIdAndObjectType(studentId, ObjectType.STUDENT);
+        if (userOpt.isPresent()) {
+            return getProfileByUserId(userOpt.get().getId());
+        } else {
+            throw new RuntimeException("Không tìm thấy user cho studentId: " + studentId);
+        }
+    }
+ 
+
 }
