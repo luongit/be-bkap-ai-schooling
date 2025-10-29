@@ -393,7 +393,9 @@ button:hover {
             }
 
             // ✅ Lưu token mới
-            localStorage.setItem('token', data.token);             // access token
+           localStorage.setItem('token', data.accessToken);
+           localStorage.setItem('accessToken', data.accessToken);
+          // access token
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('username', data.username);
             localStorage.setItem('userId', data.userId);
