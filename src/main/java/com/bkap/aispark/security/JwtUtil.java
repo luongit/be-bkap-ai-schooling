@@ -22,7 +22,7 @@ public class JwtUtil {
 
     // ⏱️ Thời hạn token
     private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15 phút
-    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 7; // 7 ngày
+    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 30; 
 
     // Sinh Access Token (cũ gọi generateToken)
     public String generateToken(Long userId, String email, String role) {
