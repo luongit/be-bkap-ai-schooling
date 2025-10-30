@@ -326,7 +326,7 @@ button:hover {
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
     <script>
- // 👁️ Toggle hiển thị mật khẩu
+ //  Toggle hiển thị mật khẩu
     document.getElementById('passwordToggle').addEventListener('click', function() {
         const passwordInput = document.getElementById('password');
         if (passwordInput.type === 'password') {
@@ -338,7 +338,7 @@ button:hover {
         }
     });
 
-    // 🔔 Toast thông báo
+    //  Toast thông báo
     function showToast(message, type = 'success') {
         let backgroundColor = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
         let className = 'toastify-custom';
@@ -362,7 +362,7 @@ button:hover {
         }).showToast();
     }
 
-    // 🚀 Xử lý đăng nhập
+    //  Xử lý đăng nhập
     document.getElementById('loginBtn').addEventListener('click', async function (e) {
         e.preventDefault();
 
@@ -392,7 +392,7 @@ button:hover {
                 throw new Error(data.message || 'Đăng nhập thất bại');
             }
 
-            // ✅ Lưu token mới
+            // Lưu token mới
            localStorage.setItem('token', data.accessToken);
            localStorage.setItem('accessToken', data.accessToken);
           // access token
@@ -415,10 +415,50 @@ button:hover {
         }
     });
 
-    // ⌨️ Enter để đăng nhập
+  
     document.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             document.getElementById('loginBtn').click();
+        }
+    });
+    window.addEventListener('load', async () => {
+        const accessToken = localStorage.getItem('accessToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (accessToken && refreshToken) {
+            try {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                const exp = payload.exp * 1000; // thời gian hết hạn tính bằng ms
+
+                // Nếu access token sắp hết hạn (< 2 phút)
+                if (Date.now() > exp - 2 * 60 * 1000) {
+                    const res = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refreshToken })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        localStorage.setItem('accessToken', data.accessToken);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        showToast('🔁 Phiên đăng nhập đã được làm mới tự động');
+                    } else {
+                        showToast('⚠️ Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 'warning');
+                        localStorage.clear();
+                        setTimeout(() => window.location.href = '/login', 2000);
+                    }
+                } else {
+                    console.log('✅ Access token vẫn còn hiệu lực');
+                }
+            } catch (err) {
+                console.error('Lỗi khi kiểm tra hoặc làm mới token:', err);
+                showToast('Lỗi khi kiểm tra token. Vui lòng đăng nhập lại.', 'error');
+                localStorage.clear();
+                setTimeout(() => window.location.href = '/login', 2000);
+            }
+        } else {
+            console.log('⚠️ Chưa có token để kiểm tra.');
         }
     });
 
