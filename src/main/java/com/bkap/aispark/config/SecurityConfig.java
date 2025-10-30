@@ -37,12 +37,11 @@ public class SecurityConfig {
 				// ✅ 3. Cho phép truy cập public, chặn API
 				.authorizeHttpRequests(auth -> auth
 						// ✅ Cho phép toàn bộ static resources
-						.requestMatchers("/", "/index.html", "/login.html", "/register.html", "/favicon.*",
+						.requestMatchers("/", "auth/login" , "/register", "/index.html", "/login.html", "/register.html", "/favicon.*",
 								"/manifest.json", "/app.css/**", "/js/**", "/images/**","/admin/**" , "/static/**")
 						.permitAll()
 
-						// ✅ Cho phép API auth (login/register)
-						.requestMatchers("/auth/**" ,  "/register").permitAll()
+						 .requestMatchers("/api/auth/**").permitAll()
 
 						// 🔒 Còn lại (API khác) phải có token
 						.anyRequest().authenticated())
