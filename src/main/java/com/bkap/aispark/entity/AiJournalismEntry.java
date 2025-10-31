@@ -29,6 +29,10 @@ public class AiJournalismEntry {
     @Column(name = "ai_feedback", columnDefinition = "TEXT")
     private String aiFeedback;
 
+    // 🔹 Thêm cột JSON để lưu điểm từng tiêu chí (vd: {"Nội dung":22, "Cảm xúc":21, ...})
+    @Column(name = "ai_criteria", columnDefinition = "JSON")
+    private String aiCriteria;
+
     @Column(name = "teacher_feedback", columnDefinition = "TEXT")
     private String teacherFeedback;
 
@@ -39,94 +43,54 @@ public class AiJournalismEntry {
 
     // ===== Constructors =====
     public AiJournalismEntry() {}
-    
-    
 
     public AiJournalismEntry(Long id, AiJournalismContest contest, Long studentId, String title, String article,
-			Double aiScore, String aiFeedback, String teacherFeedback, String status, LocalDateTime createdAt) {
-		super();
-		this.id = id;
-		this.contest = contest;
-		this.studentId = studentId;
-		this.title = title;
-		this.article = article;
-		this.aiScore = aiScore;
-		this.aiFeedback = aiFeedback;
-		this.teacherFeedback = teacherFeedback;
-		this.status = status;
-		this.createdAt = createdAt;
-	}
-
-
-
-	// ===== Getters & Setters =====
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
+                             Double aiScore, String aiFeedback, String aiCriteria,
+                             String teacherFeedback, String status, LocalDateTime createdAt) {
         this.id = id;
-    }
-
-    public AiJournalismContest getContest() {
-        return contest;
-    }
-    public void setContest(AiJournalismContest contest) {
         this.contest = contest;
-    }
-
-    public Long getStudentId() {
-        return studentId;
-    }
-    public void setStudentId(Long studentId) {
         this.studentId = studentId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-    public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getArticle() {
-        return article;
-    }
-    public void setArticle(String article) {
         this.article = article;
-    }
-
-    public Double getAiScore() {
-        return aiScore;
-    }
-    public void setAiScore(Double aiScore) {
         this.aiScore = aiScore;
-    }
-
-    public String getAiFeedback() {
-        return aiFeedback;
-    }
-    public void setAiFeedback(String aiFeedback) {
         this.aiFeedback = aiFeedback;
-    }
-
-    public String getTeacherFeedback() {
-        return teacherFeedback;
-    }
-    public void setTeacherFeedback(String teacherFeedback) {
+        this.aiCriteria = aiCriteria;
         this.teacherFeedback = teacherFeedback;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-    public void setStatus(String status) {
         this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    // ===== Getters & Setters =====
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public AiJournalismContest getContest() { return contest; }
+    public void setContest(AiJournalismContest contest) { this.contest = contest; }
+
+    public Long getStudentId() { return studentId; }
+    public void setStudentId(Long studentId) { this.studentId = studentId; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
+    public String getArticle() { return article; }
+    public void setArticle(String article) { this.article = article; }
+
+    public Double getAiScore() { return aiScore; }
+    public void setAiScore(Double aiScore) { this.aiScore = aiScore; }
+
+    public String getAiFeedback() { return aiFeedback; }
+    public void setAiFeedback(String aiFeedback) { this.aiFeedback = aiFeedback; }
+
+    public String getAiCriteria() { return aiCriteria; }
+    public void setAiCriteria(String aiCriteria) { this.aiCriteria = aiCriteria; }
+
+    public String getTeacherFeedback() { return teacherFeedback; }
+    public void setTeacherFeedback(String teacherFeedback) { this.teacherFeedback = teacherFeedback; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
