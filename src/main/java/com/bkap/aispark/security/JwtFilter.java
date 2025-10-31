@@ -29,18 +29,19 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        if (path.startsWith("/api/auth/")
-                || path.startsWith("/static/")
-                || path.startsWith("/js/")
-                || path.startsWith("/css/")
-                || path.startsWith("/images/")
-                || path.equals("/")
-                || path.endsWith(".html")
-                || path.endsWith(".ico")
-                || path.endsWith(".json")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (path.equals("/") ||
+        	    path.startsWith("/api/auth") || // 👈 thêm dòng này — bao trùm cả /api/auth và /api/auth/...
+        	    path.startsWith("/static/") ||
+        	    path.startsWith("/js/") ||
+        	    path.startsWith("/css/") ||
+        	    path.startsWith("/images/") ||
+        	    path.endsWith(".html") ||
+        	    path.endsWith(".ico") ||
+        	    path.endsWith(".json")) {
+
+        	    filterChain.doFilter(request, response);
+        	    return;
+        	}
 
         // ✅ 2️⃣ Chỉ xử lý các request còn lại (cần token)
         String authHeader = request.getHeader("Authorization");
