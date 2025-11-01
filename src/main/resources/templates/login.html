@@ -393,12 +393,12 @@ button:hover {
             }
 
             // Lưu token mới
-           localStorage.setItem('token', data.accessToken);
-           localStorage.setItem('accessToken', data.accessToken);
-          // access token
-            localStorage.setItem('refreshToken', data.refreshToken);
-            localStorage.setItem('username', data.username);
-            localStorage.setItem('userId', data.userId);
+          // Lưu token mới
+localStorage.setItem('token', data.accessToken);
+localStorage.setItem('refreshToken', data.refreshToken);
+localStorage.setItem("userId", data.userId);       
+localStorage.setItem("username", data.username); // tiện cho Header
+localStorage.setItem("user", JSON.stringify(data));
 
             showToast('Đăng nhập thành công! Đang chuyển hướng...');
 
@@ -422,7 +422,7 @@ button:hover {
         }
     });
     window.addEventListener('load', async () => {
-        const accessToken = localStorage.getItem('accessToken');
+        const accessToken = localStorage.getItem('token');
         const refreshToken = localStorage.getItem('refreshToken');
 
         if (accessToken && refreshToken) {

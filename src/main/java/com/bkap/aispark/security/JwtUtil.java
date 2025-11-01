@@ -12,6 +12,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
 public class JwtUtil {
@@ -22,7 +23,7 @@ public class JwtUtil {
 
     // ⏱️ Thời hạn token
     private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15 phút
-    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 30; 
+    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 90; 
 
     // Sinh Access Token (cũ gọi generateToken)
     public String generateToken(Long userId, String email, String role) {
@@ -76,15 +77,19 @@ public class JwtUtil {
 
     private String buildToken(Long userId, String email, String role, String type, long ttlMillis) {
         JwtBuilder builder = Jwts.builder()
-                .setSubject(email)
+                .setSubject((email != null && !email.isEmpty()) ? email : "anonymous")
                 .claim("userId", userId)
+                .claim("username", email) // 👈 thêm dòng này để fallback
                 .claim("type", type)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + ttlMillis))
-                .signWith(key);
+                .signWith(key, SignatureAlgorithm.HS256);
+
         if (role != null) builder.claim("role", role);
+
         return builder.compact();
     }
+
 
     public boolean isAccessToken(String token) {
         return "access".equals(parseClaims(token).get("type", String.class));

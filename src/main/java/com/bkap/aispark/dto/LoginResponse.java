@@ -8,11 +8,11 @@ public class LoginResponse {
     private String role;
     private String objectType;
     private Long objectId;
-    private String token; // token cũ (access token)
+    private String accessToken; // token cũ (access token)
     private String refreshToken; // mới thêm
 
     public LoginResponse(Long userId, String username, String email, String phone, String role,
-            String objectType, Long objectId, String token, String refreshToken) {
+            String objectType, Long objectId, String accessToken, String refreshToken) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -20,7 +20,7 @@ public class LoginResponse {
         this.role = role;
         this.objectType = objectType;
         this.objectId = objectId;
-        this.token = token;
+        this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }
 
@@ -59,9 +59,10 @@ public class LoginResponse {
         return objectId;
     }
 
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
     }
+
 
     public String getRefreshToken() {
         return refreshToken;
