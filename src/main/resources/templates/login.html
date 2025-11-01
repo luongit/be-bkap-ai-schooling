@@ -440,7 +440,7 @@ localStorage.setItem("user", JSON.stringify(data));
 
                     if (res.ok) {
                         const data = await res.json();
-                        localStorage.setItem('accessToken', data.accessToken);
+                        localStorage.setItem('token', data.accessToken);
                         localStorage.setItem('refreshToken', data.refreshToken);
                         showToast('🔁 Phiên đăng nhập đã được làm mới tự động');
                     } else {
