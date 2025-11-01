@@ -250,13 +250,14 @@ public class AuthService {
 //                token);
 //    }
  // ----------------- VERIFY ACCOUNT -----------------
+ // ----------------- VERIFY ACCOUNT -----------------
     @Transactional
     public String verifyUserByLink(String email, String token) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
 
         if (user.getIsActive()) {
-            return "Tài khoản đã active";
+            return "Tài khoản đã được kích hoạt.";
         }
 
         if (user.getVerificationCode().equals(token)
@@ -267,12 +268,18 @@ public class AuthService {
             user.setCodeExpiry(null);
             userRepository.save(user);
 
-            // ✅ Sinh cả 2 token
-            String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-            String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
-            return "Xác minh thành công. AccessToken: " + access + ", RefreshToken: " + refresh;
+            // ✅ Sinh cả Access & Refresh Token
+            String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+
+            // Có thể trả JSON thay vì chuỗi text cho frontend dễ xử lý:
+            return String.format(
+                "{\"message\": \"Xác minh thành công\", \"accessToken\": \"%s\", \"refreshToken\": \"%s\"}",
+                accessToken, refreshToken
+            );
+
         } else {
-            return "Link xác nhận không hợp lệ hoặc đã hết hạn";
+            return "Liên kết xác minh không hợp lệ hoặc đã hết hạn.";
         }
     }
 
@@ -292,9 +299,9 @@ public class AuthService {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        // ✅ Sinh Access và Refresh Token
-        String access = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refresh = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        // ✅ Sinh Access & Refresh Token
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
 
         return new LoginResponse(
                 user.getId(),
@@ -304,9 +311,10 @@ public class AuthService {
                 user.getRole().name(),
                 user.getObjectType() != null ? user.getObjectType().name() : null,
                 user.getObjectId(),
-                access,      // thêm field accessToken
-                refresh      // thêm field refreshToken
+                accessToken,
+                refreshToken
         );
     }
+
 
 }
