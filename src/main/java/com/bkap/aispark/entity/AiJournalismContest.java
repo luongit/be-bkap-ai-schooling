@@ -1,8 +1,17 @@
 package com.bkap.aispark.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "ai_journalism_contests")
@@ -22,37 +31,47 @@ public class AiJournalismContest {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    private String status = "ACTIVE";
+    private LocalDateTime submissionStart;
+    private LocalDateTime submissionEnd;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    private String status;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = LocalDateTime.now();
+        if (status == null)
+            status = "ACTIVE";
+    }
 
     // ===== Constructors =====
-    public AiJournalismContest() {}
-    
+    public AiJournalismContest() {
+    }
 
     public AiJournalismContest(Long id, String title, String theme, String description, LocalDate startDate,
-			LocalDate endDate, String status, Long createdBy, LocalDateTime createdAt) {
-		super();
-		this.id = id;
-		this.title = title;
-		this.theme = theme;
-		this.description = description;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.status = status;
-		this.createdBy = createdBy;
-		this.createdAt = createdAt;
-	}
+            LocalDate endDate, String status, User createdBy, LocalDateTime createdAt) {
+        super();
+        this.id = id;
+        this.title = title;
+        this.theme = theme;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.status = status;
+        this.createdBy = createdBy;
+        this.createdAt = createdAt;
+    }
 
-
-	// ===== Getters & Setters =====
+    // ===== Getters & Setters =====
     public Long getId() {
         return id;
     }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -60,6 +79,7 @@ public class AiJournalismContest {
     public String getTitle() {
         return title;
     }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -67,6 +87,7 @@ public class AiJournalismContest {
     public String getTheme() {
         return theme;
     }
+
     public void setTheme(String theme) {
         this.theme = theme;
     }
@@ -74,6 +95,7 @@ public class AiJournalismContest {
     public String getDescription() {
         return description;
     }
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -81,6 +103,7 @@ public class AiJournalismContest {
     public LocalDate getStartDate() {
         return startDate;
     }
+
     public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
@@ -88,6 +111,7 @@ public class AiJournalismContest {
     public LocalDate getEndDate() {
         return endDate;
     }
+
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
@@ -95,21 +119,40 @@ public class AiJournalismContest {
     public String getStatus() {
         return status;
     }
+
     public void setStatus(String status) {
         this.status = status;
     }
 
-    public Long getCreatedBy() {
+    public User getCreatedBy() {
         return createdBy;
     }
-    public void setCreatedBy(Long createdBy) {
+
+    public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getSubmissionStart() {
+        return submissionStart;
+    }
+
+    public void setSubmissionStart(LocalDateTime submissionStart) {
+        this.submissionStart = submissionStart;
+    }
+
+    public LocalDateTime getSubmissionEnd() {
+        return submissionEnd;
+    }
+
+    public void setSubmissionEnd(LocalDateTime submissionEnd) {
+        this.submissionEnd = submissionEnd;
     }
 }
