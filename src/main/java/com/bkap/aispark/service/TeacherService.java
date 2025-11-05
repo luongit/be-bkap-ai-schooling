@@ -60,7 +60,7 @@ public class TeacherService {
         User savedUser = userRepository.save(user);
 
         // Tạo UserCredit với 100 credit
-        UserCredit credit = new UserCredit(savedUser, 100, null); // null cho expiredDate
+        UserCredit credit = new UserCredit(savedUser, 3000, null); // null cho expiredDate
         userCreditRepository.save(credit);
 
         return saved;
