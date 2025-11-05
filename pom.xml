@@ -38,7 +38,7 @@
             <version>2.21.1</version>
         </dependency>
 
-
+    
         <!-- Jakarta Bean Validation -->
         <dependency>
             <groupId>jakarta.validation</groupId>
@@ -52,6 +52,7 @@
             <artifactId>hibernate-validator</artifactId>
             <version>8.0.1.Final</version>
         </dependency>
+        
 
         <!-- Nếu chưa có -->
         <dependency>
@@ -144,7 +145,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        
+            <!-- video -->
+        <dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.14</version>
+</dependency>
 
+      
     </dependencies>
     <build>
         <plugins>

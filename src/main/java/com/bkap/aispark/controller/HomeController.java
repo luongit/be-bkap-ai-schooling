@@ -29,5 +29,9 @@ public class HomeController {
 	public String registerPage() {
 		return "register";
 	}
+	@GetMapping("/video")
+	public String videoPage() {
+		return "slideshow-test";
+	}
 
 }
