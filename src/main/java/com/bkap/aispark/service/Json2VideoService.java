@@ -40,7 +40,7 @@ public class Json2VideoService {
                 "elements", List.of(image, text)
         );
 
-        // Đây chính là movie object (không bọc thêm)
+        // movie object 
         Map<String, Object> movie = new LinkedHashMap<>();
         movie.put("comment", "Demo video render");
         movie.put("quality", "high");
@@ -49,7 +49,7 @@ public class Json2VideoService {
         movie.put("scenes", List.of(scene));
         movie.put("exports", List.of(Map.of("format","mp4","quality","high","resolution","full-hd")));
 
-        // ✅ Sửa ở đây: gửi movie trực tiếp
+        // gửi movie trực tiếp
         Map<String, Object> payload = movie;
 
         HttpHeaders headers = new HttpHeaders();
