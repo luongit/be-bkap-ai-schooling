@@ -1,9 +1,13 @@
 package com.bkap.aispark.controller;
 
 import com.bkap.aispark.service.Json2VideoService;
+import com.bkap.aispark.service.R2StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -13,16 +17,34 @@ public class Json2VideoController {
     @Autowired
     private Json2VideoService json2VideoService;
 
-    //  Tạo video từ ảnh + phụ đề
+    @Autowired
+    private R2StorageService r2StorageService;
+
+    /**
+     * API mới: Upload ảnh + subtitle => upload ảnh lên R2 => render video từ ảnh
+     */
     @PostMapping("/create")
-    public String createVideo(@RequestBody Map<String, String> body) {
-        String imageUrl = body.get("imageUrl");
-        String subtitle = body.get("subtitle");
+    public ResponseEntity<?> createVideo(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("subtitle") String subtitle) {
 
-        if (imageUrl == null || subtitle == null) {
-            return "{\"error\":\"Thiếu trường imageUrl hoặc subtitle trong JSON body\"}";
+        try {
+            // 1️⃣ Upload ảnh lên Cloudflare R2
+            String imageUrl = r2StorageService.uploadFile(file);
+
+            // 2️⃣ Gọi JSON2VIDEO để render video từ ảnh + subtitle
+            String videoUrl = json2VideoService.renderImageWithSubtitle(imageUrl, subtitle);
+
+            // 3️⃣ Trả về kết quả cho FE
+            return ResponseEntity.ok(Map.of(
+                    "imageUrl", imageUrl,
+                    "videoUrl", videoUrl
+            ));
+
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Lỗi upload file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Lỗi render video: " + e.getMessage()));
         }
-
-        return json2VideoService.renderImageWithSubtitle(imageUrl, subtitle);
     }
 }

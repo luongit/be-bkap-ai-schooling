@@ -31,7 +31,7 @@ public class HomeController {
 	}
 	@GetMapping("/video")
 	public String videoPage() {
-		return "slideshow-test";
+		return "upload";
 	}
 
 }

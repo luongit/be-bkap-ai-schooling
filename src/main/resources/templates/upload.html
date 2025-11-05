@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo video từ ảnh (Upload R2 + Json2Video)</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 30px; }
+    h2 { color: #333; }
+    form { background: #fff; padding: 20px; border-radius: 8px; width: 400px; }
+    input[type="file"], input[type="text"] { margin-bottom: 15px; width: 100%; padding: 8px; }
+    button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .preview { margin-top: 20px; }
+    img, video { max-width: 100%; border-radius: 6px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>🎬 Tạo video từ ảnh (Cloudflare R2 + Json2Video)</h2>
+
+  <form id="videoForm">
+    <input type="file" id="fileInput" name="file" accept="image/*" required><br>
+    <input type="text" id="subtitleInput" name="subtitle" placeholder="Nhập phụ đề..." required><br>
+    <button type="submit">Tạo video</button>
+  </form>
+
+  <div id="result"></div>
+  <div class="preview" id="preview"></div>
+
+  <script>
+    const form = document.getElementById("videoForm");
+    const result = document.getElementById("result");
+    const preview = document.getElementById("preview");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const file = document.getElementById("fileInput").files[0];
+      const subtitle = document.getElementById("subtitleInput").value.trim();
+
+      if (!file) return alert("Vui lòng chọn ảnh!");
+      if (!subtitle) return alert("Vui lòng nhập phụ đề!");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("subtitle", subtitle);
+
+      result.innerHTML = "⏳ Đang xử lý... (khoảng 10–20s)";
+
+      try {
+        // Gọi API backend /api/video/create
+        const res = await fetch("/api/video/create", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          result.innerHTML = `<p style="color:red;">❌ Lỗi: ${data.error}</p>`;
+          return;
+        }
+
+        result.innerHTML = `
+          <p><b>✅ Hoàn tất!</b></p>
+          <p><b>Ảnh:</b> <a href="${data.imageUrl}" target="_blank">${data.imageUrl}</a></p>
+          <p><b>Video:</b> <a href="${data.videoUrl}" target="_blank">${data.videoUrl}</a></p>
+        `;
+
+        // Hiển thị preview
+        preview.innerHTML = `
+          <img src="${data.imageUrl}" alt="Ảnh gốc">
+          <video src="${data.videoUrl}" controls></video>
+        `;
+
+      } catch (err) {
+        result.innerHTML = `<p style="color:red;">❌ Lỗi upload hoặc render: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
