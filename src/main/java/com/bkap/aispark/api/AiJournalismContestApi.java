@@ -59,6 +59,7 @@ public class AiJournalismContestApi {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	// tao cuoc thi
+	
 	@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','ADMIN','TEACHER')")
 	@PostMapping("/create")
 	public ResponseEntity<AiJournalismContest> createContest(

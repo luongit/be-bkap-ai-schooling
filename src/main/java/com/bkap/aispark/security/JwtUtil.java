@@ -1,18 +1,18 @@
 package com.bkap.aispark.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Component;
+import java.util.Date;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
-import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
 public class JwtUtil {
@@ -23,13 +23,14 @@ public class JwtUtil {
 
     // ⏱️ Thời hạn token
     private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15 phút
-    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 90; 
+    private static final long REFRESH_TOKEN_EXPIRATION = 1000L * 60 * 60 * 24 * 90;
 
     // Sinh Access Token (cũ gọi generateToken)
     public String generateToken(Long userId, String email, String role) {
         return generateAccessToken(userId, email, role);
 
     }
+
     @PostConstruct
     public void debugKey() {
         System.out.println("🔑 JWTUtil key loaded: " + key.hashCode());
@@ -65,8 +66,6 @@ public class JwtUtil {
         }
     }
 
-
-
     public String generateAccessToken(Long userId, String email, String role) {
         return buildToken(userId, email, role, "access", ACCESS_TOKEN_EXPIRATION);
     }
@@ -85,11 +84,11 @@ public class JwtUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + ttlMillis))
                 .signWith(key, SignatureAlgorithm.HS256);
 
-        if (role != null) builder.claim("role", role);
+        if (role != null)
+            builder.claim("role", role);
 
         return builder.compact();
     }
-
 
     public boolean isAccessToken(String token) {
         return "access".equals(parseClaims(token).get("type", String.class));
@@ -102,7 +101,7 @@ public class JwtUtil {
     // ============================================================
     // 🧩 Hàm dùng chung
     // ============================================================
-   
+
     private Claims parseClaims(String token) {
 
         return Jwts.parser()
