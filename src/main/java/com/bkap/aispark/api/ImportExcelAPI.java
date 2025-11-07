@@ -37,6 +37,8 @@ public class ImportExcelAPI {
     @Autowired
     private UserRepository userRepository;
 
+    private final DataFormatter formatter = new DataFormatter();
+
     @PostMapping("/students")
     public ResponseEntity<?> importStudents(@RequestParam("file") MultipartFile file,
                                             @RequestParam("userId") Long userId) {
@@ -55,18 +57,18 @@ public class ImportExcelAPI {
                 try {
                     Student student = new Student();
 
-                    // ====== Full name ======
+                    // 0. Họ tên
                     String fullName = getStringCellValue(row, 0);
                     if (fullName.isBlank()) throw new RuntimeException("Họ tên trống");
                     student.setFullName(fullName);
 
-                    // ====== Class ======
+                    // 1. Lớp
                     String className = getStringCellValue(row, 1);
                     Classes clazz = classesRepository.findByName(className)
                             .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp: " + className));
                     student.setClassEntity(clazz);
 
-                    // ====== Username ======
+                    // 2. Username
                     String username = getStringCellValue(row, 2);
                     if (username.isBlank()) throw new RuntimeException("Username trống");
                     if (userRepository.existsByUsername(username)) {
@@ -74,34 +76,46 @@ public class ImportExcelAPI {
                     }
                     student.setUsername(username);
 
-                    // ====== Password (cho phép trống) ======
-                    String password = getStringCellValue(row, 3);
-                    if (password.isBlank()) {
-                        password = "123456"; // default
+                    // 3. Email
+                    String email = getStringCellValue(row, 3);
+                    if (!email.isBlank()) {
+                        if (userRepository.existsByEmail(email)) {
+                            throw new RuntimeException("Email đã tồn tại: " + email);
+                        }
+                        student.setEmail(email);
+                    } else {
+                        student.setEmail(null);
                     }
+
+                    // 4. Mật khẩu (cho phép trống cho thành mật khẩu mặc định)
+                    String password = getStringCellValue(row, 4);
+                    if (password.isBlank()) password = "123456";
                     student.setDefaultPassword(password);
 
-                    // ====== Phone (cho phép trống) ======
-                    String phone = getStringCellValue(row, 4);
+                    // 5. Số điện thoại
+                    String phone = getStringCellValue(row, 5);
+                    phone = normalizePhone(phone); // chỉ chuẩn hoá tại đây
                     if (!phone.isBlank()) {
-                        if (!phone.matches("^[0-9]{9,11}$")) {
+                        if (!phone.matches("^0\\d{9,10}$")) {
                             throw new RuntimeException("Số điện thoại không hợp lệ: " + phone);
                         }
                         if (userRepository.existsByPhone(phone)) {
                             throw new RuntimeException("Số điện thoại đã tồn tại: " + phone);
                         }
+                        student.setPhone(phone);
+                    } else {
+                        student.setPhone(null);
                     }
-                    student.setPhone(phone.isBlank() ? null : phone);
 
-                    // ====== Birthdate (cho phép trống) ======
-                    LocalDate birthdate = parseDateCell(row, 5);
+                    // 6. Ngày sinh
+                    LocalDate birthdate = parseDateCell(row, 6);
                     if (birthdate != null && birthdate.isAfter(LocalDate.now())) {
                         throw new RuntimeException("Ngày sinh không hợp lệ: " + birthdate);
                     }
                     student.setBirthdate(birthdate);
 
-                    // ====== Hobbies (cho phép trống) ======
-                    String hobbyRaw = getStringCellValue(row, 6);
+                    // 7. Sở thích
+                    String hobbyRaw = getStringCellValue(row, 7);
                     String hobbies = "[]";
                     if (!hobbyRaw.isBlank()) {
                         List<String> hobbyList = Arrays.stream(hobbyRaw.split(","))
@@ -159,26 +173,33 @@ public class ImportExcelAPI {
 
                 total++;
                 try {
-                    // Full name
+                    // 0) Họ tên
                     String fullName = getStringCellValue(row, 0);
                     if (fullName.isBlank()) throw new RuntimeException("Họ tên trống");
 
-                    // Class
+                    // 1) Lớp
                     String className = getStringCellValue(row, 1);
                     classesRepository.findByName(className)
                             .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp: " + className));
 
-                    // Username
+                    // 2) Username
                     String username = getStringCellValue(row, 2);
                     if (username.isBlank()) throw new RuntimeException("Username trống");
                     if (userRepository.existsByUsername(username)) {
                         throw new RuntimeException("Username đã tồn tại: " + username);
                     }
 
-                    // Phone
-                    String phone = getStringCellValue(row, 4);
+                    // 3) Email
+                    String email = getStringCellValue(row, 3);
+                    if (!email.isBlank() && userRepository.existsByEmail(email)) {
+                        throw new RuntimeException("Email đã tồn tại: " + email);
+                    }
+
+                    // 5) Phone
+                    String phone = getStringCellValue(row, 5);
+                    phone = normalizePhone(phone);
                     if (!phone.isBlank()) {
-                        if (!phone.matches("^[0-9]{9,11}$")) {
+                        if (!phone.matches("^0\\d{9,10}$")) {
                             throw new RuntimeException("Số điện thoại không hợp lệ: " + phone);
                         }
                         if (userRepository.existsByPhone(phone)) {
@@ -186,8 +207,8 @@ public class ImportExcelAPI {
                         }
                     }
 
-                    // Birthdate
-                    LocalDate birthdate = parseDateCell(row, 5);
+                    // 6) Birthdate
+                    LocalDate birthdate = parseDateCell(row, 6);
                     if (birthdate != null && birthdate.isAfter(LocalDate.now())) {
                         throw new RuntimeException("Ngày sinh không hợp lệ: " + birthdate);
                     }
@@ -215,23 +236,29 @@ public class ImportExcelAPI {
     private String getStringCellValue(Row row, int index) {
         if (row == null) return "";
         Cell cell = row.getCell(index);
-        if (cell == null || cell.getCellType() == CellType.BLANK) {
-            return "";
+        if (cell == null) return "";
+
+       // dd/MM/yyyy
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return new SimpleDateFormat("dd/MM/yyyy").format(cell.getDateCellValue());
         }
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue().trim();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return new SimpleDateFormat("dd/MM/yyyy").format(cell.getDateCellValue());
-                } else {
-                    return String.valueOf((long) cell.getNumericCellValue());
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            default:
-                return "";
+        return formatter.formatCellValue(cell).trim();
+    }
+
+    /** +84xxx → 0xxx, 84xxx → 0xxx, 9 số → thêm 0 phía trước */
+    private String normalizePhone(String raw) {
+        if (raw == null) return "";
+        String value = raw.trim();
+        if (value.isEmpty()) return "";
+        value = value.replaceAll("[\\s\\.\\-]", "");
+        if (value.startsWith("+84")) {
+            value = "0" + value.substring(3);
+        } else if (value.startsWith("84") && value.length() > 9) {
+            value = "0" + value.substring(2);
+        } else if (value.matches("\\d{9}")) {
+            value = "0" + value;
         }
+        return value;
     }
 
     private LocalDate parseDateCell(Row row, int cellIndex) {
@@ -244,8 +271,6 @@ public class ImportExcelAPI {
         } else if (cell.getCellType() == CellType.STRING) {
             String val = cell.getStringCellValue().trim();
             if (val.isEmpty()) return null;
-
-            // Chuỗi toàn số (Excel serial)
             if (val.matches("\\d+")) {
                 double excelSerial = Double.parseDouble(val);
                 return DateUtil.getJavaDate(excelSerial)
@@ -254,12 +279,13 @@ public class ImportExcelAPI {
 
             // dd/MM/yyyy
             try {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                return LocalDate.parse(val, formatter);
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                return LocalDate.parse(val, fmt);
             } catch (Exception e) {
+                // yyyy-MM-dd
                 try {
-                    DateTimeFormatter isoFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                    return LocalDate.parse(val, isoFormatter);
+                    DateTimeFormatter iso = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    return LocalDate.parse(val, iso);
                 } catch (Exception ex) {
                     throw new RuntimeException("Không parse được ngày từ chuỗi: '" + val + "'");
                 }
