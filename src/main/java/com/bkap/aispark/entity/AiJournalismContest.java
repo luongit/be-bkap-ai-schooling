@@ -2,7 +2,9 @@ package com.bkap.aispark.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -42,6 +45,20 @@ public class AiJournalismContest {
 
     private LocalDateTime createdAt;
 
+    @OneToMany(mappedBy = "contest", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AiJournalismRubric> rubrics;
+
+    public List<AiJournalismRubric> getRubrics() {
+        return rubrics;
+    }
+
+    public void setRubrics(List<AiJournalismRubric> rubrics) {
+        this.rubrics = rubrics;
+    }
+
+    @Column(name = "total_score")
+    private Double totalScore = 0.0;
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
@@ -65,6 +82,7 @@ public class AiJournalismContest {
         this.status = status;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
+
     }
 
     // ===== Getters & Setters =====
@@ -154,5 +172,13 @@ public class AiJournalismContest {
 
     public void setSubmissionEnd(LocalDateTime submissionEnd) {
         this.submissionEnd = submissionEnd;
+    }
+
+    public Double getTotalScore() {
+        return totalScore;
+    }
+
+    public void setTotalScore(Double totalScore) {
+        this.totalScore = totalScore;
     }
 }
