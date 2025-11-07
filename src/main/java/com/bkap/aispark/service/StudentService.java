@@ -56,6 +56,7 @@ public class StudentService {
         User user = new User();
         user.setUsername(saved.getUsername());
         user.setPhone(saved.getPhone());
+        user.setEmail(saved.getEmail());
         user.setPassword(passwordEncoder.encode(saved.getDefaultPassword()));
         user.setRole(UserRole.STUDENT);
         user.setObjectType(ObjectType.STUDENT);
@@ -91,6 +92,7 @@ public class StudentService {
         return studentRepository.findById(id).map(student -> {
             student.setFullName(newStudent.getFullName());
             student.setUsername(newStudent.getUsername());
+            student.setEmail(newStudent.getEmail());
             student.setDefaultPassword(newStudent.getDefaultPassword());
             student.setPhone(newStudent.getPhone());
             student.setBirthdate(newStudent.getBirthdate());
