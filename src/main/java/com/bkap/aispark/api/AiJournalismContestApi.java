@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,15 +19,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.dto.AiJournalismContestRequest;
+import com.bkap.aispark.dto.ManualScoreRequest;
 import com.bkap.aispark.dto.ProfileDTO;
 import com.bkap.aispark.entity.AiJournalismContest;
 import com.bkap.aispark.entity.AiJournalismEntry;
+import com.bkap.aispark.entity.AiJournalismManualScore;
 import com.bkap.aispark.entity.AiJournalismRubric;
+import com.bkap.aispark.entity.User;
+import com.bkap.aispark.repository.AiJournalismEntryRepository;
+import com.bkap.aispark.repository.AiJournalismManualScoreRepository;
+import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AiJournalismContestService;
 import com.bkap.aispark.service.AiJournalismService;
 import com.bkap.aispark.service.CreditService;
 import com.bkap.aispark.service.ProfileService;
+import com.bkap.aispark.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
@@ -40,6 +48,12 @@ public class AiJournalismContestApi {
 
 	@Autowired
 	private AiJournalismService service;
+
+	@Autowired
+	private AiJournalismEntryRepository entryRepo;
+
+	@Autowired
+	private AiJournalismManualScoreRepository manualScoreRepo;
 
 	@Autowired
 	private ProfileService profileService;
@@ -56,10 +70,13 @@ public class AiJournalismContestApi {
 	@Autowired
 	private AiJournalismContestService contestService;
 
+	@Autowired
+	private UserRepository userRepo;
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	// tao cuoc thi
-	
+
 	@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','ADMIN','TEACHER')")
 	@PostMapping("/create")
 	public ResponseEntity<AiJournalismContest> createContest(
@@ -270,6 +287,35 @@ public class AiJournalismContestApi {
 				"  },",
 				"  \"feedback\": \"nhận xét tổng quan và góp ý cải thiện\"",
 				"}");
+	}
+
+	@PostMapping("/entries/{entryId}/grade-manual")
+	@PreAuthorize("hasAnyRole('TEACHER','ADMIN','SYSTEM_ADMIN')")
+	public ResponseEntity<?> gradeManual(
+			@PathVariable Long entryId,
+			@RequestBody ManualScoreRequest req,
+			Authentication auth) {
+
+		User teacher = userRepo.findByEmail(auth.getName())
+				.orElseThrow(() -> new RuntimeException("User not found"));
+
+		AiJournalismEntry entry = entryRepo.findById(entryId)
+				.orElseThrow(() -> new RuntimeException("Entry not found"));
+
+		AiJournalismManualScore score = new AiJournalismManualScore();
+		score.setEntry(entry);
+		score.setTeacher(teacher);
+		score.setFeedback(req.getFeedback());
+		score.setTotalScore(req.getTotalScore());
+		score.setCriteria(req.getCriteriaJson());
+
+		manualScoreRepo.save(score);
+
+		// cập nhật điểm vào entry
+		entry.setTeacherFeedback(req.getFeedback());
+		entryRepo.save(entry);
+
+		return ResponseEntity.ok(Map.of("status", "success", "message", "Chấm điểm thành công"));
 	}
 
 }

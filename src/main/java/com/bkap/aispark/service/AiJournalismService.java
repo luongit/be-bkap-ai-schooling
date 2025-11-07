@@ -17,8 +17,8 @@ public class AiJournalismService {
     private final AiJournalismEntryRepository entryRepo;
 
     public AiJournalismService(AiJournalismContestRepository contestRepo,
-                               AiJournalismRubricRepository rubricRepo,
-                               AiJournalismEntryRepository entryRepo) {
+            AiJournalismRubricRepository rubricRepo,
+            AiJournalismEntryRepository entryRepo) {
         this.contestRepo = contestRepo;
         this.rubricRepo = rubricRepo;
         this.entryRepo = entryRepo;
@@ -63,6 +63,7 @@ public class AiJournalismService {
         }
         throw new RuntimeException("Không tìm thấy bài dự thi có ID: " + entryId);
     }
+
     public Optional<AiJournalismEntry> getEntryById(Long id) {
         return entryRepo.findById(id);
     }
@@ -70,7 +71,7 @@ public class AiJournalismService {
     public AiJournalismEntry saveEntry(AiJournalismEntry entry) {
         return entryRepo.save(entry);
     }
-  
+
     public List<AiJournalismEntry> getLeaderboard(Long contestId) {
         List<AiJournalismEntry> entries = entryRepo.findByContestId(contestId);
 
@@ -87,6 +88,5 @@ public class AiJournalismService {
 
         return entries;
     }
-
 
 }
