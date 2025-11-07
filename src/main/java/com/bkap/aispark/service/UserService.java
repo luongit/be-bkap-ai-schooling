@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bkap.aispark.entity.AiJournalismContest;
 import com.bkap.aispark.entity.ObjectType;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.entity.UserRole;
@@ -228,6 +229,11 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException("Không thể gửi email: " + e.getMessage());
         }
+    }
+
+    public Optional<AiJournalismContest> findByEmail(String name) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findByEmail'");
     }
 
 }
