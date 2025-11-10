@@ -19,8 +19,10 @@ public class AiJournalismContestRequest {
     private LocalDate endDate;
     private LocalDateTime submissionStart;
     private LocalDateTime submissionEnd;
-    private String status; // optional
+    private String status;
     private Double totalScore;
+    private String coverUrl; // request anh bia
+
 
     private List<RubricDto> rubrics;
 
