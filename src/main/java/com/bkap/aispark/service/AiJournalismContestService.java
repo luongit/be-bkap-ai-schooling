@@ -35,6 +35,9 @@ public class AiJournalismContestService {
         contest.setSubmissionEnd(dto.getSubmissionEnd());
         contest.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
         contest.setCreatedBy(creator);
+        // anh bia cuoc thi
+        contest.setCoverUrl(dto.getCoverUrl());
+
 
         if (dto.getRubrics() != null && !dto.getRubrics().isEmpty()) {
             List<AiJournalismRubric> rubrics = dto.getRubrics().stream()

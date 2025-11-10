@@ -23,9 +23,11 @@ public class AiJournalismContest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(columnDefinition = "TEXT")
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String theme;
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "start_date")
@@ -37,6 +39,8 @@ public class AiJournalismContest {
     private LocalDateTime submissionStart;
     private LocalDateTime submissionEnd;
 
+
+    @Column(columnDefinition = "TEXT")
     private String status;
 
     @ManyToOne
@@ -59,6 +63,10 @@ public class AiJournalismContest {
     @Column(name = "total_score")
     private Double totalScore = 0.0;
 
+   // anh bia cuoc thi
+    @Column(name = "cover_url", columnDefinition = "TEXT")
+    private String coverUrl;
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
@@ -66,12 +74,12 @@ public class AiJournalismContest {
             status = "ACTIVE";
     }
 
-    // ===== Constructors =====
+    // Constructors
     public AiJournalismContest() {
     }
 
     public AiJournalismContest(Long id, String title, String theme, String description, LocalDate startDate,
-            LocalDate endDate, String status, User createdBy, LocalDateTime createdAt) {
+                               LocalDate endDate, String status, User createdBy, LocalDateTime createdAt) {
         super();
         this.id = id;
         this.title = title;
@@ -82,7 +90,6 @@ public class AiJournalismContest {
         this.status = status;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
-
     }
 
     // ===== Getters & Setters =====
@@ -180,5 +187,13 @@ public class AiJournalismContest {
 
     public void setTotalScore(Double totalScore) {
         this.totalScore = totalScore;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
     }
 }

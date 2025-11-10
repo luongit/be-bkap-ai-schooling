@@ -1,5 +1,6 @@
 package com.bkap.aispark.api;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,16 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.bkap.aispark.dto.AiJournalismContestRequest;
 import com.bkap.aispark.dto.ManualScoreRequest;
@@ -42,6 +38,8 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.service.OpenAiService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
+import com.bkap.aispark.service.R2StorageService;
 
 @RestController
 @RequestMapping("/api/journalism")
@@ -49,6 +47,9 @@ public class AiJournalismContestApi {
 
 	@Autowired
 	private AiJournalismService service;
+	// upload anh bia cuoc thi len R2
+	@Autowired
+	private R2StorageService r2StorageService;
 
 	@Autowired
 	private AiJournalismEntryRepository entryRepo;
@@ -80,16 +81,29 @@ public class AiJournalismContestApi {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	// tao cuoc thi
-
 	@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','ADMIN','TEACHER')")
-	@PostMapping("/create")
+	@PostMapping(value = "/create", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
 	public ResponseEntity<AiJournalismContest> createContest(
-			@RequestBody AiJournalismContestRequest dto,
-			@RequestParam Long creatorId) {
-		AiJournalismContest contest = contestService.createContest(dto, creatorId);
-		return ResponseEntity.ok(contest);
+			@RequestPart("dto") AiJournalismContestRequest dto,
+			@RequestPart(value = "cover", required = false) MultipartFile coverFile,
+			@RequestParam(required = false) Long creatorId,
+			HttpServletRequest request
+	) throws IOException {
+		try {
+			if (coverFile != null && !coverFile.isEmpty()) {
+				String coverUrl = r2StorageService.uploadFile(coverFile);
+				dto.setCoverUrl(coverUrl);
+			} else {
+				System.out.println("Không có ảnh upload hoặc file rỗng!");
+			}
+			AiJournalismContest contest = contestService.createContest(dto, creatorId);
+			return ResponseEntity.ok(contest);
+		} catch (Exception e) {
+			System.err.println("Lỗi khi tạo cuộc thi:");
+			e.printStackTrace();
+			throw e;
+		}
 	}
-
 	// lay danh sach
 	@GetMapping
 	public ResponseEntity<List<AiJournalismContest>> getAll() {
