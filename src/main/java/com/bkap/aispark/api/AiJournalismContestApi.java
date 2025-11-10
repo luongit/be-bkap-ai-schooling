@@ -25,16 +25,17 @@ import com.bkap.aispark.entity.AiJournalismContest;
 import com.bkap.aispark.entity.AiJournalismEntry;
 import com.bkap.aispark.entity.AiJournalismManualScore;
 import com.bkap.aispark.entity.AiJournalismRubric;
+import com.bkap.aispark.entity.AiJournalismSubmission;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.AiJournalismEntryRepository;
 import com.bkap.aispark.repository.AiJournalismManualScoreRepository;
+import com.bkap.aispark.repository.AiJournalismSubmissionRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AiJournalismContestService;
 import com.bkap.aispark.service.AiJournalismService;
 import com.bkap.aispark.service.CreditService;
 import com.bkap.aispark.service.ProfileService;
-import com.bkap.aispark.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatMessage;
@@ -72,6 +73,9 @@ public class AiJournalismContestApi {
 
 	@Autowired
 	private UserRepository userRepo;
+
+	@Autowired
+	private AiJournalismSubmissionRepository submissionRepository;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -318,4 +322,9 @@ public class AiJournalismContestApi {
 		return ResponseEntity.ok(Map.of("status", "success", "message", "Chấm điểm thành công"));
 	}
 
+	@GetMapping("/entries/{entryId}/submissions")
+	public ResponseEntity<List<AiJournalismSubmission>> getSubmissions(@PathVariable Long entryId) {
+		List<AiJournalismSubmission> list = submissionRepository.findByEntryId(entryId);
+		return ResponseEntity.ok(list);
+	}
 }
