@@ -1,54 +1,64 @@
 package com.bkap.aispark.dto;
 
 import java.util.List;
+import java.util.Map;
 
 public class VideoBatchRequest {
 
-    private List<String> images;    
-    private List<String> titles;     
-    private Double perSlideSec;      
-    private String audioUrl;         
-    // Constructors
-    public VideoBatchRequest() {
+    // ========== Phiên bản cũ (tương thích cũ) ==========
+    private List<String> images;
+    private List<String> titles;
+    private Double perSlideSec;
+    private String audioUrl;
+
+    // ========== Phiên bản mới ==========
+    private List<Slide> slides;  // danh sách slide
+    private String bgMusicUrl;   // nhạc nền chung (nếu có)
+
+    // -------------------------------------------
+    // ✅ Slide: 1 ảnh, 1 text, 1 giọng đọc, 1 style
+    // -------------------------------------------
+    public static class Slide {
+        private String imageUrl;            // ảnh nền
+        private String text;                // nội dung hiển thị + TTS
+        private String voiceName;           // giọng đọc (ví dụ "vi-VN-HoaiMyNeural")
+        private Double durationSec;         // thời lượng slide (giây)
+        private Map<String, String> style;  // style: color, font-weight, shadow,...
+
+        public String getImageUrl() { return imageUrl; }
+        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+        public String getText() { return text; }
+        public void setText(String text) { this.text = text; }
+
+        public String getVoiceName() { return voiceName; }
+        public void setVoiceName(String voiceName) { this.voiceName = voiceName; }
+
+        public Double getDurationSec() { return durationSec; }
+        public void setDurationSec(Double durationSec) { this.durationSec = durationSec; }
+
+        public Map<String, String> getStyle() { return style; }
+        public void setStyle(Map<String, String> style) { this.style = style; }
     }
 
-    public VideoBatchRequest(List<String> images, List<String> titles, Double perSlideSec, String audioUrl) {
-        this.images = images;
-        this.titles = titles;
-        this.perSlideSec = perSlideSec;
-        this.audioUrl = audioUrl;
-    }
+    // -------------------------------------------
+    // Getter / Setter
+    // -------------------------------------------
+    public List<String> getImages() { return images; }
+    public void setImages(List<String> images) { this.images = images; }
 
-    // Getters and Setters
-    public List<String> getImages() {
-        return images;
-    }
+    public List<String> getTitles() { return titles; }
+    public void setTitles(List<String> titles) { this.titles = titles; }
 
-    public void setImages(List<String> images) {
-        this.images = images;
-    }
+    public Double getPerSlideSec() { return perSlideSec; }
+    public void setPerSlideSec(Double perSlideSec) { this.perSlideSec = perSlideSec; }
 
-    public List<String> getTitles() {
-        return titles;
-    }
+    public String getAudioUrl() { return audioUrl; }
+    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
 
-    public void setTitles(List<String> titles) {
-        this.titles = titles;
-    }
+    public List<Slide> getSlides() { return slides; }
+    public void setSlides(List<Slide> slides) { this.slides = slides; }
 
-    public Double getPerSlideSec() {
-        return perSlideSec;
-    }
-
-    public void setPerSlideSec(Double perSlideSec) {
-        this.perSlideSec = perSlideSec;
-    }
-
-    public String getAudioUrl() {
-        return audioUrl;
-    }
-
-    public void setAudioUrl(String audioUrl) {
-        this.audioUrl = audioUrl;
-    }
+    public String getBgMusicUrl() { return bgMusicUrl; }
+    public void setBgMusicUrl(String bgMusicUrl) { this.bgMusicUrl = bgMusicUrl; }
 }
