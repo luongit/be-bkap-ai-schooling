@@ -1,15 +1,15 @@
 package com.bkap.aispark.config;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.theokanning.openai.service.OpenAiService;
-
 import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.theokanning.openai.service.OpenAiService;
 
 @Configuration
 public class OpenAiConfig {
