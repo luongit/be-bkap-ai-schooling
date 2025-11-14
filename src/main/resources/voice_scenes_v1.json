@@ -1,0 +1,645 @@
+{
+  "meta": {
+    "version": "1.0",
+    "language": "en",
+    "description": "BKAP VoiceHero – 15 scenes x 3 levels (Easy/Standard/Challenging). Mỗi lượt: short AI line + sample learner answer + target sound.",
+    "levels": ["easy", "standard", "challenging"]
+  },
+
+  "phonemeTips": [
+    {
+      "key": "sound_r",
+      "label": "/r/",
+      "description": "Curl your tongue slightly back, do not touch the roof of your mouth.",
+      "examples": ["red", "ruler", "rice"],
+      "hint_vi": "Cong nhẹ lưỡi ra sau, không chạm vòm miệng.",
+      "hint_en": "Curl your tongue back a little, keep it off the roof of your mouth."
+    },
+    {
+      "key": "sound_th_voiceless",
+      "label": "/θ/",
+      "description": "Put your tongue between your teeth and blow air out gently.",
+      "examples": ["think", "thanks", "bath"],
+      "hint_vi": "Đặt đầu lưỡi giữa hai hàm răng, thổi hơi nhẹ.",
+      "hint_en": "Place the tip of your tongue between your teeth and push air out."
+    },
+    {
+      "key": "sound_th_voiced",
+      "label": "/ð/",
+      "description": "Same tongue position as /θ/, but make your voice vibrate.",
+      "examples": ["this", "mother", "breathe"],
+      "hint_vi": "Vị trí giống /θ/ nhưng có rung dây thanh.",
+      "hint_en": "Same as /θ/ but let your voice vibrate."
+    },
+    {
+      "key": "sound_v_vs_w",
+      "label": "/v/ vs /w/",
+      "description": "/v/: teeth on lip + vibration; /w/: round lips, no teeth on lip.",
+      "examples": ["very", "wine", "white", "five"],
+      "hint_vi": "/v/ cắn nhẹ môi dưới; /w/ chu môi tròn, không chạm răng.",
+      "hint_en": "For /v/ bite your lower lip; for /w/ round your lips without teeth."
+    },
+    {
+      "key": "sound_l",
+      "label": "/l/",
+      "description": "Touch the ridge behind your teeth with your tongue.",
+      "examples": ["like", "love", "school"],
+      "hint_vi": "Đầu lưỡi chạm nướu ngay sau răng cửa trên.",
+      "hint_en": "Touch the ridge behind your upper teeth with the tip of your tongue."
+    },
+    {
+      "key": "sound_ending_t",
+      "label": "ending /t/",
+      "description": "Stop the air shortly at the end, like a soft click.",
+      "examples": ["want", "hot", "late"],
+      "hint_vi": "Ngắt hơi nhanh ở cuối, như tiếng 't' rất nhẹ.",
+      "hint_en": "Cut the air quickly at the end with a soft /t/ sound."
+    },
+    {
+      "key": "sound_ending_d",
+      "label": "ending /d/",
+      "description": "Soft /d/ at the end, tongue touches the ridge lightly.",
+      "examples": ["friend", "need", "said"],
+      "hint_vi": "Kết thúc bằng /d/ nhẹ, đầu lưỡi chạm nướu.",
+      "hint_en": "End with a soft /d/ and touch the ridge behind your teeth."
+    },
+    {
+      "key": "sound_ending_s_z",
+      "label": "ending /s/ vs /z/",
+      "description": "Voiceless /s/ no vibration; voiced /z/ with vibration.",
+      "examples": ["bus", "buzz", "dogs"],
+      "hint_vi": "/s/ không rung; /z/ có rung cổ.",
+      "hint_en": "Touch your throat: if it vibrates, it's /z/; if not, it's /s/."
+    },
+    {
+      "key": "sound_linking",
+      "label": "linking",
+      "description": "Connect words smoothly, no big gaps between them.",
+      "examples": ["a sandwich", "take it", "go out"],
+      "hint_vi": "Nối âm cuối từ trước với âm đầu từ sau, tránh ngắt quãng.",
+      "hint_en": "Link the ending sound of one word to the beginning of the next."
+    },
+    {
+      "key": "sound_stress_word",
+      "label": "word stress",
+      "description": "Make one syllable stronger, longer and higher.",
+      "examples": ["TAble", "HOtel", "reLAX"],
+      "hint_vi": "Nhấn 1 âm tiết: đọc to hơn, dài hơn, cao hơn.",
+      "hint_en": "Stress one syllable: say it louder, longer, and higher."
+    },
+    {
+      "key": "sound_sentence_rhythm",
+      "label": "sentence rhythm",
+      "description": "Strong beats on content words, weak on small words.",
+      "examples": ["I LIKE this CAfé."],
+      "hint_vi": "Nhấn từ quan trọng, lướt nhanh từ nhỏ như a, the, to.",
+      "hint_en": "Stress main words (nouns, verbs) and reduce small words."
+    },
+    {
+      "key": "sound_rising_question",
+      "label": "rising intonation",
+      "description": "Raise your voice at the end of yes/no questions.",
+      "examples": ["Do you LIKE it↗?"],
+      "hint_vi": "Cuối câu hỏi Yes/No giọng đi lên.",
+      "hint_en": "Let your pitch go up at the end of the question."
+    },
+    {
+      "key": "sound_falling_statement",
+      "label": "falling intonation",
+      "description": "Let your voice fall at the end of statements.",
+      "examples": ["I like iced tea↘."],
+      "hint_vi": "Cuối câu kể giọng hạ xuống, nghe chắc chắn.",
+      "hint_en": "Drop your voice slightly at the end to sound certain."
+    },
+    {
+      "key": "sound_ch",
+      "label": "/tʃ/",
+      "description": "Air stops then releases like 't' + 'sh'.",
+      "examples": ["chocolate", "cheap", "lunch"],
+      "hint_vi": "Âm kết hợp 't' + 'sh', bật hơi mạnh.",
+      "hint_en": "Stop the air then release with a 'ch' sound."
+    },
+    {
+      "key": "sound_j",
+      "label": "/dʒ/",
+      "description": "Similar to /tʃ/ but voiced with vibration.",
+      "examples": ["juice", "June", "jacket"],
+      "hint_vi": "Giống /tʃ/ nhưng có rung dây thanh.",
+      "hint_en": "Like /ch/ but with voice vibration."
+    },
+    {
+      "key": "sound_long_i",
+      "label": "/i:/ vs /ɪ/",
+      "description": "Long /i:/ is longer and tenser than short /ɪ/.",
+      "examples": ["sheep", "ship"],
+      "hint_vi": "/i:/ kéo dài hơn, miệng căng hơn so với /ɪ/.",
+      "hint_en": "For /i:/ smile more and hold the sound longer."
+    },
+    {
+      "key": "sound_ae",
+      "label": "/æ/",
+      "description": "Open your mouth wide like in 'cat'.",
+      "examples": ["cat", "sandwich", "café"],
+      "hint_vi": "Há miệng rộng, lưỡi thấp.",
+      "hint_en": "Open your mouth wide and keep the tongue low."
+    },
+    {
+      "key": "sound_ou",
+      "label": "/əʊ/",
+      "description": "Start in the middle, then lips round at the end.",
+      "examples": ["go", "no", "photo"],
+      "hint_vi": "Bắt đầu bình thường, cuối chu môi tròn.",
+      "hint_en": "Start relaxed, then round your lips at the end."
+    },
+    {
+      "key": "sound_confidence",
+      "label": "confidence",
+      "description": "Use a clear, steady volume from start to end.",
+      "examples": [],
+      "hint_vi": "Nói đủ to, rõ, không ngập ngừng.",
+      "hint_en": "Speak clearly, not too soft, and avoid mumbling."
+    },
+    {
+      "key": "sound_slow_down",
+      "label": "slow down",
+      "description": "Use 4 clear beats for short sentences.",
+      "examples": ["I / would / like / this."],
+      "hint_vi": "Chia câu thành 3–4 nhịp, dừng nhẹ từng nhịp.",
+      "hint_en": "Break the sentence into 3–4 beats and say each clearly."
+    }
+  ],
+
+  "scenes": [
+    {
+      "code": "self-intro",
+      "title": "Self Introduction",
+      "topic": "name, age, school, hobbies",
+      "weekTag": "confidence-week",
+      "dayIndex": 1,
+      "levels": [
+        {
+          "difficulty": "easy",
+          "cefr": "A1",
+          "targetSoundKeys": ["sound_r"],
+          "goalSentence": "Say your name and age.",
+          "vocab": ["name", "age", "years old", "student"],
+          "patterns": ["My name is ...", "I am ... years old."],
+          "turns": [
+            {
+              "aiPrompt": "Hi! What's your name?",
+              "sampleStudent": "My name is Linh.",
+              "targetPattern": "My name is + [name].",
+              "tipKey": "sound_r"
+            },
+            {
+              "aiPrompt": "Nice to meet you, Linh! How old are you?",
+              "sampleStudent": "I am twelve years old.",
+              "targetPattern": "I am + [age] years old.",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Great! Are you a student?",
+              "sampleStudent": "Yes, I am a student.",
+              "targetPattern": "Yes, I am a student.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "standard",
+          "cefr": "A1-A2",
+          "targetSoundKeys": ["sound_r", "sound_stress_word"],
+          "goalSentence": "Introduce your name, age and school.",
+          "vocab": ["school", "class", "from"],
+          "patterns": ["I study at ...", "I am in class ..."],
+          "turns": [
+            {
+              "aiPrompt": "Can you introduce yourself with your name and school?",
+              "sampleStudent": "My name is Linh and I study at BKAP School.",
+              "targetPattern": "My name is ... and I study at ...",
+              "tipKey": "sound_r"
+            },
+            {
+              "aiPrompt": "Which class are you in?",
+              "sampleStudent": "I am in class 7A.",
+              "targetPattern": "I am in class ...",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Nice! Say it again a bit more confident.",
+              "sampleStudent": "My name is Linh. I am twelve and I study at BKAP School.",
+              "targetPattern": "Full self-introduction.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "challenging",
+          "cefr": "A2-B1",
+          "targetSoundKeys": ["sound_r", "sound_sentence_rhythm"],
+          "goalSentence": "Introduce yourself with hobbies and reason.",
+          "vocab": ["hobby", "because", "like"],
+          "patterns": ["I like ... because ..."],
+          "turns": [
+            {
+              "aiPrompt": "Tell me your name and one hobby.",
+              "sampleStudent": "My name is Linh and I like reading books.",
+              "targetPattern": "My name is ... and I like ...",
+              "tipKey": "sound_stress_word"
+            },
+            {
+              "aiPrompt": "Great! Why do you like that hobby?",
+              "sampleStudent": "I like reading because it is relaxing.",
+              "targetPattern": "I like ... because ...",
+              "tipKey": "sound_r"
+            },
+            {
+              "aiPrompt": "Now say your full introduction in one go.",
+              "sampleStudent": "My name is Linh. I am twelve. I study at BKAP School and I like reading because it is relaxing.",
+              "targetPattern": "Full self-introduction with reason.",
+              "tipKey": "sound_sentence_rhythm"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "code": "cafe",
+      "title": "At the Café",
+      "topic": "order drinks/food, please/thank you",
+      "weekTag": "confidence-week",
+      "dayIndex": 2,
+      "levels": [
+        {
+          "difficulty": "easy",
+          "cefr": "A1",
+          "targetSoundKeys": ["sound_ending_t", "sound_linking"],
+          "goalSentence": "Order one drink politely.",
+          "vocab": ["iced tea", "milk tea", "coffee", "please"],
+          "patterns": ["I'd like ..., please.", "Can I have ...?"],
+          "turns": [
+            {
+              "aiPrompt": "Hi there! What would you like to drink?",
+              "sampleStudent": "I'd like an iced milk tea, please.",
+              "targetPattern": "I'd like + [drink], please.",
+              "tipKey": "sound_ending_t"
+            },
+            {
+              "aiPrompt": "Great choice! Anything else?",
+              "sampleStudent": "No, thank you.",
+              "targetPattern": "No, thank you.",
+              "tipKey": "sound_th_voiceless"
+            },
+            {
+              "aiPrompt": "Perfect! Say it again a little slower.",
+              "sampleStudent": "I'd like an iced milk tea, please.",
+              "targetPattern": "Full polite order.",
+              "tipKey": "sound_slow_down"
+            }
+          ]
+        },
+        {
+          "difficulty": "standard",
+          "cefr": "A1-A2",
+          "targetSoundKeys": ["sound_linking", "sound_sentence_rhythm"],
+          "goalSentence": "Order a drink and a snack.",
+          "vocab": ["sandwich", "cake", "anything to eat"],
+          "patterns": ["I'd like ..., and ..., please."],
+          "turns": [
+            {
+              "aiPrompt": "What would you like to drink and eat?",
+              "sampleStudent": "I'd like an iced tea and a sandwich, please.",
+              "targetPattern": "I'd like + drink + and + food, please.",
+              "tipKey": "sound_linking"
+            },
+            {
+              "aiPrompt": "Nice! Can you say it with good rhythm?",
+              "sampleStudent": "I'd LIKE an ICED tea and a SANDwich, PLEASE.",
+              "targetPattern": "Stressed key words.",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Excellent! One more time, naturally.",
+              "sampleStudent": "I'd like an iced tea and a sandwich, please.",
+              "targetPattern": "Natural order sentence.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "challenging",
+          "cefr": "A2-B1",
+          "targetSoundKeys": ["sound_ending_t", "sound_ou"],
+          "goalSentence": "Order and change your mind politely.",
+          "vocab": ["actually", "instead"],
+          "patterns": ["Actually, can I have ... instead?"],
+          "turns": [
+            {
+              "aiPrompt": "Order a drink. Then change it politely.",
+              "sampleStudent": "I'd like a hot chocolate, please. Actually, can I have an orange juice instead?",
+              "targetPattern": "Order + actually, can I have ... instead?",
+              "tipKey": "sound_ending_t"
+            },
+            {
+              "aiPrompt": "Great! Focus on the /əʊ/ in 'no' and 'hotel'.",
+              "sampleStudent": "No, I'd like a cold orange juice.",
+              "targetPattern": "Use /əʊ/ clearly.",
+              "tipKey": "sound_ou"
+            },
+            {
+              "aiPrompt": "Now say your final order smoothly.",
+              "sampleStudent": "I'd like a cold orange juice instead, please.",
+              "targetPattern": "Final clear order.",
+              "tipKey": "sound_linking"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "code": "directions",
+      "title": "Asking for Directions",
+      "topic": "where is…, turn left/right",
+      "weekTag": "confidence-week",
+      "dayIndex": 3,
+      "levels": [
+        {
+          "difficulty": "easy",
+          "cefr": "A1",
+          "targetSoundKeys": ["sound_th_voiced"],
+          "goalSentence": "Ask where a place is.",
+          "vocab": ["where", "bank", "school", "right", "left"],
+          "patterns": ["Where is the ...?"],
+          "turns": [
+            {
+              "aiPrompt": "You are lost. Ask me where the school is.",
+              "sampleStudent": "Excuse me, where is the school?",
+              "targetPattern": "Excuse me, where is the ...?",
+              "tipKey": "sound_th_voiced"
+            },
+            {
+              "aiPrompt": "Good! Now ask for the café.",
+              "sampleStudent": "Excuse me, where is the café?",
+              "targetPattern": "Where is the café?",
+              "tipKey": "sound_stress_word"
+            },
+            {
+              "aiPrompt": "Nice! Say it again, a bit slower.",
+              "sampleStudent": "Excuse me, where is the café?",
+              "targetPattern": "Slow clear question.",
+              "tipKey": "sound_slow_down"
+            }
+          ]
+        },
+        {
+          "difficulty": "standard",
+          "cefr": "A1-A2",
+          "targetSoundKeys": ["sound_rising_question", "sound_linking"],
+          "goalSentence": "Ask for directions and listen.",
+          "vocab": ["turn left", "turn right", "go straight"],
+          "patterns": ["How can I get to ...?"],
+          "turns": [
+            {
+              "aiPrompt": "Ask how to get to the bus station.",
+              "sampleStudent": "Excuse me, how can I get to the bus station?",
+              "targetPattern": "How can I get to ...?",
+              "tipKey": "sound_rising_question"
+            },
+            {
+              "aiPrompt": "Great! Repeat after me: 'Turn left and then go straight.'",
+              "sampleStudent": "Turn left and then go straight.",
+              "targetPattern": "Turn left and then go straight.",
+              "tipKey": "sound_linking"
+            },
+            {
+              "aiPrompt": "Now say the full conversation in one sentence.",
+              "sampleStudent": "Excuse me, how can I get to the bus station?",
+              "targetPattern": "Full polite question.",
+              "tipKey": "sound_sentence_rhythm"
+            }
+          ]
+        },
+        {
+          "difficulty": "challenging",
+          "cefr": "A2-B1",
+          "targetSoundKeys": ["sound_sentence_rhythm"],
+          "goalSentence": "Ask and confirm directions.",
+          "vocab": ["next to", "behind", "opposite"],
+          "patterns": ["Is it next to ...?", "Is it far from ...?"],
+          "turns": [
+            {
+              "aiPrompt": "Ask if the bank is next to the café.",
+              "sampleStudent": "Is the bank next to the café?",
+              "targetPattern": "Is the ... next to the ...?",
+              "tipKey": "sound_rising_question"
+            },
+            {
+              "aiPrompt": "Good! Now confirm the direction.",
+              "sampleStudent": "So I turn left and the bank is next to the café.",
+              "targetPattern": "So I turn left and ...",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Say it again with strong rhythm on 'turn left' and 'next to the café'.",
+              "sampleStudent": "I TURN LEFT and the BANK is NEXT to the CAFÉ.",
+              "targetPattern": "Strong rhythm sentence.",
+              "tipKey": "sound_sentence_rhythm"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "code": "shopping",
+      "title": "Shopping for Clothes",
+      "topic": "sizes, price, I’d like…, how much…",
+      "weekTag": "confidence-week",
+      "dayIndex": 5,
+      "levels": [
+        {
+          "difficulty": "easy",
+          "cefr": "A1",
+          "targetSoundKeys": ["sound_v_vs_w"],
+          "goalSentence": "Ask about price.",
+          "vocab": ["how much", "size", "small", "medium", "large"],
+          "patterns": ["How much is this?", "What size is it?"],
+          "turns": [
+            {
+              "aiPrompt": "Ask the price of this T-shirt.",
+              "sampleStudent": "Excuse me, how much is this T-shirt?",
+              "targetPattern": "How much is this ...?",
+              "tipKey": "sound_stress_word"
+            },
+            {
+              "aiPrompt": "Great! Now ask for your size.",
+              "sampleStudent": "Do you have size M?",
+              "targetPattern": "Do you have size ...?",
+              "tipKey": "sound_v_vs_w"
+            },
+            {
+              "aiPrompt": "Say both sentences together.",
+              "sampleStudent": "Excuse me, how much is this T-shirt? Do you have size M?",
+              "targetPattern": "Combine price + size.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "standard",
+          "cefr": "A1-A2",
+          "targetSoundKeys": ["sound_linking"],
+          "goalSentence": "Ask price and choose item.",
+          "vocab": ["try on", "too big", "too small"],
+          "patterns": ["Can I try it on?", "It's too ..."],
+          "turns": [
+            {
+              "aiPrompt": "Ask if you can try the jacket on.",
+              "sampleStudent": "Can I try this jacket on?",
+              "targetPattern": "Can I try this ... on?",
+              "tipKey": "sound_linking"
+            },
+            {
+              "aiPrompt": "Say that it's too big.",
+              "sampleStudent": "It is too big for me.",
+              "targetPattern": "It is too ... for me.",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Now ask for a smaller size politely.",
+              "sampleStudent": "Do you have a smaller size, please?",
+              "targetPattern": "Do you have a smaller size, please?",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "challenging",
+          "cefr": "A2-B1",
+          "targetSoundKeys": ["sound_stress_word", "sound_linking"],
+          "goalSentence": "Compare two items and decide.",
+          "vocab": ["cheaper", "more comfortable", "I’ll take it"],
+          "patterns": ["This one is ... but that one is ..."],
+          "turns": [
+            {
+              "aiPrompt": "Compare two T-shirts: one cheap, one comfortable.",
+              "sampleStudent": "This one is cheaper, but that one is more comfortable.",
+              "targetPattern": "This one is ..., but that one is ...",
+              "tipKey": "sound_stress_word"
+            },
+            {
+              "aiPrompt": "Now decide which one you want.",
+              "sampleStudent": "I’ll take the more comfortable one.",
+              "targetPattern": "I’ll take the ... one.",
+              "tipKey": "sound_linking"
+            },
+            {
+              "aiPrompt": "Say your decision again with confidence.",
+              "sampleStudent": "I’ll take the more comfortable one, please.",
+              "targetPattern": "Polite decision sentence.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "code": "small-talk",
+      "title": "Small Talk & Weather",
+      "topic": "weather, compliments, polite phrases",
+      "weekTag": "confidence-week",
+      "dayIndex": 6,
+      "levels": [
+        {
+          "difficulty": "easy",
+          "cefr": "A1",
+          "targetSoundKeys": ["sound_falling_statement"],
+          "goalSentence": "Talk about today’s weather.",
+          "vocab": ["sunny", "rainy", "hot", "cold"],
+          "patterns": ["It is ... today.", "I like ... weather."],
+          "turns": [
+            {
+              "aiPrompt": "How is the weather today?",
+              "sampleStudent": "It is sunny today.",
+              "targetPattern": "It is ... today.",
+              "tipKey": "sound_falling_statement"
+            },
+            {
+              "aiPrompt": "Do you like this weather?",
+              "sampleStudent": "Yes, I like sunny weather.",
+              "targetPattern": "I like ... weather.",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Say it again, a little slower.",
+              "sampleStudent": "It is sunny today. I like sunny weather.",
+              "targetPattern": "Two short sentences.",
+              "tipKey": "sound_slow_down"
+            }
+          ]
+        },
+        {
+          "difficulty": "standard",
+          "cefr": "A1-A2",
+          "targetSoundKeys": ["sound_sentence_rhythm"],
+          "goalSentence": "Give a compliment politely.",
+          "vocab": ["nice", "cool", "I like your ..."],
+          "patterns": ["I like your ...", "You look ..."],
+          "turns": [
+            {
+              "aiPrompt": "Give your friend a nice compliment.",
+              "sampleStudent": "I like your T-shirt.",
+              "targetPattern": "I like your ...",
+              "tipKey": "sound_stress_word"
+            },
+            {
+              "aiPrompt": "Now add a polite phrase at the end.",
+              "sampleStudent": "I like your T-shirt, it looks cool.",
+              "targetPattern": "I like your ..., it looks ...",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Say it again with a friendly tone.",
+              "sampleStudent": "I like your T-shirt, it looks really cool.",
+              "targetPattern": "Friendly compliment.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        },
+        {
+          "difficulty": "challenging",
+          "cefr": "A2-B1",
+          "targetSoundKeys": ["sound_rising_question"],
+          "goalSentence": "Start and continue a short small-talk.",
+          "vocab": ["by the way", "what about you"],
+          "patterns": ["By the way, ...", "What about you?"],
+          "turns": [
+            {
+              "aiPrompt": "Start with the weather and then ask your friend.",
+              "sampleStudent": "It is cold today. What about you, do you like cold weather?",
+              "targetPattern": "Statement + 'What about you?'",
+              "tipKey": "sound_rising_question"
+            },
+            {
+              "aiPrompt": "Good! Repeat with better rhythm.",
+              "sampleStudent": "IT is COLD today. WHAT about YOU?",
+              "targetPattern": "Strong rhythm on key words.",
+              "tipKey": "sound_sentence_rhythm"
+            },
+            {
+              "aiPrompt": "Now say it naturally and confidently.",
+              "sampleStudent": "It is cold today. What about you?",
+              "targetPattern": "Natural small talk.",
+              "tipKey": "sound_confidence"
+            }
+          ]
+        }
+      ]
+    }
+
+   
+  ]
+}
