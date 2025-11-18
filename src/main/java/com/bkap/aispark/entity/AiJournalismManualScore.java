@@ -1,11 +1,10 @@
 package com.bkap.aispark.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -34,79 +33,26 @@ public class AiJournalismManualScore {
     private String feedback;
 
     /**
-     * Lưu JSON tiêu chí chấm, ví dụ:
-     * {
-     * "Nội dung": 8,
-     * "Cảm xúc": 9,
-     * "Sáng tạo": 10,
-     * "Trình bày": 9
-     * }
+     * Lưu JSON tiêu chí chấm dưới dạng JsonNode để tránh lỗi PGobject
      */
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
-    private Map<String, BigDecimal> criteria;
+    private JsonNode criteria;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public Long getId() {
-        return id;
-    }
+    public AiJournalismManualScore() {}
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public AiJournalismEntry getEntry() {
-        return entry;
-    }
-
-    public void setEntry(AiJournalismEntry entry) {
-        this.entry = entry;
-    }
-
-    public User getTeacher() {
-        return teacher;
-    }
-
-    public void setTeacher(User teacher) {
-        this.teacher = teacher;
-    }
-
-    public BigDecimal getTotalScore() {
-        return totalScore;
-    }
-
-    public void setTotalScore(BigDecimal totalScore) {
-        this.totalScore = totalScore;
-    }
-
-    public String getFeedback() {
-        return feedback;
-    }
-
-    public void setFeedback(String feedback) {
-        this.feedback = feedback;
-    }
-
-    public Map<String, BigDecimal> getCriteria() {
-        return criteria;
-    }
-
-    public void setCriteria(Map<String, BigDecimal> criteria) {
-        this.criteria = criteria;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public AiJournalismManualScore(Long id, AiJournalismEntry entry, User teacher, BigDecimal totalScore,
-            String feedback, Map<String, BigDecimal> criteria, LocalDateTime createdAt) {
+    public AiJournalismManualScore(
+            Long id,
+            AiJournalismEntry entry,
+            User teacher,
+            BigDecimal totalScore,
+            String feedback,
+            JsonNode criteria,
+            LocalDateTime createdAt
+    ) {
         this.id = id;
         this.entry = entry;
         this.teacher = teacher;
@@ -116,7 +62,26 @@ public class AiJournalismManualScore {
         this.createdAt = createdAt;
     }
 
-    public AiJournalismManualScore() {
-    }
+    // 👉 Getter / Setter đầy đủ
 
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public AiJournalismEntry getEntry() { return entry; }
+    public void setEntry(AiJournalismEntry entry) { this.entry = entry; }
+
+    public User getTeacher() { return teacher; }
+    public void setTeacher(User teacher) { this.teacher = teacher; }
+
+    public BigDecimal getTotalScore() { return totalScore; }
+    public void setTotalScore(BigDecimal totalScore) { this.totalScore = totalScore; }
+
+    public String getFeedback() { return feedback; }
+    public void setFeedback(String feedback) { this.feedback = feedback; }
+
+    public JsonNode getCriteria() { return criteria; }
+    public void setCriteria(JsonNode criteria) { this.criteria = criteria; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

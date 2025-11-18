@@ -7,4 +7,6 @@ import com.bkap.aispark.entity.AiJournalismManualScore;
 
 @Repository
 public interface AiJournalismManualScoreRepository extends JpaRepository<AiJournalismManualScore, Long> {
+	AiJournalismManualScore findTopByEntryIdOrderByIdDesc(Long entryId);
+
 }
