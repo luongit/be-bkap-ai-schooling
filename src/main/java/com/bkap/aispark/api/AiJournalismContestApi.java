@@ -370,43 +370,45 @@ public class AiJournalismContestApi {
     }
 
     @PostMapping("/entries/{entryId}/grade-manual")
-	@PreAuthorize("hasAnyRole('TEACHER','ADMIN','SYSTEM_ADMIN')")
-	public ResponseEntity<?> gradeManual(
-	        @PathVariable Long entryId,
-	        @RequestBody ManualScoreRequest req,
-	        Authentication auth) {
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN','SYSTEM_ADMIN')")
+    public ResponseEntity<?> gradeManual(
+            @PathVariable Long entryId,
+            @RequestBody ManualScoreRequest req,
+            Authentication auth) {
 
-	    User teacher = userRepo.findByEmail(auth.getName())
-	            .orElseThrow(() -> new RuntimeException("User not found"));
+        User teacher = userRepo.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-	    AiJournalismEntry entry = entryRepo.findById(entryId)
-	            .orElseThrow(() -> new RuntimeException("Entry not found"));
+        AiJournalismEntry entry = entryRepo.findById(entryId)
+                .orElseThrow(() -> new RuntimeException("Entry not found"));
 
-	    AiJournalismManualScore score = new AiJournalismManualScore();
-	    score.setEntry(entry);
-	    score.setTeacher(teacher);
-	    score.setFeedback(req.getFeedback());
-	    score.setTotalScore(req.getTotalScore());
+        AiJournalismManualScore score = new AiJournalismManualScore();
+        score.setEntry(entry);
+        score.setTeacher(teacher);
+        score.setFeedback(req.getFeedback());
+        score.setTotalScore(req.getTotalScore());
 
-	    // -------------- 🔥 FIX CHUẨN NHẤT --------------
-	    JsonNode criteriaNode = objectMapper.valueToTree(req.getCriteriaJson());
-	    score.setCriteria(criteriaNode);
-	    // -----------------------------------------------
+        // -------------- 🔥 FIX CHUẨN NHẤT --------------
+        JsonNode criteriaNode = objectMapper.valueToTree(req.getCriteriaJson());
+        score.setCriteria(criteriaNode);
+        // -----------------------------------------------
 
-	    manualScoreRepo.save(score);
+        manualScoreRepo.save(score);
 
-	    // cập nhật entry
-	    entry.setTeacherFeedback(req.getFeedback());
-	    entryRepo.save(entry);
+        // cập nhật entry
+        entry.setTeacherFeedback(req.getFeedback());
+        entryRepo.save(entry);
 
-	    return ResponseEntity.ok(Map.of(
-	            "status", "success",
-	            "message", "Chấm điểm thủ công thành công"
-	    ));
-	}
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Chấm điểm thủ công thành công"
+        ));
+    }
 
     @GetMapping("/entries/{entryId}/submissions")
     public ResponseEntity<List<AiJournalismSubmission>> getSubmissions(@PathVariable Long entryId) {
         List<AiJournalismSubmission> list = submissionRepository.findByEntryId(entryId);
         return ResponseEntity.ok(list);
     }
+
+}
