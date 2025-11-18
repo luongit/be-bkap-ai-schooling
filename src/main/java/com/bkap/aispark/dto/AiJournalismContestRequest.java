@@ -30,6 +30,7 @@ public class AiJournalismContestRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RubricDto {
+        private Long id;
         private String criterion;
         private String description;
         private Double weight;

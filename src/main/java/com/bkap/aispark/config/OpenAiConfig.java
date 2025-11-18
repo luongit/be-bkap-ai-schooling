@@ -10,8 +10,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.service.OpenAiService;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
+@Primary
 public class OpenAiConfig {
 
     @Value("${openai.api.key}")
