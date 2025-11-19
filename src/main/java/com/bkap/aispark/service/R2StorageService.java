@@ -9,6 +9,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -33,11 +34,29 @@ public class R2StorageService {
     @Value("${cloudflare.r2.endpoint}")
     private String endpoint;
 
+    // Giữ nguyên như bạn muốn — không đưa vào config
+    private final String publicBaseUrl = "https://pub-73166ad3cfdb4cacae1a32467e7110c0.r2.dev";
+
+    private S3Client buildClient() {
+        AwsBasicCredentials creds = AwsBasicCredentials.create(accessKey, secretKey);
+
+        return S3Client.builder()
+                .region(Region.US_EAST_1)
+                .serviceConfiguration(
+                        S3Configuration.builder().pathStyleAccessEnabled(true).build()
+                )
+                .endpointOverride(URI.create(endpoint))
+                .credentialsProvider(StaticCredentialsProvider.create(creds))
+                .build();
+    }
+
+    /* ======================================================
+            UPLOAD (Giữ nguyên code của bạn)
+    ====================================================== */
     public String uploadFile(MultipartFile file) throws IOException {
         String cleanName = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String fileName = UUID.randomUUID() + "_" + cleanName;
 
-        // Xác định content-type an toàn
         String contentType = file.getContentType();
         if (contentType == null || contentType.isBlank()) {
             if (fileName.endsWith(".mp4")) contentType = "video/mp4";
@@ -46,19 +65,8 @@ public class R2StorageService {
             else contentType = "application/octet-stream";
         }
 
-        AwsBasicCredentials creds = AwsBasicCredentials.create(accessKey, secretKey);
+        S3Client s3 = buildClient();
 
-        // Kết nối tới Cloudflare R2 qua S3 API
-        S3Client s3 = S3Client.builder()
-                .region(Region.US_EAST_1)
-                .serviceConfiguration(S3Configuration.builder()
-                        .pathStyleAccessEnabled(true)
-                        .build())
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(creds))
-                .build();
-
-        // Upload file
         s3.putObject(
                 PutObjectRequest.builder()
                         .bucket(bucket)
@@ -68,10 +76,34 @@ public class R2StorageService {
                 RequestBody.fromBytes(file.getBytes())
         );
 
-        // ✅ Public URL (dùng để người xem tải file)
-        String publicBaseUrl = "https://pub-73166ad3cfdb4cacae1a32467e7110c0.r2.dev";
-
-        // Trả về link public để người dùng có thể xem trực tiếp
         return publicBaseUrl + "/" + fileName;
+    }
+
+    /* ======================================================
+            DELETE FILE – BẠN CHƯA CÓ! (Thêm mới)
+    ====================================================== */
+    public void deleteFile(String fileUrl) {
+
+        if (fileUrl == null || fileUrl.isBlank()) return;
+        if (!fileUrl.contains(publicBaseUrl)) return;
+
+        // Tách tên file từ public URL
+        String key = fileUrl.replace(publicBaseUrl + "/", "");
+
+        try {
+            S3Client s3 = buildClient();
+
+            s3.deleteObject(
+                    DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build()
+            );
+
+            System.out.println("🗑 Đã xoá file khỏi R2: " + key);
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi xoá file R2: " + e.getMessage());
+        }
     }
 }

@@ -9,6 +9,8 @@ import com.bkap.aispark.repository.AiJournalismSubmissionRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.dto.ProfileDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -150,4 +152,27 @@ public class AiSubmissionService {
     public List<AiJournalismSubmission> getSubmissionsByStudent(Long studentId) {
         return submissionRepository.findByStudentId(studentId);
     }
+    
+    public void deleteFileFromR2(String fileUrl) {
+        try {
+            r2StorageService.deleteFile(fileUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Transactional
+    public void deleteAllSubmissionsByEntryId(Long entryId) {
+
+        List<AiJournalismSubmission> oldSubs = submissionRepository.findByEntryId(entryId);
+
+        // Xóa file trong R2
+        for (AiJournalismSubmission sub : oldSubs) {
+            deleteFileFromR2(sub.getFileUrl());
+        }
+
+        // Xóa DB
+        submissionRepository.deleteByEntryId(entryId);
+    }
+
 }

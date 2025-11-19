@@ -5,8 +5,10 @@ import com.bkap.aispark.entity.AiJournalismEntry;
 import com.bkap.aispark.entity.AiJournalismSubmission;
 import com.bkap.aispark.repository.AiJournalismContestRepository;
 import com.bkap.aispark.repository.AiJournalismEntryRepository;
+import com.bkap.aispark.repository.AiJournalismSubmissionRepository;
 import com.bkap.aispark.service.AiSubmissionService;
 import com.bkap.aispark.service.ProfileService;
+import com.bkap.aispark.service.R2StorageService;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.dto.ProfileDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +41,11 @@ public class AiJournalismSubmissionApi {
 
     @Autowired
     private ProfileService profileService;
+    
+    @Autowired
+    private AiJournalismSubmissionRepository submissionRepository;
+    
+  
 
  
     @PostMapping("/upload")
@@ -157,7 +165,7 @@ public class AiJournalismSubmissionApi {
                 "uploaded", uploaded
         ));
     }
-
+  
 
     /** Giáo viên xem danh sách bài nộp theo entry */
     @GetMapping("/entry/{entryId}")
@@ -180,4 +188,78 @@ public class AiJournalismSubmissionApi {
                 "data", submissions
         ));
     }
+    // update lại file bài nộp
+    @PostMapping("/update-files/{entryId}")
+    public ResponseEntity<?> updateFiles(
+            @PathVariable Long entryId,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            @RequestParam(value = "video", required = false) MultipartFile video,
+            @RequestParam(value = "slide", required = false) MultipartFile slide,
+            HttpServletRequest request
+    ) throws IOException {
+
+        // Lấy user
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return ResponseEntity.status(401).body(Map.of("error", "Thiếu Authorization header"));
+
+        Long userId = jwtUtil.getUserId(authHeader.substring(7));
+        ProfileDTO profile = profileService.getProfileByUserId(userId);
+
+        // Lấy entry
+        AiJournalismEntry entry = entryRepository.findById(entryId)
+                .orElseThrow(() -> new RuntimeException("Entry không tồn tại"));
+
+        if (!entry.getStudentId().equals(profile.getObjectId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "Không có quyền sửa bài nộp này"));
+        }
+
+        // Lấy file cũ
+        List<AiJournalismSubmission> oldSubs = submissionRepository.findByEntryId(entryId);
+
+        // Xử lý theo từng loại file
+        if (image != null) {
+            oldSubs.stream()
+                    .filter(sub -> sub.getFileType() != null && sub.getFileType().startsWith("image"))
+                    .forEach(sub -> {
+                        submissionService.deleteFileFromR2(sub.getFileUrl());
+                        submissionRepository.delete(sub);
+                    });
+
+            submissionService.uploadMixed(entryId, image, null, null, null, request);
+        }
+
+        if (video != null) {
+            oldSubs.stream()
+                    .filter(sub -> sub.getFileType() != null && sub.getFileType().startsWith("video"))
+                    .forEach(sub -> {
+                        submissionService.deleteFileFromR2(sub.getFileUrl());
+                        submissionRepository.delete(sub);
+                    });
+
+            submissionService.uploadMixed(entryId, null, video, null, null, request);
+        }
+
+        if (slide != null) {
+            oldSubs.stream()
+                    .filter(sub -> sub.getFileType() != null &&
+                            (sub.getFileType().contains("presentation") || sub.getFileType().contains("pdf")))
+                    .forEach(sub -> {
+                        submissionService.deleteFileFromR2(sub.getFileUrl());
+                        submissionRepository.delete(sub);
+                    });
+
+            submissionService.uploadMixed(entryId, null, null, slide, null, request);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Cập nhật file thành công!"
+        ));
+    }
+
+
+
+
+
 }
