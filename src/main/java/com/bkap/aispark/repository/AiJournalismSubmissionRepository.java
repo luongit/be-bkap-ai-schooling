@@ -12,5 +12,7 @@ public interface AiJournalismSubmissionRepository extends JpaRepository<AiJourna
     List<AiJournalismSubmission> findByStudentId(Long studentId);
 
     List<AiJournalismSubmission> findByEntryId(Long entryId);
+    
+    void deleteByEntryId(Long entryId);
 
 }

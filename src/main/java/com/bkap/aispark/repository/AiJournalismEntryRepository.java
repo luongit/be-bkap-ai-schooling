@@ -16,4 +16,5 @@ public interface AiJournalismEntryRepository extends JpaRepository<AiJournalismE
     // kiem tra xem co bai thi nao da nop cho cuoc thi khong
     boolean existsByContestId(Long contestId);
     Optional<AiJournalismEntry> findByContestIdAndStudentId(Long contestId, Long studentId);
+
 }

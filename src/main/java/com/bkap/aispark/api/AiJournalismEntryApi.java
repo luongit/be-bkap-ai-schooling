@@ -100,5 +100,38 @@ public class AiJournalismEntryApi {
                 "entry", entry
         ));
     }
+    // update bài thi đã nộp
+    @PutMapping("/update/{entryId}")
+    public ResponseEntity<?> updateEntry(
+            @PathVariable Long entryId,
+            @RequestBody Map<String, String> body,
+            HttpServletRequest request
+    ) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return ResponseEntity.status(401).body(Map.of("error", "Thiếu token"));
+
+        Long userId = jwtUtil.getUserId(authHeader.substring(7));
+        ProfileDTO profile = profileService.getProfileByUserId(userId);
+
+        AiJournalismEntry entry = entryRepository.findById(entryId)
+                .orElseThrow(() -> new RuntimeException("Entry không tồn tại"));
+
+        // chỉ cho phép đúng học sinh sửa
+        if (!entry.getStudentId().equals(profile.getObjectId()))
+            return ResponseEntity.status(403).body(Map.of("error", "Không có quyền sửa bài này"));
+
+        if (body.containsKey("title")) entry.setTitle(body.get("title"));
+        if (body.containsKey("article")) entry.setArticle(body.get("article"));
+
+        entryRepository.save(entry);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Cập nhật thành công",
+                "entry", entry
+        ));
+    }
+
 
 }
