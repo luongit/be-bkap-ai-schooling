@@ -1,12 +1,23 @@
 package com.bkap.aispark.entity;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "ai_journalism_manual_scores")
@@ -21,10 +32,10 @@ public class AiJournalismManualScore {
     @JoinColumn(name = "entry_id", nullable = false)
     private AiJournalismEntry entry;
 
-    // 🔗 Liên kết đến giáo viên chấm
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id")
-    private User teacher;
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "teacher_id")
+private User teacher;
 
     @Column(name = "total_score", precision = 5, scale = 2)
     private BigDecimal totalScore;
