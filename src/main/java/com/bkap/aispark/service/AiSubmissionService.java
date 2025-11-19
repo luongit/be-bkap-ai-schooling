@@ -1,5 +1,15 @@
 package com.bkap.aispark.service;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.bkap.aispark.dto.ProfileDTO;
 import com.bkap.aispark.entity.AiJournalismContest;
 import com.bkap.aispark.entity.AiJournalismEntry;
 import com.bkap.aispark.entity.AiJournalismSubmission;
@@ -7,18 +17,9 @@ import com.bkap.aispark.repository.AiJournalismContestRepository;
 import com.bkap.aispark.repository.AiJournalismEntryRepository;
 import com.bkap.aispark.repository.AiJournalismSubmissionRepository;
 import com.bkap.aispark.security.JwtUtil;
-import com.bkap.aispark.dto.ProfileDTO;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class AiSubmissionService {
