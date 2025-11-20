@@ -30,4 +30,7 @@ public interface UserImageHistoryRepository extends JpaRepository<UserImageHisto
      * Đếm tổng số ảnh của user
      */
     long countByUserId(Long userId);
+    
+    List<UserImageHistory> findByUserIdOrderByCreatedAtDesc(Long userId);
+    
 }
