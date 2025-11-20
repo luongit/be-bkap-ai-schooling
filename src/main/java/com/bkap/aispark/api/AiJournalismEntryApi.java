@@ -1,26 +1,33 @@
 package com.bkap.aispark.api;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.bkap.aispark.dto.ProfileDTO;
 import com.bkap.aispark.entity.AiJournalismEntry;
 import com.bkap.aispark.entity.AiJournalismManualScore;
-import com.bkap.aispark.entity.AiJournalismSubmission;
 import com.bkap.aispark.entity.AiJournalismRubric;
+import com.bkap.aispark.entity.AiJournalismSubmission;
 import com.bkap.aispark.repository.AiJournalismEntryRepository;
 import com.bkap.aispark.repository.AiJournalismManualScoreRepository;
+import com.bkap.aispark.repository.AiJournalismRubricRepository;
 import com.bkap.aispark.repository.AiJournalismSubmissionRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.ProfileService;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import com.bkap.aispark.repository.AiJournalismRubricRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/journalism/entries")
@@ -132,6 +139,38 @@ public class AiJournalismEntryApi {
                 "entry", entry
         ));
     }
+@GetMapping("/teacher-view/{contestId}")
+public List<Map<String, Object>> getEntriesForTeacher(@PathVariable Long contestId) {
+    List<AiJournalismEntry> entries = entryRepository.findByContestId(contestId);
+
+    List<Map<String, Object>> result = new ArrayList<>();
+
+    for (AiJournalismEntry e : entries) {
+        Map<String, Object> item = new HashMap<>();
+
+        ProfileDTO p = null;
+        try {
+            if (e.getStudentId() != null) {
+                p = profileService.getProfileByStudentId(e.getStudentId());
+            }
+        } catch (Exception ignored) {}
+
+        item.put("id", e.getId());
+        item.put("title", e.getTitle());
+        item.put("article", e.getArticle());
+        item.put("createdAt", e.getCreatedAt());
+
+        // thông tin học sinh
+        item.put("studentName", p != null ? p.getFullName() : null);
+        item.put("className", p != null ? p.getClassName() : null);
+        item.put("code", p != null ? p.getCode() : null);
+        item.put("studentId", e.getStudentId());
+
+        result.add(item);
+    }
+
+    return result;
+}
 
 
 }
