@@ -4,8 +4,10 @@ import com.bkap.aispark.service.ImageLibraryService;
 import com.bkap.aispark.service.UserImageHistoryService;
 import com.bkap.aispark.service.CreditService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
@@ -26,6 +28,9 @@ public class ImageLibraryApi {
         this.historyService = historyService;
         this.creditService = creditService;
     }
+    
+    @Autowired
+    private RestTemplate restTemplate;
 
     // 🟢 Lấy thông tin dung lượng thư viện
     @GetMapping("/info")
@@ -84,5 +89,20 @@ public class ImageLibraryApi {
     	return ResponseEntity.ok("Đã xoá ảnh.");
 
 }
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> downloadImage(@RequestParam String url) {
+        try {
+            byte[] fileBytes = restTemplate.getForObject(url, byte[].class);
+
+            return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=ai-image.png")
+                .header("Content-Type", "image/png")
+                .body(fileBytes);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
 }
 
