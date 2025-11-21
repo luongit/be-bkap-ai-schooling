@@ -5,19 +5,13 @@ import java.util.Map;
 
 public class VideoBatchRequest {
 
-    // ========== Phiên bản cũ (tương thích cũ) ==========
     private List<String> images;
     private List<String> titles;
     private Double perSlideSec;
     private String audioUrl;
-
-    // ========== Phiên bản mới ==========
     private List<Slide> slides;  // danh sách slide
     private String bgMusicUrl;   // nhạc nền chung (nếu có)
 
-    // -------------------------------------------
-    // ✅ Slide: 1 ảnh, 1 text, 1 giọng đọc, 1 style
-    // -------------------------------------------
     public static class Slide {
         private String imageUrl;            // ảnh nền
         private String text;                // nội dung hiển thị + TTS
@@ -25,40 +19,95 @@ public class VideoBatchRequest {
         private Double durationSec;         // thời lượng slide (giây)
         private Map<String, String> style;  // style: color, font-weight, shadow,...
 
-        public String getImageUrl() { return imageUrl; }
-        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+        public String getImageUrl() {
+            return imageUrl;
+        }
 
-        public String getText() { return text; }
-        public void setText(String text) { this.text = text; }
+        public void setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
+        }
 
-        public String getVoiceName() { return voiceName; }
-        public void setVoiceName(String voiceName) { this.voiceName = voiceName; }
+        public String getText() {
+            return text;
+        }
 
-        public Double getDurationSec() { return durationSec; }
-        public void setDurationSec(Double durationSec) { this.durationSec = durationSec; }
+        public void setText(String text) {
+            this.text = text;
+        }
 
-        public Map<String, String> getStyle() { return style; }
-        public void setStyle(Map<String, String> style) { this.style = style; }
+        public String getVoiceName() {
+            return voiceName;
+        }
+
+        public void setVoiceName(String voiceName) {
+            this.voiceName = voiceName;
+        }
+
+        public Double getDurationSec() {
+            return durationSec;
+        }
+
+        public void setDurationSec(Double durationSec) {
+            this.durationSec = durationSec;
+        }
+
+        public Map<String, String> getStyle() {
+            return style;
+        }
+
+        public void setStyle(Map<String, String> style) {
+            this.style = style;
+        }
     }
 
-    // -------------------------------------------
+
     // Getter / Setter
-    // -------------------------------------------
-    public List<String> getImages() { return images; }
-    public void setImages(List<String> images) { this.images = images; }
 
-    public List<String> getTitles() { return titles; }
-    public void setTitles(List<String> titles) { this.titles = titles; }
+    public List<String> getImages() {
+        return images;
+    }
 
-    public Double getPerSlideSec() { return perSlideSec; }
-    public void setPerSlideSec(Double perSlideSec) { this.perSlideSec = perSlideSec; }
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
 
-    public String getAudioUrl() { return audioUrl; }
-    public void setAudioUrl(String audioUrl) { this.audioUrl = audioUrl; }
+    public List<String> getTitles() {
+        return titles;
+    }
 
-    public List<Slide> getSlides() { return slides; }
-    public void setSlides(List<Slide> slides) { this.slides = slides; }
+    public void setTitles(List<String> titles) {
+        this.titles = titles;
+    }
 
-    public String getBgMusicUrl() { return bgMusicUrl; }
-    public void setBgMusicUrl(String bgMusicUrl) { this.bgMusicUrl = bgMusicUrl; }
+    public Double getPerSlideSec() {
+        return perSlideSec;
+    }
+
+    public void setPerSlideSec(Double perSlideSec) {
+        this.perSlideSec = perSlideSec;
+    }
+
+    public String getAudioUrl() {
+        return audioUrl;
+    }
+
+    public void setAudioUrl(String audioUrl) {
+        this.audioUrl = audioUrl;
+    }
+
+    public List<Slide> getSlides() {
+        return slides;
+    }
+
+    public void setSlides(List<Slide> slides) {
+        this.slides = slides;
+    }
+
+    public String getBgMusicUrl() {
+        return bgMusicUrl;
+    }
+
+    public void setBgMusicUrl(String bgMusicUrl) {
+        this.bgMusicUrl = bgMusicUrl;
+    }
 }
