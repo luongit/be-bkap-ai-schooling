@@ -44,7 +44,7 @@ public class AuthApi {
 	private UserRepository userRepository;
 	@Autowired
 	private AuthService authService;
-	
+
 	@Autowired
 	private JwtUtil jwtUtil;
 
@@ -138,26 +138,25 @@ public class AuthApi {
 		// redirect về frontend login
 		response.sendRedirect("http://bkapai.vn/auth/login");
 	}
+
 	@PostMapping("/refresh")
 	public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
-	    String refreshToken = body.get("refreshToken");
-	    if (refreshToken == null || !jwtUtil.validateToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
-	        return ResponseEntity.status(401).body(Map.of("message", "Refresh token không hợp lệ hoặc đã hết hạn"));
-	    }
+		String refreshToken = body.get("refreshToken");
+		if (refreshToken == null || !jwtUtil.validateToken(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+			return ResponseEntity.status(401).body(Map.of("message", "Refresh token không hợp lệ hoặc đã hết hạn"));
+		}
 
-	    Long userId = jwtUtil.getUserId(refreshToken);
-	    String email = jwtUtil.getEmail(refreshToken);
-	    User user = userRepository.findById(userId)
-	            .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+		Long userId = jwtUtil.getUserId(refreshToken);
+		String email = jwtUtil.getEmail(refreshToken);
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
-	    String newAccess = jwtUtil.generateAccessToken(userId, email, user.getRole().name());
-	    String newRefresh = jwtUtil.generateRefreshToken(userId, email);
+		String newAccess = jwtUtil.generateAccessToken(userId, email, user.getRole().name());
+		String newRefresh = jwtUtil.generateRefreshToken(userId, email);
 
-	    return ResponseEntity.ok(Map.of(
-	            "accessToken", newAccess,
-	            "refreshToken", newRefresh
-	    ));
+		return ResponseEntity.ok(Map.of(
+				"accessToken", newAccess,
+				"refreshToken", newRefresh));
 	}
-
 
 }
