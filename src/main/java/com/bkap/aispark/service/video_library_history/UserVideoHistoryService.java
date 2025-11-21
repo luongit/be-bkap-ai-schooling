@@ -3,7 +3,7 @@ import com.bkap.aispark.entity.video_library_history.UserVideoHistory;
 import com.bkap.aispark.repository.video_library_history.UserVideoHistoryRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
-
+import org.springframework.transaction.annotation.Transactional; // ← ĐẢM BẢO CÓ DÒNG NÀY Ở TRÊN CÙNG
 @Service
 public class UserVideoHistoryService {
 
@@ -20,7 +20,7 @@ public class UserVideoHistoryService {
     public UserVideoHistory save(UserVideoHistory video) {
         return repo.save(video);
     }
-
+    @Transactional
     public boolean delete(Long userId, Long videoId) {
         if (repo.existsByUserIdAndId(userId, videoId)) {
             repo.deleteByUserIdAndId(userId, videoId);

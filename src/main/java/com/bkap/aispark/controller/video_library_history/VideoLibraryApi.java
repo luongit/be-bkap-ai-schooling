@@ -80,27 +80,36 @@ public class VideoLibraryApi {
     }
 
     // Xóa video khỏi thư viện
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> delete(@RequestParam Long userId, @RequestParam Long videoId) {
-        if (userId == null || userId <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "userId không hợp lệ"));
-        }
-        if (videoId == null || videoId <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "videoId không hợp lệ"));
-        }
+    
+   @DeleteMapping("/delete")
+public ResponseEntity<?> delete(@RequestParam Long userId, @RequestParam Long videoId) {
+    if (userId == null || userId <= 0) {
+        return ResponseEntity.badRequest().body(Map.of("error", "userId không hợp lệ"));
+    }
+    if (videoId == null || videoId <= 0) {
+        return ResponseEntity.badRequest().body(Map.of("error", "videoId không hợp lệ"));
+    }
 
+    try {
         boolean deleted = historyService.delete(userId, videoId);
         if (deleted) {
-            libraryService.decrementUsed(userId); // Giảm số video đã dùng
+            libraryService.decrementUsed(userId);
             return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Đã xóa video thành công",
-                    "freedSlot", true
+                "success", true,
+                "message", "Đã xóa video thành công",
+                "decrement", true   // <-- frontend cần cái này
             ));
         } else {
             return ResponseEntity.status(404).body(Map.of(
-                    "error", "Video không tồn tại hoặc đã bị xóa trước đó"
+                "error", "Video không tồn tại hoặc đã bị xóa"
             ));
         }
+    } catch (Exception e) {
+        e.printStackTrace(); // để bạn thấy lỗi thật
+        return ResponseEntity.internalServerError().body(Map.of(
+            "error", "Lỗi server khi xóa video",
+            "details", e.getMessage()
+        ));
     }
+}
 }
