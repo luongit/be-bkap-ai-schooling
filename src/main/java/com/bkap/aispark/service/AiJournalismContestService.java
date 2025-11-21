@@ -1,18 +1,19 @@
 package com.bkap.aispark.service;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-import com.bkap.aispark.repository.AiJournalismEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bkap.aispark.dto.AiJournalismContestRequest;
 import com.bkap.aispark.entity.AiJournalismContest;
 import com.bkap.aispark.entity.AiJournalismRubric;
 import com.bkap.aispark.entity.User;
 import com.bkap.aispark.repository.AiJournalismContestRepository;
+import com.bkap.aispark.repository.AiJournalismEntryRepository;
 import com.bkap.aispark.repository.UserRepository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiJournalismContestService {

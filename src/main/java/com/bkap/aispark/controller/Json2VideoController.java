@@ -1,8 +1,11 @@
 package com.bkap.aispark.controller;
 
 import com.bkap.aispark.dto.VideoBatchRequest;
+import com.bkap.aispark.entity.video_library_history.UserVideoHistory;
 import com.bkap.aispark.service.Json2VideoService;
 import com.bkap.aispark.service.R2StorageService;
+import com.bkap.aispark.service.video_library_history.UserVideoHistoryService;
+import com.bkap.aispark.service.video_library_history.UserVideoLibraryService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -22,30 +27,41 @@ public class Json2VideoController {
     @Autowired
     private R2StorageService r2StorageService;
 
+    @Autowired
+    private UserVideoHistoryService videoHistoryService;
+
+    @Autowired
+    private UserVideoLibraryService videoLibraryService;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // ================= API upload ảnh + slides JSON + optional bg music file =================
+    // ================= API CHÍNH: TẠO VIDEO + TỰ ĐỘNG LƯU VÀO THƯ VIỆN =================
     @PostMapping("/create-slides-advanced-upload")
     public ResponseEntity<?> createSlidesAdvancedUpload(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("slidesJson") String slidesJson,
-            @RequestParam(value = "bgMusicFile", required = false) MultipartFile bgMusicFile
+            @RequestParam(value = "bgMusicFile", required = false) MultipartFile bgMusicFile,
+            @RequestParam("userId") Long userId   // BẮT BUỘC GỬI TỪ FRONTEND
     ) {
         try {
+            // === KIỂM TRA USER ID ===
+            if (userId == null || userId <= 0) {
+                return ResponseEntity.status(401).body(Map.of("error", "Thiếu hoặc sai userId! Vui lòng đăng nhập lại."));
+            }
+
             if (files == null || files.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Danh sách files trống"));
             }
 
-            // 1) Upload ảnh lên R2
+            // === UPLOAD ẢNH LÊN R2 ===
             List<String> imageUrls = new ArrayList<>();
             for (MultipartFile file : files) {
                 imageUrls.add(r2StorageService.uploadFile(file));
             }
 
-            // 2) Parse slides JSON
+            // === PARSE SLIDES JSON ===
             List<Map<String, Object>> slidesRaw = mapper.readValue(slidesJson, new TypeReference<>() {});
             List<VideoBatchRequest.Slide> slides = new ArrayList<>();
-
             double totalVideoDuration = 0.0;
 
             for (int i = 0; i < slidesRaw.size(); i++) {
@@ -92,45 +108,61 @@ public class Json2VideoController {
                 slides.add(slide);
             }
 
-            // 3) Upload bg music file nếu có
+            // === UPLOAD NHẠC NỀN NẾU CÓ ===
             String bgMusicUrl = null;
             if (bgMusicFile != null && !bgMusicFile.isEmpty()) {
-                // optional validation here: extension, mime, size
-                String name = bgMusicFile.getOriginalFilename() != null ? bgMusicFile.getOriginalFilename().toLowerCase() : "";
-                if (!(name.endsWith(".mp3") || name.endsWith(".mpeg"))) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "Chỉ chấp nhận mp3!"));
+                String name = bgMusicFile.getOriginalFilename() != null 
+                    ? bgMusicFile.getOriginalFilename().toLowerCase() : "";
+                if (!name.endsWith(".mp3") && !name.endsWith(".mpeg") && !name.endsWith(".m4a")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Chỉ chấp nhận file âm thanh (mp3, m4a)!"));
                 }
-                // upload to R2 -> get public url
                 bgMusicUrl = r2StorageService.uploadFile(bgMusicFile);
             }
 
-            // 4) Gọi service render video (chuyển cả totalVideoDuration)
+            // === TẠO VIDEO ===
             VideoBatchRequest req = new VideoBatchRequest();
             req.setSlides(slides);
             req.setBgMusicUrl(bgMusicUrl);
 
             String videoUrl = json2VideoService.renderSlideshowMultiTrack(req, totalVideoDuration);
 
+            // === TỰ ĐỘNG LƯU VÀO THƯ VIỆN ===
+            String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
+
+            String title = slides.stream()
+                    .map(VideoBatchRequest.Slide::getText)
+                    .filter(t -> t != null && !t.trim().isEmpty())
+                    .findFirst()
+                    .map(t -> t.length() > 60 ? t.substring(0, 57) + "..." : t)
+                    .orElse("Video AI - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+
+            UserVideoHistory history = new UserVideoHistory(userId, videoUrl, thumbnailUrl, title);
+            videoHistoryService.save(history);
+
+            videoLibraryService.incrementUsed(userId);
+
+            // === TRẢ KẾT QUẢ ===
             return ResponseEntity.ok(Map.of(
                     "status", "success",
-                    "uploaded", files.size(),
-                    "slides", slides.size(),
                     "videoUrl", videoUrl,
-                    "bgMusicUrl", bgMusicUrl
+                    "thumbnailUrl", thumbnailUrl,
+                    "title", title,
+                    "savedToLibrary", true,
+                    "message", "Video đã được tạo và lưu vào thư viện thành công!"
             ));
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.internalServerError().body(
+                Map.of("error", "Lỗi tạo video: " + e.getMessage())
+            );
         }
     }
 
-    // ================= API nhận JSON trực tiếp (không upload file) =================
+    // ================= API CŨ: KHÔNG UPLOAD FILE (GIỮ NGUYÊN) =================
     @PostMapping("/create-slides-advanced")
     public ResponseEntity<?> createSlidesAdvanced(@RequestBody VideoBatchRequest req) {
         try {
-            // nếu client đã gửi bgMusicUrl (public) thì service sẽ sử dụng
-            // tính tổng duration nếu muốn
             double total = 0.0;
             if (req.getSlides() != null) {
                 for (VideoBatchRequest.Slide s : req.getSlides()) {
@@ -148,5 +180,5 @@ public class Json2VideoController {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
-
 }
+
