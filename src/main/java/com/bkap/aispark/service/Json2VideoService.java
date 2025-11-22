@@ -66,7 +66,7 @@ public class Json2VideoService {
                 style.putIfAbsent("vertical-position", client.getOrDefault("vertical-position", "bottom"));
             }
             style.putIfAbsent("font-family", "Inter");
-            style.putIfAbsent("font-size", "2vw");
+            style.putIfAbsent("font-size", "1vw");
             style.putIfAbsent("color", "#ffffff");
             style.putIfAbsent("highlight-color", "#fefa4a");
             style.putIfAbsent("stroke-color", "#333333");
