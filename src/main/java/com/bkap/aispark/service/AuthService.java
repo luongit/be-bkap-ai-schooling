@@ -47,6 +47,15 @@ public class AuthService {
     @Autowired
     private JavaMailSender mailSender;
 
+public boolean checkPassword(String raw, String encoded) {
+    return passwordEncoder.matches(raw, encoded);
+}
+
+public void updatePassword(User user, String newPassword) {
+    user.setPassword(passwordEncoder.encode(newPassword));
+    userRepository.save(user);
+}
+
     // ----------------- HELPER -----------------
     private String generateVerificationToken() {
         return UUID.randomUUID().toString();

@@ -158,5 +158,37 @@ public class AuthApi {
 				"accessToken", newAccess,
 				"refreshToken", newRefresh));
 	}
+@PostMapping("/change-password")
+public ResponseEntity<?> changePassword(@RequestBody Map<String, String> req) {
+    try {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getName().equals("anonymousUser")) {
+            return ResponseEntity.status(401).body(Map.of("message", "Chưa đăng nhập"));
+        }
+
+        String email = auth.getName(); // Lấy email từ token
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        String oldPassword = req.get("oldPassword");
+        String newPassword = req.get("newPassword");
+
+        if (oldPassword == null || newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu dữ liệu"));
+        }
+
+        // Kiểm tra mật khẩu cũ
+        if (!authService.checkPassword(oldPassword, user.getPassword())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Mật khẩu cũ không đúng"));
+        }
+
+        // Lưu mật khẩu mới
+        authService.updatePassword(user, newPassword);
+
+        return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công!"));
+    } catch (Exception e) {
+        return ResponseEntity.status(500).body(Map.of("message", e.getMessage()));
+    }
+}
 
 }
