@@ -149,7 +149,7 @@ public class AiJournalismContestApi {
 	}
 
 	// Xoa cuoc thi
-	@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','ADMIN','TEACHER')")
+	@PreAuthorize("hasAnyRole('SYSTEM_ADMIN','ADMIN')")
 	@DeleteMapping("/contests/{contestId}")
 	public ResponseEntity<Map<String, Object>> deleteContest(@PathVariable Long contestId) {
 		AiJournalismContest contest = contestService.getContestById(contestId);
