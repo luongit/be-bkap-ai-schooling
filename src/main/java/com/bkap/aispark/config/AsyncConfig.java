@@ -36,16 +36,22 @@ public class AsyncConfig {
     }
     
     
-    @Bean(name = "openAIImage")
-    public Executor openAIImage() {
+    @Bean(name = "imageExecutor")
+    public Executor imageExecutor() {
         ThreadPoolTaskExecutor img = new ThreadPoolTaskExecutor();
-        img.setCorePoolSize(20);
-        img.setMaxPoolSize(40);
-        img.setQueueCapacity(100);
-        img.setThreadNamePrefix("open-img-");
+
+        img.setCorePoolSize(20);       // 20 thread chạy POST + GET poll
+        img.setMaxPoolSize(60);        // không cần quá 100
+        img.setQueueCapacity(200);     // hàng chờ vừa đủ
+        img.setThreadNamePrefix("leonardo-img-");
+
+        // tránh reject khi user vào đông
+        img.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        
         img.initialize();
         return img;
     }
+
     
     
     @Bean(name = "email")
@@ -62,14 +68,15 @@ public class AsyncConfig {
     
     @Bean(name = "Jsonvideo2")
     public Executor Jsonvideo() {
-    	ThreadPoolTaskExecutor video = new ThreadPoolTaskExecutor();
-    	video.setCorePoolSize(20);
-    	video.setMaxPoolSize(50);
-    	video.setQueueCapacity(100);
-    	video.setThreadNamePrefix("video-");
-    	video.initialize();
-    	return video;
+        ThreadPoolTaskExecutor video = new ThreadPoolTaskExecutor();
+        video.setCorePoolSize(50);
+        video.setMaxPoolSize(100);
+        video.setQueueCapacity(300);
+        video.setThreadNamePrefix("video-");
+        video.initialize();
+        return video;
     }
+
     @Bean(name = "streamExecutor")
     public Executor streamExecutor() {
         ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
