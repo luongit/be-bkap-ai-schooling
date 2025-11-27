@@ -13,8 +13,11 @@ public class SpaController {
     }
 
     // Cho trang chủ FE
-    @RequestMapping({ "/", "/{path:[^\\.]*}" })
-    public String forwardRoot() {
-        return "forward:/index.html";
+    @RequestMapping({
+            "/",
+            "/**/{path:[^\\.]*}" // FIX: match route nhiều cấp
+    })
+    public String forwardClient() {
+        return "forward:/index.html"; // React xử lý bằng React Router
     }
 }
