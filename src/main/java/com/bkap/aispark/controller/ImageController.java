@@ -29,8 +29,11 @@ public class ImageController {
     @Autowired
     private UserImageHistoryService historyService;
 
+    // ========================
+    //  GENERATE IMAGE (ASYNC)
+    // ========================
     @PostMapping("/generate")
-    @Async("openAIImage")  // <-- CHỈ ASYNC TẠI ĐÂY
+    @Async("imageExecutor")
     public CompletableFuture<ResponseEntity<Map<String,Object>>> generateImage(
             @RequestParam Long userId,
             @RequestParam String prompt,
@@ -38,17 +41,18 @@ public class ImageController {
             @RequestParam(defaultValue = "1024x1024") String size
     ) {
 
-        return CompletableFuture.supplyAsync(() -> {
-
-            // 1) Check slot
+        try {
+            // 0) Kiểm tra slot thư viện ảnh
             if (!libraryService.canStore(userId)) {
-                return ResponseEntity.ok(Map.of(
-                        "status", "LIMIT_REACHED",
-                        "message", "Thư viện ảnh đã đầy. Vui lòng mua thêm dung lượng."
-                ));
+                return CompletableFuture.completedFuture(
+                    ResponseEntity.ok(Map.of(
+                            "status", "LIMIT_REACHED",
+                            "message", "Thư viện ảnh đã đầy. Vui lòng mua thêm dung lượng."
+                    ))
+                );
             }
 
-            // 2) Check credit
+            // 1) Trừ credit
             boolean ok = creditService.deductByAction(
                     userId,
                     "IMAGE_GENERATE",
@@ -56,30 +60,41 @@ public class ImageController {
             );
 
             if (!ok) {
-                return ResponseEntity.ok(Map.of(
-                        "status", "NO_CREDIT",
-                        "message", "Bạn không đủ credit để tạo ảnh."
-                ));
+                return CompletableFuture.completedFuture(
+                    ResponseEntity.ok(Map.of(
+                            "status", "NO_CREDIT",
+                            "message", "Bạn không đủ credit để tạo ảnh."
+                    ))
+                );
             }
 
-            // 3) Gọi AI (blocking nhưng chạy trong thread pool openAIImage)
+            // 2) Generate ảnh
             String finalUrl = imageService.generate(userId, prompt, style, size);
 
-            
+            return CompletableFuture.completedFuture(
+                ResponseEntity.ok(Map.of(
+                        "status", "success",
+                        "imageUrl", finalUrl
+                ))
+            );
 
-            // 4) Trả về FE
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "imageUrl", finalUrl
-            ));
+        } catch (Exception e) {
 
-        }, CompletableFuture.delayedExecutor(0, java.util.concurrent.TimeUnit.MILLISECONDS));
-        // 👆 forced use of the same pool (optional)
+            return CompletableFuture.completedFuture(
+                ResponseEntity.ok(Map.of(
+                        "status", "ERROR",
+                        "message", e.getMessage()
+                ))
+            );
+        }
     }
 
+
+    // ======================
+    //  GET IMAGE HISTORY
+    // ======================
     @GetMapping("/history")
     public ResponseEntity<?> getHistory(@RequestParam Long userId) {
         return ResponseEntity.ok(historyService.getHistory(userId));
     }
 }
-
