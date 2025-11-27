@@ -9,6 +9,7 @@ public class HomeController {
 	public String home() {
 		return "forward:/index.html";
 	}
+	
 
 	@GetMapping({ "/excel" })
 	public String excel() {
