@@ -35,9 +35,8 @@ public class ImageGenerationService {
 	@Autowired
 	private OpenAiService openAiService;
 
-	/**
-	 * Generate image using Leonardo API – 2-step flow
-	 */
+	//Generate image using Leonardo API – 2-step flow
+	 
 	public String generate(Long userId, String prompt, String styleUUID, String size) {
 		try {
 
@@ -47,7 +46,7 @@ public class ImageGenerationService {
 			}
 
 			// 2) Parse size
-			int width = 512;
+			int width = 1024;
 			int height = 1024;
 			try {
 				String[] parts = size.toLowerCase().split("x");
@@ -127,7 +126,7 @@ public class ImageGenerationService {
 		}
 	}
 
-	/** Poll GET until generation is complete */
+	// Poll GET until generation is complete 
 	private String pollResult(String generationId) throws InterruptedException {
 
 		String url = API_URL + "/" + generationId;
@@ -172,44 +171,29 @@ public class ImageGenerationService {
 	            .messages(List.of(
 	                new ChatMessage("system",
 	                    """
-	                    Bạn là AI chuyên chuyển mô tả tiếng Việt rất ngắn thành prompt tiếng Anh chi tiết,
-	                    phù hợp cho mô hình tạo ảnh (Leonardo diffusion models).
-
-	                    NHIỆM VỤ CHÍNH:
-	                    1. Xác định CHỦ THỂ (robot, người, con vật…)
-	                    2. Xác định HÀNH ĐỘNG CHÍNH (quét rác, bảo vệ môi trường, bay, nhảy, chiến đấu…)
-	                    3. Xác định DỤNG CỤ nếu có (chổi, máy hút bụi, kiếm, sách, bút…)
-	                    4. Xác định SỰ TƯƠNG TÁC với môi trường (bụi bay, khói, lửa, nước, rác…)
-	                    5. Dịch sang tiếng Anh tự nhiên và mở rộng ĐÚNG hành động người dùng mô tả.
-
-	                    QUY TẮC MỞ RỘNG:
-	                    - Nếu hành động là “quét rác”:
-	                        thêm: động tác quét, chổi, robot cleaning arms, hạt bụi bay,
-	                        rác trên mặt đất, hiệu ứng chuyển động.
-	                    - Nếu hành động là “bảo vệ môi trường”:
-	                        thêm: hành động dọn rác, làm sạch, hỗ trợ cây xanh, năng lượng xanh.
-	                    - Nếu hành động là “xử lý ô nhiễm / khói bụi”:
-	                        thêm: hút khói độc, lọc không khí, làm sạch khí bẩn.
-	                    - Nếu người dùng mô tả hành động KHÁC → mở rộng đúng hành động đó.
-	                    - Tuyệt đối KHÔNG thêm nội dung không liên quan.
-
-	                    YÊU CẦU:
-	                    - Mô tả rõ hành động, dụng cụ, hiệu ứng, cảnh.
-	                    - Thêm lighting, environment, dynamic scene để Leonardo hiểu đúng.
-	                    - KHÔNG giải thích; chỉ trả về prompt tiếng Anh cuối cùng.
+	                    You are a translation assistant.
+	                    Translate the given Vietnamese image description into natural English.
+	                    
+	                    RULES:
+	                    - DO NOT add any new visual details.
+	                    - DO NOT expand the scene.
+	                    - DO NOT add lighting, environment, effects, or composition.
+	                    - Translate EXACTLY the meaning of the user's text.
+	                    - Keep the output short, simple, clear.
+	                    - Return ONLY the English translation.
 	                    """
 	                ),
 	                new ChatMessage("user", prompt)
 	            ))
-	            .maxTokens(250)
-	            .temperature(0.2)
+	            .maxTokens(60)
+	            .temperature(0.0)
 	            .build();
 
 	        var res = openAiService.createChatCompletion(req);
-	        return res.getChoices().get(0).getMessage().getContent();
+	        return res.getChoices().get(0).getMessage().getContent().trim();
 
 	    } catch (Exception e) {
-	        return prompt;
+	        return prompt; // fallback: dùng đúng prompt gốc nếu OpenAI lỗi
 	    }
 	}
 
