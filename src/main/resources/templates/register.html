@@ -2,392 +2,154 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Đăng ký tài khoản</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f0f2f5;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Đăng ký | Hệ Thống BKAP AI</title>
 
-        .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            width: 400px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        input,
-        button {
-            width: 100%;
-            padding: 10px 10px 10px 35px;
-            margin-top: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        input.error-input {
-            border-color: red;
-            background-color: #fff5f5;
-        }
-
-        .input-icon {
-            position: absolute;
-            margin-left: 10px;
-            margin-top: 12px;
-            color: #888;
-        }
-
-        .role-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: 0.3s;
-        }
-
-        .role-btn.student {
-            background: #a8d0ff;
-            color: #007bff;
-        }
-
-        .role-btn.student:hover {
-            background: #007bff;
-            color: white;
-        }
-
-        .role-btn.parent {
-            background: #ffd1b3;
-            color: #ff7f50;
-        }
-
-        .role-btn.parent:hover {
-            background: #ff7f50;
-            color: white;
-        }
-
-        .btn-back {
-            background: #6c757d;
-            color: white;
-            border: none;
-        }
-
-        .btn-back:hover {
-            background: #5a6268;
-        }
-
-        .btn-submit.student {
-            background: #007bff;
-            color: white;
-            border: none;
-        }
-
-        .btn-submit.student:hover {
-            background: #0056b3;
-        }
-
-        .btn-submit.parent {
-            background: #ff7f50;
-            color: white;
-            border: none;
-        }
-
-        .btn-submit.parent:hover {
-            background: #e67340;
-        }
-
-        .error {
-            color: red;
-            font-size: 13px;
-            margin-top: 5px;
-        }
-
-        .success {
-            color: green;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/register.css">
+    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
 </head>
 
 <body>
-    <div class="container" id="formContainer">
-        <div id="step1">
-            <h2>Chọn vai trò của bạn</h2>
-            <button class="role-btn student" onclick="selectRole('student')"><i class="fas fa-user-graduate"></i> Học
-                sinh</button>
-            <button class="role-btn parent" onclick="selectRole('parent')"><i class="fas fa-user"></i> Phụ
-                huynh</button>
-        </div>
+<div class="register-container">
 
-        <div id="step2" style="display: none">
-            <h2 id="formTitle"></h2>
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
 
-            <!-- FORM HỌC SINH -->
-            <div id="studentForm" style="display: none">
-                <div class="input-wrapper"><i class="fas fa-user input-icon"></i>
-                    <input type="text" id="sUsername" placeholder="Tên đăng nhập" />
-                    <div id="sUsernameErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-id-card input-icon"></i>
-                    <input type="text" id="sFullName" placeholder="Họ và tên" />
-                    <div id="sFullNameErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-calendar input-icon"></i>
-                    <input type="date" id="sBirthdate" placeholder="Ngày sinh" />
-                    <div id="sBirthdateErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="sEmail" placeholder="Email" />
-                    <div id="sEmailErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-phone input-icon"></i>
-                    <input type="text" id="sPhone" placeholder="Số điện thoại" />
-                    <div id="sPhoneErr" class="error"></div>
-                </div>
-            </div>
+    <!-- STEP 1 -->
+    <div id="step1" class="step">
+        <h1>Đăng ký tài khoản</h1>
+        <p style="text-align: center;">Chọn vai trò phù hợp để tiếp tục</p>
 
-            <!-- FORM PHỤ HUYNH -->
-            <div id="parentForm" style="display: none">
-                <div class="input-wrapper"><i class="fas fa-user input-icon"></i>
-                    <input type="text" id="pUsername" placeholder="Tên đăng nhập" />
-                    <div id="pUsernameErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-id-card input-icon"></i>
-                    <input type="text" id="pFullName" placeholder="Họ và tên" />
-                    <div id="pFullNameErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-map-marker-alt input-icon"></i>
-                    <input type="text" id="pAddress" placeholder="Địa chỉ" />
-                    <div id="pAddressErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-envelope input-icon"></i>
-                    <input type="email" id="pEmail" placeholder="Email" />
-                    <div id="pEmailErr" class="error"></div>
-                </div>
-                <div class="input-wrapper"><i class="fas fa-phone input-icon"></i>
-                    <input type="text" id="pPhone" placeholder="Số điện thoại" />
-                    <div id="pPhoneErr" class="error"></div>
-                </div>
-            </div>
+        <button class="role-btn student" onclick="selectRole('student')">
+            <i class="fas fa-user-graduate"></i> Dành cho học sinh
+        </button>
 
-            <!-- PASSWORD -->
-            <div class="input-wrapper"><i class="fas fa-lock input-icon"></i>
-                <input type="password" id="password" placeholder="Mật khẩu" />
-                <div id="passErr" class="error"></div>
-            </div>
-            <div class="input-wrapper"><i class="fas fa-lock input-icon"></i>
-                <input type="password" id="confirm" placeholder="Nhập lại mật khẩu" />
-                <div id="confirmErr" class="error"></div>
-            </div>
+        <button class="role-btn parent" onclick="selectRole('parent')">
+            <i class="fas fa-people-group"></i> Dành cho phụ huynh
+        </button>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; gap: 10px">
-                <button class="btn-back" onclick="goBack()"><i class="fas fa-arrow-left"></i> Quay lại</button>
-                <button id="submitBtn" class="btn-submit student" onclick="register()"><i class="fas fa-user-plus"></i>
-                    Đăng ký</button>
-            </div>
-            <p id="message"></p>
+        <div class="go-login">
+            Đã có tài khoản? <a href="/auth/login">Đăng nhập ngay</a>
         </div>
     </div>
 
-    <script>
-        let selectedRole = null;
-        function selectRole(role) {
-            selectedRole = role;
-            document.getElementById("step1").style.display = "none";
-            document.getElementById("step2").style.display = "block";
-            const btn = document.getElementById("submitBtn");
-            if (role === "student") {
-                document.getElementById("formTitle").innerText = "Đăng ký Học sinh";
-                document.getElementById("studentForm").style.display = "block";
-                document.getElementById("parentForm").style.display = "none";
-                btn.className = "btn-submit student";
-            } else {
-                document.getElementById("formTitle").innerText = "Đăng ký Phụ huynh";
-                document.getElementById("studentForm").style.display = "none";
-                document.getElementById("parentForm").style.display = "block";
-                btn.className = "btn-submit parent";
-            }
-            document.querySelectorAll(".error").forEach(e => e.innerText = "");
-            document.querySelectorAll("input").forEach(i => i.classList.remove("error-input"));
-        }
-        function goBack() {
-            selectedRole = null;
-            document.getElementById("step2").style.display = "none";
-            document.getElementById("step1").style.display = "block";
-        }
-        function setError(id, errId, msg) {
-            document.getElementById(id).classList.add("error-input");
-            document.getElementById(errId).innerText = msg;
-        }
-        function clearError(id, errId) {
-            document.getElementById(id).classList.remove("error-input");
-            document.getElementById(errId).innerText = "";
-        }
-        // clear lỗi khi người dùng nhập lại
-        document.addEventListener("input", e => {
-            const fieldMap = {
-                sUsername: "sUsernameErr", sFullName: "sFullNameErr", sBirthdate: "sBirthdateErr", sEmail: "sEmailErr", sPhone: "sPhoneErr",
-                pUsername: "pUsernameErr", pFullName: "pFullNameErr", pAddress: "pAddressErr", pEmail: "pEmailErr", pPhone: "pPhoneErr",
-                password: "passErr", confirm: "confirmErr",
-            };
-            if (fieldMap[e.target.id]) clearError(e.target.id, fieldMap[e.target.id]);
-        });
-        function validateNotEmpty(id, errId, msg) {
-            const v = document.getElementById(id).value.trim();
-            if (!v) { setError(id, errId, msg); return false; }
-            clearError(id, errId);
-            return true;
-        }
-        function validateEmail(id, errId) {
-            const val = document.getElementById(id).value.trim();
-            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!regex.test(val)) { setError(id, errId, "Email không hợp lệ"); return false; }
-            clearError(id, errId); return true;
-        }
-        function validatePhone(id, errId) {
-            const val = document.getElementById(id).value.trim();
-            const regex = /^(0|\+84)[0-9]{9}$/;
-            if (!regex.test(val)) { setError(id, errId, "Số điện thoại không hợp lệ"); return false; }
-            clearError(id, errId); return true;
-        }
-        function validatePasswordMatch() {
-            const pass = document.getElementById("password").value.trim();
-            const confirmVal = document.getElementById("confirm").value.trim();
+    <!-- STEP 2 -->
+    <div id="step2" class="step hidden">
+        <h1 id="formTitle"></h1>
 
-            if (pass !== confirmVal) {
-                setError("confirm", "confirmErr", "Mật khẩu nhập lại không khớp");
-                return false;
-            }
-            clearError("confirm", "confirmErr");
-            return true;
-        }
+        <!-- =============== STUDENT FORM =============== -->
+        <div id="studentForm" class="hidden">
+            <div class="input-group">
+                <label>Tên đăng nhập</label>
+                <input id="sUsername" type="text" placeholder="Tên đăng nhập...">
+                <p id="sUsernameErr" class="error"></p>
+            </div>
 
+            <div class="input-group">
+                <label>Họ và tên</label>
+                <input id="sFullName" type="text" placeholder="Họ và tên...">
+                <p id="sFullNameErr" class="error"></p>
+            </div>
 
-        async function register() {
-            const btn = document.getElementById("submitBtn");
-            const msg = document.getElementById("message");
-            const original = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
-            msg.innerText = ""; msg.className = "";
+            <div class="input-group">
+                <label>Ngày sinh</label>
+                <input id="sBirthdate" type="date">
+                <p id="sBirthdateErr" class="error"></p>
+            </div>
 
-            let valid = true;
-            if (selectedRole === "student") {
-                valid &= validateNotEmpty("sUsername", "sUsernameErr", "Tên đăng nhập là bắt buộc")
-                    & validateNotEmpty("sFullName", "sFullNameErr", "Họ và tên là bắt buộc")
-                    & validateNotEmpty("sBirthdate", "sBirthdateErr", "Ngày sinh là bắt buộc")
-                    & validateNotEmpty("sEmail", "sEmailErr", "Email là bắt buộc")
-                    & validateEmail("sEmail", "sEmailErr")
-                    & validateNotEmpty("sPhone", "sPhoneErr", "Số điện thoại là bắt buộc")
-                    & validatePhone("sPhone", "sPhoneErr");
-            } else {
-                valid &= validateNotEmpty("pUsername", "pUsernameErr", "Tên đăng nhập là bắt buộc")
-                    & validateNotEmpty("pFullName", "pFullNameErr", "Họ và tên là bắt buộc")
-                    & validateNotEmpty("pAddress", "pAddressErr", "Địa chỉ là bắt buộc")
-                    & validateNotEmpty("pEmail", "pEmailErr", "Email là bắt buộc")
-                    & validateEmail("pEmail", "pEmailErr")
-                    & validateNotEmpty("pPhone", "pPhoneErr", "Số điện thoại là bắt buộc")
-                    & validatePhone("pPhone", "pPhoneErr");
-            }
-            valid &= validateNotEmpty("password", "passErr", "Mật khẩu là bắt buộc");
-            valid &= validateNotEmpty("confirm", "confirmErr", "Vui lòng xác nhận mật khẩu");
-            valid &= validatePasswordMatch();
+            <div class="input-group">
+                <label>Email</label>
+                <input id="sEmail" type="email" placeholder="Email...">
+                <p id="sEmailErr" class="error"></p>
+            </div>
 
-            if (!valid) { btn.disabled = false; btn.innerHTML = original; return; }
+            <div class="input-group">
+                <label>Số điện thoại</label>
+                <input id="sPhone" type="text" placeholder="Số điện thoại...">
+                <p id="sPhoneErr" class="error"></p>
+            </div>
 
-            const payload = selectedRole === "student" ? {
-                username: sUsername.value.trim(),
-                fullName: sFullName.value.trim(),
-                birthdate: sBirthdate.value,
-                email: sEmail.value.trim(),
-                phone: sPhone.value.trim(),
-                password: password.value.trim(),
-            } : {
-                username: pUsername.value.trim(),
-                name: pFullName.value.trim(),
-                address: pAddress.value.trim(),
-                email: pEmail.value.trim(),
-                phone: pPhone.value.trim(),
-                password: password.value.trim(),
-            };
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input id="sPassword" type="password" placeholder="Mật khẩu...">
+                <p id="sPassErr" class="error"></p>
+            </div>
 
-            const baseUrl = window.location.origin.includes("localhost")
-                ? "http://localhost:8080"
-                : "https://bkapai.vn";
+            <div class="input-group">
+                <label>Nhập lại mật khẩu</label>
+                <input id="sConfirm" type="password" placeholder="Xác nhận mật khẩu...">
+                <p id="sConfirmErr" class="error"></p>
+            </div>
+        </div>
 
-            const url = selectedRole === "student"
-                ? `${baseUrl}/api/auth/register/student`
-                : `${baseUrl}/api/auth/register/parent`;
+        <!-- =============== PARENT FORM =============== -->
+        <div id="parentForm" class="hidden">
 
-            try {
-                console.log("🔹 Sending request to:", url, payload);
-                const res = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
+            <div class="input-group">
+                <label>Tên đăng nhập</label>
+                <input id="pUsername" type="text" placeholder="Tên đăng nhập phụ huynh...">
+                <p id="pUsernameErr" class="error"></p>
+            </div>
 
-                const text = await res.text();
-                if (!res.ok) {
-                    let errText = "";
-                    try {
-                        const data = JSON.parse(text);
-                        errText = data.message || text;
-                    } catch { errText = text; }
+            <div class="input-group">
+                <label>Họ và tên</label>
+                <input id="pFullName" type="text" placeholder="Họ và tên phụ huynh...">
+                <p id="pFullNameErr" class="error"></p>
+            </div>
 
-                    console.warn("🔸 Server error:", errText);
-                    if (errText.includes("Username")) {
-                        selectedRole === "student"
-                            ? setError("sUsername", "sUsernameErr", "Tên đăng nhập đã tồn tại")
-                            : setError("pUsername", "pUsernameErr", "Tên đăng nhập đã tồn tại");
-                    } else if (errText.includes("Email")) {
-                        selectedRole === "student"
-                            ? setError("sEmail", "sEmailErr", "Email đã được sử dụng")
-                            : setError("pEmail", "pEmailErr", "Email đã được sử dụng");
-                    } else if (errText.includes("Số điện thoại")) {
-                        selectedRole === "student"
-                            ? setError("sPhone", "sPhoneErr", "Số điện thoại đã được sử dụng")
-                            : setError("pPhone", "pPhoneErr", "Số điện thoại đã được sử dụng");
-                    } else {
-                        msg.innerText = "❌ Lỗi đăng ký: " + errText;
-                        msg.className = "error";
-                    }
-                    return;
-                }
+            <div class="input-group">
+                <label>Địa chỉ</label>
+                <input id="pAddress" type="text" placeholder="Địa chỉ...">
+                <p id="pAddressErr" class="error"></p>
+            </div>
 
-                msg.innerText = "✅ Đăng ký thành công! Kiểm tra email để xác minh tài khoản.";
-                msg.className = "success";
-                setTimeout(() => location.href = "/auth/login", 2000);
+            <div class="input-group">
+                <label>Email</label>
+                <input id="pEmail" type="email" placeholder="Email phụ huynh...">
+                <p id="pEmailErr" class="error"></p>
+            </div>
 
-            } catch (err) {
-                msg.innerText = "❌ Lỗi kết nối server: " + err.message;
-                msg.className = "error";
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = original;
-            }
-        }
-    </script>
+            <div class="input-group">
+                <label>Số điện thoại</label>
+                <input id="pPhone" type="text" placeholder="Số điện thoại...">
+                <p id="pPhoneErr" class="error"></p>
+            </div>
+
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input id="pPassword" type="password" placeholder="Mật khẩu...">
+                <p id="pPassErr" class="error"></p>
+            </div>
+
+            <div class="input-group">
+                <label>Nhập lại mật khẩu</label>
+                <input id="pConfirm" type="password" placeholder="Xác nhận mật khẩu...">
+                <p id="pConfirmErr" class="error"></p>
+            </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+            <button class="back-btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </button>
+
+            <button class="submit-btn" id="submitBtn">
+                <i class="fas fa-user-plus"></i> Đăng ký
+            </button>
+        </div>
+
+        <p id="message" class="form-msg"></p>
+    </div>
+
+</div>
+
+<script src="/js/register.js"></script>
+
 </body>
-
 </html>

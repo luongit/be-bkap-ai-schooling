@@ -1,0 +1,328 @@
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #64748b;
+    --accent: #f43f5e;
+    --light: #f8fafc;
+    --dark: #1e293b;
+    --success: #10b981;
+    --border: #e2e8f0;
+    --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    --shadow-hover: 0 20px 40px -10px rgba(0,0,0,0.15);
+    --radius: 12px;
+    --font-main: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+/* BODY */
+body {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;       /* Giữ giữa */
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--dark);
+}
+
+/* CONTAINER */
+.register-container {
+    width: 100%;
+    max-width: 440px;
+    background-color: white;
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    transition: 0.3s;
+    z-index: 1;
+}
+
+.register-container:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+/* DECORATIONS */
+.decoration {
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.decoration-1 {
+    width: 200px;
+    height: 200px;
+    background: rgba(37,99,235,0.08);
+    top: -80px;
+    right: -80px;
+}
+
+.decoration-2 {
+    width: 180px;
+    height: 180px;
+    background: rgba(244,63,94,0.08);
+    bottom: -60px;
+    left: -60px;
+}
+
+/* TITLES */
+h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+p {
+    color: var(--secondary);
+    font-size: 12px;
+    text-align: left;
+    margin-bottom: 3px;
+}
+
+/* ANIMATION */
+.step {
+    animation: fadeIn .4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ROLE BUTTONS (Giữ nguyên) */
+.role-btn {
+    width: 100%;
+    padding: 18px;
+    margin-top: 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    color: var(--dark);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    transition: .3s;
+}
+
+.role-btn i {
+    font-size: 20px;
+}
+
+.role-btn.student:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.role-btn.parent:hover {
+    background: #f97316;
+    border-color: #f97316;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* FORMS */
+#studentForm, #parentForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+}
+
+#step2 > .input-group {
+    margin-bottom: 8px;
+}
+
+label {
+    margin-bottom: 3px;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+input {
+    padding: 8px 8px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--light);
+    font-size: 15px;
+    transition: .3s;
+}
+
+input:focus {
+    border-color: var(--primary);
+    background-color: white;
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+}
+
+input::placeholder {
+    color: #94a3b8;
+}
+
+.error-input {
+    border-color: var(--accent) !important;
+    background-color: #fff1f2 !important;
+}
+
+.error {
+    color: var(--accent);
+    font-size: 13px;
+    margin-top: 3px;
+    min-height: 0;
+}
+
+/* ACTION BUTTONS */
+.actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.back-btn, .submit-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.back-btn {
+    background: var(--light);
+    border: 1px solid var(--border);
+    color: var(--secondary);
+}
+
+.back-btn:hover {
+    background: #e2e8f0;
+    color: var(--dark);
+}
+
+.submit-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.submit-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* LOGIN LINK */
+.go-login {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 14px;
+    color: var(--secondary);
+}
+
+.go-login a {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.go-login a:hover {
+    text-decoration: underline;
+}
+
+/* FORM MESSAGE */
+.form-msg {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.form-msg.error {
+    color: var(--accent);
+}
+
+.form-msg.success {
+    color: var(--success);
+}
+
+/* RESPONSIVE ================================== */
+
+/* TABLET */
+@media (max-width: 768px) {
+    .register-container {
+        padding: 30px;
+        max-width: 90%;
+    }
+}
+
+/* MOBILE */
+@media (max-width: 480px) {
+
+    body {
+        padding: 15px;
+        /* Giữ nguyên căn giữa trên mobile */
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 100vh;
+    }
+
+    .register-container {
+        padding: 25px 20px;
+        margin-top: 0 !important;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    .role-btn {
+        padding: 15px;
+        font-size: 15px;
+    }
+
+    input {
+        padding: 12px;
+        font-size: 15px;
+    }
+
+    /* input gần nhau nữa */
+    .input-group {
+        margin-bottom: 3px !important;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .back-btn, .submit-btn {
+        width: 100%;
+    }
+}
