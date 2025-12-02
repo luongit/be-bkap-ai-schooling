@@ -39,7 +39,6 @@ public class AsyncConfig {
     @Bean(name = "imageExecutor")
     public Executor imageExecutor() {
         ThreadPoolTaskExecutor img = new ThreadPoolTaskExecutor();
-
         img.setCorePoolSize(20);       // 20 thread chạy POST + GET poll
         img.setMaxPoolSize(60);        // không cần quá 100
         img.setQueueCapacity(200);     // hàng chờ vừa đủ
@@ -52,8 +51,6 @@ public class AsyncConfig {
         return img;
     }
 
-    
-    
     @Bean(name = "email")
     public Executor email() {
     	ThreadPoolTaskExecutor em = new ThreadPoolTaskExecutor();
