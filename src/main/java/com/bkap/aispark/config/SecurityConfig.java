@@ -37,6 +37,7 @@ public class SecurityConfig {
                         // .requestMatchers("/api/auth/**").permitAll() // login/register thoải mái
                         // .anyRequest().authenticated()
                         // còn lại cần token
+                        .requestMatchers("/favicon/**","/favicon.ico", "/css/**", "/js/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/journalism/create/**").hasAnyRole("SYSTEM_ADMIN", "ADMIN", "TEACHER")
 
