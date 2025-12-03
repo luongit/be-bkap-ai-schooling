@@ -1,48 +1,42 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8" />
-    <title>OTP Reset Password</title>
-  </head>
-  <body
-    style="
+
+<head>
+  <meta charset="UTF-8" />
+  <title>OTP Reset Password</title>
+</head>
+
+<body style="
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
       background-color: #f0f2f5;
-    "
-  >
-    <table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px">
-      <tr>
-        <td align="center">
-          <table
-            width="500"
-            cellpadding="0"
-            cellspacing="0"
-            style="
+    ">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding: 20px">
+  <tr>
+    <td align="center">
+      <table width="500" cellpadding="0" cellspacing="0" style="
               background: #ffffff;
               border-radius: 8px;
               box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
               padding: 30px;
-            "
-          >
-            <tr>
-              <td align="center" style="padding-bottom: 20px">
-                <h2 style="margin: 0; color: #1877f2; font-size: 22px">
-                  Xác nhận đặt lại mật khẩu
-                </h2>
-              </td>
-            </tr>
-            <tr>
-              <td style="color: #333333; font-size: 15px; line-height: 22px">
-                <p>Xin chào,</p>
-                <p>Mã OTP đặt lại mật khẩu của bạn là:</p>
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="padding: 20px 0">
-                <div
-                  style="
+            ">
+        <tr>
+          <td align="center" style="padding-bottom: 20px">
+            <h2 style="margin: 0; color: #1877f2; font-size: 22px">
+              Xác nhận đặt lại mật khẩu
+            </h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="color: #333333; font-size: 15px; line-height: 22px">
+            <p>Xin chào,</p>
+            <p>Mã OTP đặt lại mật khẩu của bạn là:</p>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding: 20px 0">
+            <div style="
                     background: #1877f2;
                     color: #ffffff;
                     font-size: 24px;
@@ -51,40 +45,34 @@
                     padding: 12px 24px;
                     border-radius: 6px;
                     display: inline-block;
-                  "
-                  th:text="${otp}"
-                >
-                  123456
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td
-                style="
+                  " th:text="${otp}">
+              123456
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="
                   color: #555555;
                   font-size: 14px;
                   line-height: 20px;
                   text-align: center;
-                "
-              >
-                <p>Mã OTP có hiệu lực trong <strong>2 phút</strong>.</p>
-                <p>
-                  Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email
-                  này.
-                </p>
-              </td>
-            </tr>
-            <tr>
-              <td
-                align="center"
-                style="padding-top: 20px; font-size: 12px; color: #999999"
-              >
-                <p>© 2025 AISpark. All rights reserved.</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+                ">
+            <p>Mã OTP có hiệu lực trong <strong>2 phút</strong>.</p>
+            <p>
+              Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email
+              này.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding-top: 20px; font-size: 12px; color: #999999">
+            <p>© 2025 BKAPAI. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+
 </html>
