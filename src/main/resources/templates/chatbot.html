@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Spark Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <style>
+        .message-bubble { max-width: 80%; padding: 12px 16px; border-radius: 18px; margin: 8px 0; word-wrap: break-word; }
+        .user-bubble { background: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .ai-bubble { background: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .typing { display: flex; gap: 6px; padding: 10px 0; }
+        .typing span { height: 10px; width: 10px; background: #9ca3af; border-radius: 50%; animation: typing 1.4s infinite; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+        <h1 class="text-xl font-bold flex items-center gap-3">
+            <i class="fas fa-robot text-blue-500"></i>
+            <span>AI Spark Chat</span>
+        </h1>
+        <button id="newChatBtn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+            <i class="fas fa-plus"></i> Trò chuyện mới
+        </button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+            <!-- Assistant List -->
+            <div class="p-4 border-b border-gray-700">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-semibold">Assistants</h3>
+                    <button id="createAssistantBtn" class="text-blue-400 hover:text-blue-300 text-sm">
+                        <i class="fas fa-plus"></i> Tạo mới
+                    </button>
+                </div>
+                <div id="assistantList" class="space-y-2 max-h-64 overflow-y-auto scrollbar-hide"></div>
+            </div>
+
+            <!-- Conversation List -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <h3 class="font-semibold mb-3">Cuộc trò chuyện</h3>
+                <div id="conversationList" class="space-y-2"></div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col bg-gray-950">
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+                <div class="text-center text-gray-500 text-sm">Chọn một assistant và bắt đầu trò chuyện!</div>
+            </div>
+
+            <div class="border-t border-gray-700 p-4">
+                <div class="flex gap-3">
+                    <textarea id="messageInput" rows="1" placeholder="Nhập tin nhắn..." 
+                              class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 resize-none focus:outline-none focus:border-blue-500"></textarea>
+                    <button id="sendBtn" disabled class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal tạo Assistant -->
+    <div id="assistantModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-xl p-6 w-96">
+            <h2 class="text-xl font-bold mb-4">Tạo Assistant mới</h2>
+            <input type="text" id="assistantName" placeholder="Tên assistant" class="w-full mb-3 px-4 py-2 bg-gray-700 rounded-lg">
+            <textarea id="assistantPrompt" rows="4" placeholder="System prompt (hướng dẫn hành vi)" class="w-full mb-3 px-4 py-2 bg-gray-700 rounded-lg"></textarea>
+            <input type="text" id="assistantDesc" placeholder="Mô tả ngắn" class="w-full mb-4 px-4 py-2 bg-gray-700 rounded-lg">
+            <div class="flex justify-end gap-3">
+                <button id="cancelModal" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Hủy</button>
+                <button id="saveAssistant" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg">Tạo</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+    const USER_ID = 1;
+    let currentConversationId = null;
+    let currentAssistant = null;
+
+    // Load danh sách Assistants
+    async function loadAssistants() {
+        try {
+            const res = await fetch(`${API_BASE}/assistants`);
+            const assistants = await res.json();
+            const container = document.getElementById('assistantList');
+            container.innerHTML = assistants.map(a => `
+                <div onclick="selectAssistant(${a.id}, '${a.name.replace(/'/g, "\\'")}')" 
+                     class="p-3 rounded-lg hover:bg-gray-700 cursor-pointer flex items-center gap-3 ${currentAssistant?.id === a.id ? 'bg-gray-700' : ''}">
+                    <img src="${a.avatarUrl || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full object-cover">
+                    <div>
+                        <div class="font-medium">${a.name}</div>
+                        <div class="text-xs text-gray-400 truncate">${a.description || 'Không có mô tả'}</div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // Load danh sách Conversations
+    async function loadConversations() {
+        try {
+            const res = await fetch(`${API_BASE}/conversations/user/${USER_ID}`);
+            const convs = await res.json();
+            const container = document.getElementById('conversationList');
+            container.innerHTML = convs.map(c => `
+                <div onclick="loadConversation(${c.id}, this)" 
+                     class="p-3 rounded-lg hover:bg-gray-700 cursor-pointer truncate ${currentConversationId === c.id ? 'bg-gray-700' : ''}">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-comment text-gray-500"></i>
+                        <span>${c.title || 'Cuộc trò chuyện mới'}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // Load tin nhắn của conversation
+    async function loadConversation(conversationId, clickedElement = null) {
+        currentConversationId = conversationId;
+
+        // Highlight conversation được chọn
+        document.querySelectorAll('#conversationList > div').forEach(el => el.classList.remove('bg-gray-700'));
+        if (clickedElement) {
+            clickedElement.classList.add('bg-gray-700');
+        } else {
+            const el = document.querySelector(`#conversationList > div[onclick*="${conversationId}"]`);
+            if (el) el.classList.add('bg-gray-700');
+        }
+
+        const container = document.getElementById('messagesContainer');
+        container.innerHTML = '<div class="text-center text-gray-500">Đang tải tin nhắn...</div>';
+
+        try {
+            const res = await fetch(`${API_BASE}/chat/conversation/${conversationId}`);
+            if (!res.ok) throw new Error("Không lấy được tin nhắn");
+
+            const messages = await res.json();
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 text-sm">Bắt đầu trò chuyện nào!</div>';
+                return;
+            }
+
+            messages.forEach(msg => {
+                appendMessage(msg.role === 'user' ? 'user' : 'ai', msg.content);
+            });
+        } catch (err) {
+            container.innerHTML = '<div class="text-red-500 text-center">Lỗi tải tin nhắn!</div>';
+            console.error(err);
+        }
+    }
+
+    // Chọn Assistant → tạo conversation mới
+    function selectAssistant(id, name) {
+        currentAssistant = { id, name };
+        createNewConversation();
+    }
+
+    // Tạo cuộc trò chuyện mới
+    async function createNewConversation() {
+        if (!currentAssistant) return alert("Vui lòng chọn một Assistant trước!");
+
+        const res = await fetch(`${API_BASE}/conversations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                assistantId: currentAssistant.id,
+                userId: USER_ID
+            })
+        });
+
+        const conv = await res.json();
+        currentConversationId = conv.id;
+        await loadConversations();
+        await loadConversation(conv.id);
+    }
+
+    // Gửi tin nhắn + streaming
+    document.getElementById('sendBtn').onclick = async () => {
+        if (!currentConversationId) return;
+
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        if (!message) return;
+
+        appendMessage('user', message);
+        input.value = '';
+        document.getElementById('sendBtn').disabled = true;
+
+        const aiBubble = appendMessage('ai', '<div class="typing"><span></span><span></span><span></span></div>');
+
+        const reqBody = {
+            conversationId: currentConversationId,
+            userId: USER_ID,
+            message: message
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/chat/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponse = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6).trim();
+                        if (!data || data === '[DONE]') continue;
+                        fullResponse += data;
+                        aiBubble.innerHTML = `<div class="message-bubble ai-bubble">${marked.parse(fullResponse)}</div>`;
+                    }
+                }
+            }
+
+            // QUAN TRỌNG: Đảm bảo tin nhắn AI hiện đầy đủ khi stream xong
+            aiBubble.innerHTML = `<div class="message-bubble ai-bubble">${marked.parse(fullResponse) || '...'}</div>`;
+
+            // TỐT NHẤT: Reload lại từ DB để 100% đồng bộ (không cần F5 nữa)
+            setTimeout(() => loadConversation(currentConversationId), 300);
+
+        } catch (err) {
+            aiBubble.innerHTML = '<div class="text-red-500">Lỗi kết nối AI!</div>';
+            console.error(err);
+        } finally {
+            document.getElementById('sendBtn').disabled = false;
+        }
+    };
+
+    // Hàm thêm tin nhắn vào giao diện
+    function appendMessage(role, content) {
+        const container = document.getElementById('messagesContainer');
+        const div = document.createElement('div');
+        div.className = 'flex' + (role === 'user' ? ' justify-end' : '');
+        div.innerHTML = `<div class="message-bubble ${role}-bubble">${content}</div>`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        return div.querySelector('.message-bubble');
+    }
+
+    // Enter để gửi
+    document.getElementById('messageInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('sendBtn').click();
+        }
+    });
+
+    // Bật nút gửi khi có nội dung
+    document.getElementById('messageInput').addEventListener('input', () => {
+        document.getElementById('sendBtn').disabled = !document.getElementById('messageInput').value.trim();
+    });
+
+    // Modal tạo Assistant
+    document.getElementById('createAssistantBtn').onclick = () => document.getElementById('assistantModal').classList.remove('hidden');
+    document.getElementById('cancelModal').onclick = () => document.getElementById('assistantModal').classList.add('hidden');
+    document.getElementById('saveAssistant').onclick = async () => {
+        const name = document.getElementById('assistantName').value.trim();
+        const prompt = document.getElementById('assistantPrompt').value.trim();
+        const desc = document.getElementById('assistantDesc').value.trim();
+        if (!name || !prompt) return alert("Vui lòng nhập tên và prompt!");
+
+        await fetch(`${API_BASE}/assistants`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description: desc, systemPrompt: prompt, authorId: USER_ID, categoryId: 1, isPublished: true })
+        });
+
+        document.getElementById('assistantModal').classList.add('hidden');
+        document.getElementById('assistantName').value = '';
+        document.getElementById('assistantPrompt').value = '';
+        document.getElementById('assistantDesc').value = '';
+        loadAssistants();
+    };
+
+    document.getElementById('newChatBtn').onclick = createNewConversation;
+
+    // Khởi động
+    loadAssistants();
+    loadConversations();
+
+    // Load marked.js để render Markdown đẹp
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    document.head.appendChild(script);
+</script>
+</body>
+</html>
