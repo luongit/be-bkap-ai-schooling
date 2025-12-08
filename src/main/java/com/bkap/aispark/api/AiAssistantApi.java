@@ -22,13 +22,15 @@ public class AiAssistantApi {
     }
 
     // API to create a new assistant
-    @PostMapping
+    @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<AiAssistant> createAssistant(
-            @RequestBody AssistantCreateRequest dto, 
-            @RequestParam(value = "avatar", required = false) MultipartFile avatar) throws Exception {
+            @RequestPart("dto") AssistantCreateRequest dto,
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar) throws Exception {
+
         AiAssistant assistant = aiAssistantService.createAssistant(dto, avatar);
         return ResponseEntity.ok(assistant);
     }
+
 
     // API to get a list of all assistants
     @GetMapping
