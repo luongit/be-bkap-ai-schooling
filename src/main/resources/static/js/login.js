@@ -40,10 +40,14 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
 
     const identifier = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
+
+    // ➤ Checkbox Remember Me
+    const rememberMe = document.getElementById("remember").checked;
+
     const loginBtn = this;
 
     if (!identifier || !password) {
-        showToast('Vui lòng điền đầy đủ thông tin đăng nhập!', 'warning');
+        showToast('Vui lòng điền đầy đủ thông tin để đăng nhập!', 'warning');
         return;
     }
 
@@ -54,7 +58,11 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ identifier, password })
+
+            // bat cookie de nhan refresh_token
+            credentials: "include",
+
+            body: JSON.stringify({ identifier, password, rememberMe })
         });
 
         const data = await res.json().catch(() => ({}));
@@ -64,9 +72,11 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
             throw new Error(data.message || 'Đăng nhập thất bại');
         }
 
-        // Luu token
+        // Luu Access Token
         localStorage.setItem('token', data.accessToken);
-        localStorage.setItem('refreshToken', data.refreshToken);
+
+        // backend dùng cookie HttpOnly nên không lưu refresh token trong localstorage
+
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("username", data.username);
         localStorage.setItem("user", JSON.stringify(data));
@@ -95,33 +105,33 @@ document.addEventListener('keypress', function (e) {
 
 // Auto refresh token khi trang load
 window.addEventListener('load', async () => {
-    const accessToken = localStorage.getItem('token');
-    const refreshToken = localStorage.getItem('refreshToken');
 
-    if (accessToken && refreshToken) {
+    const accessToken = localStorage.getItem('token');
+
+    if (accessToken) {
         try {
             const payload = JSON.parse(atob(accessToken.split('.')[1]));
             const exp = payload.exp * 1000;
 
-            // Nếu access token sắp hết hạn (< 2 phút)
-            if (Date.now() > exp - 2 * 60 * 1000) {
+
+
+             if (Date.now() > exp - 1 * 60 * 1000) {  // refresh khi còn 2 phút
+
                 const res = await fetch('/api/auth/refresh', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refreshToken })
+                    credentials: "include", // gửi cookie lên backend
                 });
 
                 if (res.ok) {
                     const data = await res.json();
                     localStorage.setItem('token', data.accessToken);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    showToast('Phiên đăng nhập đã được làm mới tự động');
                 } else {
                     showToast('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại', 'warning');
                     localStorage.clear();
                     setTimeout(() => window.location.href = '/login', 2000);
                 }
             }
+
         } catch (err) {
             console.error('Lỗi check/refresh token:', err);
             showToast('Lỗi khi kiểm tra token!', 'error');
@@ -129,4 +139,40 @@ window.addEventListener('load', async () => {
             setTimeout(() => window.location.href = '/login', 2000);
         }
     }
+
+    // ===============================
+    //     AUTO LOGOUT KHI TOKEN HẾT HẠN
+    // ===============================
+    setInterval(() => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            const exp = payload.exp * 1000;
+            const now = Date.now();
+
+            // Token hết hạn hoàn toàn
+            if (now >= exp) {
+
+                Toastify({
+                    text: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "linear-gradient(135deg, #f43f5e, #e11d48)",
+                }).showToast();
+
+                localStorage.clear();
+                sessionStorage.clear();
+
+                window.location.href = "/auth/login";
+            }
+
+        } catch (err) {
+            console.error("Lỗi giải mã token:", err);
+        }
+
+    }, 1000); // kiểm tra mỗi 1 giây
+
 });

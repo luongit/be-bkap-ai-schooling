@@ -47,14 +47,14 @@ public class AuthService {
     @Autowired
     private JavaMailSender mailSender;
 
-public boolean checkPassword(String raw, String encoded) {
-    return passwordEncoder.matches(raw, encoded);
-}
+    public boolean checkPassword(String raw, String encoded) {
+        return passwordEncoder.matches(raw, encoded);
+    }
 
-public void updatePassword(User user, String newPassword) {
-    user.setPassword(passwordEncoder.encode(newPassword));
-    userRepository.save(user);
-}
+    public void updatePassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 
     // ----------------- HELPER -----------------
     private String generateVerificationToken() {
@@ -111,7 +111,7 @@ public void updatePassword(User user, String newPassword) {
     @Transactional
     public String registerStudent(StudentRegisterRequest req) {
 
-        // ✅ Validate username không chứa dấu và khoảng trắng
+        // Validate username không chứa dấu và khoảng trắng
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
@@ -127,7 +127,7 @@ public void updatePassword(User user, String newPassword) {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
 
-        // 1️⃣ Tạo Student entity
+        // Tạo Student entity
         Student student = new Student();
         student.setCode(generateStudentCode());
         student.setFullName(req.getFullName());
@@ -139,7 +139,7 @@ public void updatePassword(User user, String newPassword) {
         student.setHobbies(req.getHobbies());
         Student savedStudent = studentRepository.save(student);
 
-        // 2️⃣ Tạo User inactive + token
+        // Tạo User inactive + token
         User user = new User();
         user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
@@ -164,7 +164,7 @@ public void updatePassword(User user, String newPassword) {
     @Transactional
     public String registerParent(ParentRegisterRequest req) {
 
-        // ✅ Validate username không chứa dấu và khoảng trắng
+        // Validate username không chứa dấu và khoảng trắng
         if (!req.getUsername().matches("^[a-zA-Z0-9._-]+$")) {
             throw new IllegalArgumentException(
                     "Tên đăng nhập chỉ được chứa chữ cái không dấu, số và ký tự . _ - , không chứa dấu hoặc khoảng trắng");
@@ -187,8 +187,8 @@ public void updatePassword(User user, String newPassword) {
         Parent savedParent = parentRepository.save(parent);
 
         User user = new User();
-        user.setUsername(req.getUsername());
         user.setEmail(req.getEmail());
+        user.setUsername(req.getUsername());
         user.setPhone(req.getPhone());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setRole(UserRole.PARENT);
@@ -205,61 +205,8 @@ public void updatePassword(User user, String newPassword) {
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
     }
 
-//    // ----------------- VERIFY ACCOUNT -----------------
-//    @Transactional
-//    public String verifyUserByLink(String email, String token) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
-//
-//        if (user.getIsActive()) {
-//            return "Tài khoản đã active";
-//        }
-//
-//        if (user.getVerificationCode().equals(token)
-//                && user.getCodeExpiry().isAfter(LocalDateTime.now())) {
-//
-//            user.setIsActive(true);
-//            user.setVerificationCode(null);
-//            user.setCodeExpiry(null);
-//            userRepository.save(user);
-//
-//            String jwtToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-//            return "Xác minh thành công. Token: " + jwtToken;
-//        } else {
-//            return "Link xác nhận không hợp lệ hoặc đã hết hạn";
-//        }
-//    }
-//
-//    // ----------------- LOGIN -----------------
-//    public LoginResponse login(String identifier, String password) {
-//        User user = identifier.contains("@")
-//                ? userRepository.findByEmail(identifier)
-//                        .orElseThrow(() -> new RuntimeException("Email không tồn tại"))
-//                : userRepository.findByUsername(identifier)
-//                        .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
-//
-//        if (!user.getIsActive()) {
-//            throw new RuntimeException("Tài khoản chưa được kích hoạt");
-//        }
-//
-//        if (!passwordEncoder.matches(password, user.getPassword())) {
-//            throw new RuntimeException("Mật khẩu không đúng");
-//        }
-//
-//        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-//
-//        return new LoginResponse(
-//                user.getId(),
-//                user.getUsername(),
-//                user.getEmail(),
-//                user.getPhone(),
-//                user.getRole().name(),
-//                user.getObjectType() != null ? user.getObjectType().name() : null,
-//                user.getObjectId(),
-//                token);
-//    }
- // ----------------- VERIFY ACCOUNT -----------------
- // ----------------- VERIFY ACCOUNT -----------------
+
+    // ----------------- VERIFY ACCOUNT -----------------
     @Transactional
     public String verifyUserByLink(String email, String token) {
         User user = userRepository.findByEmail(email)
@@ -277,14 +224,14 @@ public void updatePassword(User user, String newPassword) {
             user.setCodeExpiry(null);
             userRepository.save(user);
 
-            // ✅ Sinh cả Access & Refresh Token
-            String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+            //  Sinh cả Access & Refresh Token
+            String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getUsername(), user.getRole().name());
             String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
 
             // Có thể trả JSON thay vì chuỗi text cho frontend dễ xử lý:
             return String.format(
-                "{\"message\": \"Xác minh thành công\", \"accessToken\": \"%s\", \"refreshToken\": \"%s\"}",
-                accessToken, refreshToken
+                    "{\"message\": \"Xác minh thành công\", \"accessToken\": \"%s\", \"refreshToken\": \"%s\"}",
+                    accessToken, refreshToken
             );
 
         } else {
@@ -296,9 +243,9 @@ public void updatePassword(User user, String newPassword) {
     public LoginResponse login(String identifier, String password) {
         User user = identifier.contains("@")
                 ? userRepository.findByEmail(identifier)
-                        .orElseThrow(() -> new RuntimeException("Email không tồn tại"))
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"))
                 : userRepository.findByUsername(identifier)
-                        .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Username không tồn tại"));
 
         if (!user.getIsActive()) {
             throw new RuntimeException("Tài khoản chưa được kích hoạt");
@@ -308,8 +255,8 @@ public void updatePassword(User user, String newPassword) {
             throw new RuntimeException("Mật khẩu không đúng");
         }
 
-        // ✅ Sinh Access & Refresh Token
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        //  Sinh Access & Refresh Token
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getUsername(), user.getRole().name());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
 
         return new LoginResponse(
