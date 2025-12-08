@@ -38,7 +38,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 String username = jwtUtil.getUsername(token);
                 String role = jwtUtil.getRole(token);
 
-                String identifier = (email != null && !email.isEmpty()) ? email : username;
+                String identifier = email;
 
                 if (identifier != null && !identifier.isEmpty() && role != null && !role.isEmpty()) {
                     User userDetails = new User(

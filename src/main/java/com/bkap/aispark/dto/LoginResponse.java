@@ -24,7 +24,7 @@ public class LoginResponse {
         this.refreshToken = refreshToken;
     }
 
-    // ✳️ Giữ nguyên constructor cũ (nếu phần khác của project đang dùng)
+    // Giữ nguyên constructor cũ (nếu phần khác của project đang dùng)
     public LoginResponse(Long id, String username, String email, String phone, String role,
             String objectType, Long objectId, String token) {
         this(id, username, email, phone, role, objectType, objectId, token, null);
