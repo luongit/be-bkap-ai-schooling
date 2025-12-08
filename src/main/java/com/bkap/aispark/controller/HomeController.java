@@ -34,5 +34,10 @@ public class HomeController {
 	public String videoPage() {
 		return "upload";
 	}
+	@GetMapping("/chatbot")
+	public String chatbot() {
+		return "chatbot";
+	}
+
 
 }
