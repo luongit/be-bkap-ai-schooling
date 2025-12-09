@@ -1,6 +1,7 @@
 package com.bkap.aispark.api;
 
 import com.bkap.aispark.dto.AssistantCreateRequest;
+import com.bkap.aispark.dto.AssistantResponse;
 import com.bkap.aispark.entity.AiAssistant;
 import com.bkap.aispark.service.AiAssistantService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,10 +35,10 @@ public class AiAssistantApi {
 
     // API to get a list of all assistants
     @GetMapping
-    public ResponseEntity<List<AiAssistant>> getAllAssistants() {
-        List<AiAssistant> assistants = aiAssistantService.getAllAssistants();
-        return ResponseEntity.ok(assistants);
+    public ResponseEntity<List<AssistantResponse>> getAllAssistants() {
+        return ResponseEntity.ok(aiAssistantService.getAllAssistantResponses());
     }
+
 
     // API to get a specific assistant by ID
     @GetMapping("/{id}")

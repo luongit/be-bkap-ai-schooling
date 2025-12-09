@@ -7,4 +7,5 @@ public class ChatMessageRequest {
     private Long conversationId;
     private Integer userId;
     private String message;
+   
 }
