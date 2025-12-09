@@ -42,8 +42,13 @@ public class JwtUtil {
     // ==========================
     //  Generate Refresh Token
     // ==========================
-    public String generateRefreshToken(Long userId, String email) {
-        return buildToken(userId, email, null, null, "refresh", REFRESH_TOKEN_EXPIRATION);
+    public String generateRefreshToken(Long userId, String email, boolean rememberMe) {
+
+        long expiry = rememberMe
+                ? REFRESH_TOKEN_EXPIRATION       // 7 ngày khi tick Remember Me
+                : 1000L * 60 * 30;               // 30 phút khi KHÔNG tick Remember Me
+
+        return buildToken(userId, email, null, null, "refresh", expiry);
     }
 
     // ==========================

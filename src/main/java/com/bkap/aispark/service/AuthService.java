@@ -226,7 +226,7 @@ public class AuthService {
 
             //  Sinh cả Access & Refresh Token
             String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getUsername(), user.getRole().name());
-            String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail() ,true);
 
             // Có thể trả JSON thay vì chuỗi text cho frontend dễ xử lý:
             return String.format(
@@ -257,7 +257,7 @@ public class AuthService {
 
         //  Sinh Access & Refresh Token
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getUsername(), user.getRole().name());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail(),true);
 
         return new LoginResponse(
                 user.getId(),
@@ -271,6 +271,21 @@ public class AuthService {
                 refreshToken
         );
     }
+    // Ham tao sinh id hoc sinh khi login bang gg
+    public String generateStudentCodeByYear() {
+        int year = java.time.LocalDate.now().getYear();
 
+        // Lấy code lớn nhất theo năm
+        String maxCode = studentRepository.findMaxCodeByYear(year);
+
+        int nextNumber = 1;
+        if (maxCode != null) {
+            String lastDigits = maxCode.substring(6);
+            nextNumber = Integer.parseInt(lastDigits) + 1;
+        }
+
+        // Format thành HS20250001
+        return String.format("HS%d%04d", year, nextNumber);
+    }
 
 }

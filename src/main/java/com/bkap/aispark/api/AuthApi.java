@@ -85,7 +85,8 @@ public class AuthApi {
             // Tao refresh token
             String refreshToken = jwtUtil.generateRefreshToken(
                     user.getId(),
-                    user.getEmail()
+                    user.getEmail(),
+                    true
             );
 
             // Lưu DB để quản lý token
