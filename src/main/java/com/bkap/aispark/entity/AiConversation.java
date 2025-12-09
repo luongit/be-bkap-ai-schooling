@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 @Entity
 @Table(name = "ai_conversations")
 @Getter
@@ -28,6 +30,8 @@ public class AiConversation {
     private Integer userId;
 
     private String title;
-
+    
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }
