@@ -14,7 +14,7 @@ import com.bkap.aispark.entity.Student;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
     Optional<Student> findByCode(String code);
-
+    Optional<Student> findByEmail(String email);
     boolean existsByCode(String code);
     boolean existsByUsername(String username);
     @Query("SELECT MAX(s.code) FROM Student s WHERE s.code LIKE CONCAT('HS', :year, '%')")

@@ -13,14 +13,11 @@ document.getElementById('passwordToggle').addEventListener('click', function () 
 // Toast thong bao
 function showToast(message, type = 'success') {
     let backgroundColor = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
-    let className = 'toastify-custom';
 
     if (type === 'error') {
-        backgroundColor = 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)';
-        className = 'toastify-custom-error';
+        backgroundColor = 'linear-gradient(135deg, #f43f5e, #e11d48 100%)';
     } else if (type === 'warning') {
-        backgroundColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-        className = 'toastify-custom-warning';
+        backgroundColor = 'linear-gradient(135deg, #f59e0b, #d97706 100%)';
     }
 
     Toastify({
@@ -29,25 +26,23 @@ function showToast(message, type = 'success') {
         gravity: "top",
         position: "right",
         backgroundColor,
-        className,
         stopOnFocus: true,
     }).showToast();
 }
 
-// Xu ly dang nhap
+// ==============================
+//        XỬ LÝ LOGIN FORM
+// ==============================
 document.getElementById('loginBtn').addEventListener('click', async function (e) {
     e.preventDefault();
 
     const identifier = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
-
-    // ➤ Checkbox Remember Me
     const rememberMe = document.getElementById("remember").checked;
-
     const loginBtn = this;
 
     if (!identifier || !password) {
-        showToast('Vui lòng điền đầy đủ thông tin để đăng nhập!', 'warning');
+        showToast('Vui lòng điền đầy đủ thông tin!', 'warning');
         return;
     }
 
@@ -58,10 +53,7 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
         const res = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-
-            // bat cookie de nhan refresh_token
             credentials: "include",
-
             body: JSON.stringify({ identifier, password, rememberMe })
         });
 
@@ -69,110 +61,65 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
 
         if (!res.ok) {
             showToast(data.message || 'Sai tài khoản hoặc mật khẩu', 'error');
-            throw new Error(data.message || 'Đăng nhập thất bại');
+            return;
         }
 
-        // Luu Access Token
         localStorage.setItem('token', data.accessToken);
-
-        // backend dùng cookie HttpOnly nên không lưu refresh token trong localstorage
-
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("username", data.username);
         localStorage.setItem("user", JSON.stringify(data));
 
-        showToast('Đăng nhập thành công! Đang chuyển hướng...');
+        showToast('Đăng nhập thành công!');
 
-        setTimeout(() => {
-            window.location.href = '/';
-        }, 1500);
+        setTimeout(() => window.location.href = "/", 800);
 
     } catch (err) {
-        console.error('Lỗi đăng nhập:', err);
-        showToast('Đăng nhập thất bại. Vui lòng thử lại.', 'error');
+        console.error(err);
+        showToast('Lỗi đăng nhập hệ thống!', 'error');
     } finally {
         loginBtn.innerHTML = 'Đăng nhập';
         loginBtn.disabled = false;
     }
 });
 
-// Bam Enter de login
-document.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        document.getElementById('loginBtn').click();
-    }
+// ==============================
+// XỬ LÝ GOOGLE LOGIN DEV/PROD
+// ==============================
+const isLocal = window.location.hostname === "localhost";
+
+const googleLoginUrl = isLocal
+    ? "http://localhost:8080/api/auth/google"
+    : "https://bkapai.vn/api/auth/google";
+
+// Gắn đúng phần tử ----> QUAN TRỌNG
+document.getElementById("googleLoginBtn").addEventListener("click", function () {
+    window.location.href = googleLoginUrl;
 });
 
-// Auto refresh token khi trang load
-window.addEventListener('load', async () => {
+// ==============================
+// AUTO LOGIN SAU KHI GOOGLE REDIRECT
+// ==============================
+const params = new URLSearchParams(window.location.search);
+const googleToken = params.get("token");
 
-    const accessToken = localStorage.getItem('token');
+if (googleToken) {
+    localStorage.setItem("token", googleToken);
 
-    if (accessToken) {
-        try {
-            const payload = JSON.parse(atob(accessToken.split('.')[1]));
-            const exp = payload.exp * 1000;
+    fetch(isLocal ? "http://localhost:8080/api/auth/me" : "https://bkapai.vn/api/auth/me", {
+        headers: { "Authorization": "Bearer " + googleToken }
+    })
+        .then(res => res.json())
+        .then(user => {
+            localStorage.setItem("username", user.username);
+            localStorage.setItem("email", user.email);
+            localStorage.setItem("userId", user.id);
+            localStorage.setItem("user", JSON.stringify(user));
 
-
-
-             if (Date.now() > exp - 1 * 60 * 1000) {  // refresh khi còn 2 phút
-
-                const res = await fetch('/api/auth/refresh', {
-                    method: 'POST',
-                    credentials: "include", // gửi cookie lên backend
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem('token', data.accessToken);
-                } else {
-                    showToast('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại', 'warning');
-                    localStorage.clear();
-                    setTimeout(() => window.location.href = '/login', 2000);
-                }
-            }
-
-        } catch (err) {
-            console.error('Lỗi check/refresh token:', err);
-            showToast('Lỗi khi kiểm tra token!', 'error');
-            localStorage.clear();
-            setTimeout(() => window.location.href = '/login', 2000);
-        }
-    }
-
-    // ===============================
-    //     AUTO LOGOUT KHI TOKEN HẾT HẠN
-    // ===============================
-    setInterval(() => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            const exp = payload.exp * 1000;
-            const now = Date.now();
-
-            // Token hết hạn hoàn toàn
-            if (now >= exp) {
-
-                Toastify({
-                    text: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    backgroundColor: "linear-gradient(135deg, #f43f5e, #e11d48)",
-                }).showToast();
-
-                localStorage.clear();
-                sessionStorage.clear();
-
-                window.location.href = "/auth/login";
-            }
-
-        } catch (err) {
-            console.error("Lỗi giải mã token:", err);
-        }
-
-    }, 1000); // kiểm tra mỗi 1 giây
-
-});
+            showToast("Đăng nhập Google thành công!");
+            setTimeout(() => window.location.href = "/", 800);
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("Lỗi đăng nhập Google!", "error");
+        });
+}
