@@ -31,7 +31,7 @@ function showToast(message, type = 'success') {
 }
 
 // ==============================
-//        XỬ LÝ LOGIN FORM
+// XỬ LÝ LOGIN FORM
 // ==============================
 document.getElementById('loginBtn').addEventListener('click', async function (e) {
     e.preventDefault();
@@ -70,7 +70,6 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
         localStorage.setItem("user", JSON.stringify(data));
 
         showToast('Đăng nhập thành công!');
-
         setTimeout(() => window.location.href = "/", 800);
 
     } catch (err) {
@@ -83,7 +82,7 @@ document.getElementById('loginBtn').addEventListener('click', async function (e)
 });
 
 // ==============================
-// XỬ LÝ GOOGLE LOGIN DEV/PROD
+// xu ly GOOGLE LOGIN DEV/PROD
 // ==============================
 const isLocal = window.location.hostname === "localhost";
 
@@ -91,22 +90,32 @@ const googleLoginUrl = isLocal
     ? "http://localhost:8080/api/auth/google"
     : "https://bkapai.vn/api/auth/google";
 
-// Gắn đúng phần tử ----> QUAN TRỌNG
 document.getElementById("googleLoginBtn").addEventListener("click", function () {
     window.location.href = googleLoginUrl;
 });
 
 // ==============================
-// AUTO LOGIN SAU KHI GOOGLE REDIRECT
+// xu ly FACEBOOK LOGIN DEV/PROD  (THÊM MỚI)
+// ==============================
+const facebookLoginUrl = isLocal
+    ? "http://localhost:8080/api/auth/facebook"
+    : "https://bkapai.vn/api/auth/facebook";
+
+document.getElementById("facebookLoginBtn").addEventListener("click", function () {
+    window.location.href = facebookLoginUrl;
+});
+
+// ==============================
+// AUTO LOGIN SAU KHI GOOGLE/FACEBOOK REDIRECT
 // ==============================
 const params = new URLSearchParams(window.location.search);
-const googleToken = params.get("token");
+const socialToken = params.get("token");
 
-if (googleToken) {
-    localStorage.setItem("token", googleToken);
+if (socialToken) {
+    localStorage.setItem("token", socialToken);
 
     fetch(isLocal ? "http://localhost:8080/api/auth/me" : "https://bkapai.vn/api/auth/me", {
-        headers: { "Authorization": "Bearer " + googleToken }
+        headers: { "Authorization": "Bearer " + socialToken }
     })
         .then(res => res.json())
         .then(user => {
@@ -115,11 +124,11 @@ if (googleToken) {
             localStorage.setItem("userId", user.id);
             localStorage.setItem("user", JSON.stringify(user));
 
-            showToast("Đăng nhập Google thành công!");
+            showToast("Đăng nhập thành công!");
             setTimeout(() => window.location.href = "/", 800);
         })
         .catch(err => {
             console.error(err);
-            showToast("Lỗi đăng nhập Google!", "error");
+            showToast("Lỗi xác thực tài khoản!", "error");
         });
 }
