@@ -27,4 +27,9 @@ public class AiCategoryService {
     public AiCategory create(AiCategory category) {
         return categoryRepo.save(category);
     }
+
+    public boolean existsByName(String name) {
+        return categoryRepo.existsByName(name);
+    }
+
 }
