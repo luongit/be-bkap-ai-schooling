@@ -15,7 +15,8 @@ public class SpaController {
     // Cho trang chủ FE
     @RequestMapping({
             "/",
-            "/**/{path:[^\\.]*}" // FIX: match route nhiều cấp
+           "/{path:^(?!api|static|assets|.*\\..*).*}"
+
     })
     public String forwardClient() {
         return "forward:/index.html"; // React xử lý bằng React Router
