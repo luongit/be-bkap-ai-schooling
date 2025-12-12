@@ -58,6 +58,11 @@
             <version>8.0.1.Final</version>
         </dependency>
 
+<dependency>
+    <groupId>org.apache.poi</groupId>
+    <artifactId>poi-ooxml</artifactId>
+    <version>5.2.3</version> <!-- Chọn phiên bản mới nhất -->
+</dependency>
 
 
         <!-- Nếu chưa có -->
