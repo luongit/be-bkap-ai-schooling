@@ -1,20 +1,24 @@
 package com.bkap.aispark.service.AiLearningOs;
 
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.imageio.ImageIO;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import net.sourceforge.tess4j.ITesseract;
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 
 @Service
 public class OCRService {
@@ -32,27 +36,24 @@ public class OCRService {
         this.tesseract.setPageSegMode(1);       // Auto page segmentation
     }
 
-    public String extractText(MultipartFile file) throws IOException, TesseractException {
-        String filename = file.getOriginalFilename();
-        if (filename == null) {
-            throw new IllegalArgumentException("File name is null");
-        }
-        String lowerName = filename.toLowerCase();
-
-        if (lowerName.endsWith(".pdf")) {
-            return extractFromPdf(file);
-        } else if (lowerName.endsWith(".png")
-                || lowerName.endsWith(".jpg")
-                || lowerName.endsWith(".jpeg")
-                || lowerName.endsWith(".bmp")
-                || lowerName.endsWith(".tif")
-                || lowerName.endsWith(".tiff")) {
-            return extractFromImage(file);
-        } else {
-            // Nếu muốn: fallback là không OCR mà trả rỗng / throw
-            throw new IllegalArgumentException("Unsupported file type for OCR: " + filename);
-        }
+   public String extractText(MultipartFile file) throws IOException, TesseractException {
+    String filename = file.getOriginalFilename();
+    if (filename == null) {
+        throw new IllegalArgumentException("File name is null");
     }
+    String lowerName = filename.toLowerCase();
+
+    if (lowerName.endsWith(".pdf")) {
+        return extractFromPdf(file);
+    } else if (lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")
+            || lowerName.endsWith(".bmp") || lowerName.endsWith(".tif") || lowerName.endsWith(".tiff")) {
+        return extractFromImage(file);
+    } else if (lowerName.endsWith(".docx")) {
+        return extractTextFromDocx(file);
+    } else {
+        throw new IllegalArgumentException("Unsupported file type for OCR: " + file.getOriginalFilename());
+    }
+}
 
     private String extractFromImage(MultipartFile file) throws IOException, TesseractException {
         try (InputStream is = new ByteArrayInputStream(file.getBytes())) {
@@ -63,6 +64,15 @@ public class OCRService {
             return tesseract.doOCR(image);
         }
     }
+
+    private String extractTextFromDocx(MultipartFile file) throws IOException {
+    // Sử dụng Apache POI để trích xuất văn bản từ file .docx
+    try (InputStream fis = file.getInputStream()) {  // Sử dụng InputStream trực tiếp
+        XWPFDocument document = new XWPFDocument(fis);
+        XWPFWordExtractor extractor = new XWPFWordExtractor(document);  // Dùng XWPFWordExtractor thay vì XHTMLWordExtractor
+        return extractor.getText();
+    }
+}
 
     private String extractFromPdf(MultipartFile file) throws IOException, TesseractException {
         StringBuilder sb = new StringBuilder();

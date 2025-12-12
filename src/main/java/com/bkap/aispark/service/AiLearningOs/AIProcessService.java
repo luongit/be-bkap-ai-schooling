@@ -3,11 +3,13 @@ package com.bkap.aispark.service.AiLearningOs;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
 
 @Service
 public class AIProcessService {
@@ -85,61 +87,71 @@ public class AIProcessService {
          * ------------------------
          */
         private String askOpenAI(String prompt) {
-                try {
-                        JSONObject body = new JSONObject()
-                                        .put("model", modelName)
-                                        .put("messages", new JSONArray()
-                                                        .put(new JSONObject()
-                                                                        .put("role", "user")
-                                                                        .put("content", prompt)));
+    try {
+        // Tạo body request
+        JSONObject body = new JSONObject()
+                .put("model", modelName)
+                .put("messages", new JSONArray()
+                        .put(new JSONObject()
+                                .put("role", "user")
+                                .put("content", prompt)));
 
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.APPLICATION_JSON);
-                        headers.set("Authorization", "Bearer " + apiKey);
+        // Thiết lập headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
 
-                        HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
+        // Gửi request tới OpenAI API
+        HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
+        ResponseEntity<String> response = rest.exchange(
+                OPENAI_URL,
+                HttpMethod.POST,
+                request,
+                String.class);
 
-                        ResponseEntity<String> response = rest.exchange(
-                                        OPENAI_URL,
-                                        HttpMethod.POST,
-                                        request,
-                                        String.class);
+        // Chuyển đổi kết quả trả về từ OpenAI thành JSONObject
+        JSONObject json = new JSONObject(response.getBody());
 
-                        JSONObject json = new JSONObject(response.getBody());
+        // Lấy nội dung trả về từ OpenAI
+        return json
+                .getJSONArray("choices")
+                .getJSONObject(0)
+                .getJSONObject("message")
+                .getString("content");
 
-                        return json
-                                        .getJSONArray("choices")
-                                        .getJSONObject(0)
-                                        .getJSONObject("message")
-                                        .getString("content");
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "AI_PROCESSING_ERROR";
+    }
+}
 
-                } catch (Exception e) {
-                        e.printStackTrace();
-                        return "AI_PROCESSING_ERROR";
-                }
-        }
+       public String cleanJson(String aiOutput) {
+    if (aiOutput == null || aiOutput.trim().isEmpty()) {
+        return "{}";  // Trả về "{}" nếu aiOutput là null hoặc rỗng
+    }
 
-        public String cleanJson(String aiOutput) {
-                if (aiOutput == null)
-                        return "{}";
+    // Loại bỏ codeblock json và các ký tự dư thừa (nếu có)
+    String cleaned = aiOutput
+            .replace("```json", "")
+            .replace("```", "")
+            .trim();
 
-                // Xoá ký tự codeblock: ```json ... ```
-                String cleaned = aiOutput
-                                .replace("```json", "")
-                                .replace("```", "")
-                                .trim();
+    // Kiểm tra nếu output không phải là JSON hợp lệ
+    if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
+        System.err.println("❌ AI output is not valid JSON. Raw = " + aiOutput);
+        return "{}";  // Trả về JSON rỗng nếu không hợp lệ
+    }
 
-                // Xóa ký tự ` đơn lẻ
-                if (cleaned.startsWith("`") && cleaned.endsWith("`")) {
-                        cleaned = cleaned.substring(1, cleaned.length() - 1);
-                }
+    try {
+        // Cố gắng phân tích đầu ra của AI thành một JSONObject
+        new JSONObject(cleaned);
+    } catch (Exception e) {
+        System.err.println("❌ AI output is invalid JSON format: " + aiOutput);
+        return "{}";  // Trả về JSON rỗng nếu không thể phân tích
+    }
 
-                // Nếu AI trả text không phải JSON → fallback về {}
-                if (!cleaned.startsWith("{") && !cleaned.startsWith("[")) {
-                        System.err.println("❌ AI output is not valid JSON. Raw = " + aiOutput);
-                        return "{}";
-                }
+    // Nếu output hợp lệ, trả về JSON sạch sẽ
+    return cleaned;
+}
 
-                return cleaned;
-        }
 }
