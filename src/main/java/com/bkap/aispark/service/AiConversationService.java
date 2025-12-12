@@ -35,7 +35,9 @@ public class AiConversationService {
                 .userId(dto.getUserId())
                 .title(title)
                 .build();
-
+        
+        assistant.setUsed(assistant.getUsed() + 1);
+        assistantRepo.save(assistant);
         return conversationRepo.save(conv);
     }
 

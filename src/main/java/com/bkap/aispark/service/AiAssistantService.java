@@ -89,8 +89,14 @@ public class AiAssistantService {
 
 
     public AiAssistant getById(Integer id) {
-        return assistantRepo.findById(id)
+        AiAssistant assistant = assistantRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Assistant not found"));
+        
+        // Tăng views mỗi khi xem chi tiết
+        assistant.setViews(assistant.getViews() + 1);
+        assistantRepo.save(assistant);
+
+        return assistant;
     }
 
   

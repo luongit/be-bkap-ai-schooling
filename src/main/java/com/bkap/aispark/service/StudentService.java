@@ -3,6 +3,7 @@ package com.bkap.aispark.service;
 import java.time.Year;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -73,15 +74,8 @@ public class StudentService {
 
     private String generateStudentCode() {
         int year = Year.now().getValue();
-        String maxCode = studentRepository.findMaxCodeByYear(year);
-
-        int nextNumber = 1;
-        if (maxCode != null) {
-            String[] parts = maxCode.split("-");
-            nextNumber = Integer.parseInt(parts[1]) + 1;
-        }
-
-        return "HS" + year + "-" + String.format("%04d", nextNumber);
+        String uuidPart = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        return "HS" + year + "-" + uuidPart;
     }
 
     public Optional<Student> getByIdStudent(Long id) {
