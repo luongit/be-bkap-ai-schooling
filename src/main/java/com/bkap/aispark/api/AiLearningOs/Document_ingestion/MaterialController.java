@@ -1,4 +1,4 @@
-package com.bkap.aispark.api.AiLearningOs;
+package com.bkap.aispark.api.AiLearningOs.Document_ingestion;
 
 import java.util.Map;
 
@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.bkap.aispark.entity.AiLearningOs.TeacherUploadedMaterial;
-import com.bkap.aispark.repository.AiLearningOs.TeacherUploadedMaterialRepository;
-import com.bkap.aispark.service.AiLearningOs.MaterialService;
+import com.bkap.aispark.entity.AiLearningOs.Document_ingestion.TeacherUploadedMaterial;
+import com.bkap.aispark.repository.AiLearningOs.Document_ingestion.TeacherUploadedMaterialRepository;
+import com.bkap.aispark.service.AiLearningOs.Document_ingestion.MaterialService;
 
 @RestController
 @RequestMapping("/materials")

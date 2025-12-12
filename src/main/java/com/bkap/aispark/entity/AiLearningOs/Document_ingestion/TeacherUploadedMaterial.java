@@ -1,4 +1,4 @@
-package com.bkap.aispark.entity.AiLearningOs;
+package com.bkap.aispark.entity.AiLearningOs.Document_ingestion;
 
 import java.sql.Timestamp;
 import java.util.Map;
