@@ -30,6 +30,25 @@ function showToast(message, type = 'success') {
     }).showToast();
 }
 
+
+const activated = new URLSearchParams(window.location.search).get("activated");
+
+if (activated === "success") {
+    showToast("Kích hoạt tài khoản thành công! Vui lòng đăng nhập.", "success");
+
+    // Xoá query param
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+if (activated === "fail") {
+    showToast("Kích hoạt tài khoản thất bại! Liên hệ hỗ trợ hoặc thử lại.", "error");
+
+    // Xoá query param
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+
+
 // ==============================
 // XỬ LÝ LOGIN FORM
 // ==============================
@@ -104,6 +123,8 @@ const facebookLoginUrl = isLocal
 document.getElementById("facebookLoginBtn").addEventListener("click", function () {
     window.location.href = facebookLoginUrl;
 });
+
+
 
 // ==============================
 // AUTO LOGIN SAU KHI GOOGLE/FACEBOOK REDIRECT

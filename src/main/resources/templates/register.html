@@ -8,7 +8,7 @@
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link rel="stylesheet" href="/css/register.css">
     <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico">
 </head>
@@ -86,6 +86,7 @@
             </div>
         </div>
 
+
         <!-- =============== PARENT FORM =============== -->
         <div id="parentForm" class="hidden">
 
@@ -97,8 +98,8 @@
 
             <div class="input-group">
                 <label>Họ và tên</label>
-                <input id="pFullName" type="text" placeholder="Họ và tên phụ huynh...">
-                <p id="pFullNameErr" class="error"></p>
+                <input id="pName" type="text" placeholder="Họ và tên phụ huynh...">
+                <p id="pNameErr" class="error"></p>
             </div>
 
             <div class="input-group">
@@ -133,6 +134,7 @@
 
         </div>
 
+
         <!-- ACTIONS -->
         <div class="actions">
             <button class="back-btn" onclick="goBack()">
@@ -150,6 +152,8 @@
 </div>
 
 <script src="/js/register.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
 
 </body>
 </html>

@@ -1,16 +1,17 @@
 package com.bkap.aispark.api;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Map;
-
 import com.bkap.aispark.service.refresh_tokens.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
 import com.bkap.aispark.dto.LoginRequest;
 import com.bkap.aispark.dto.LoginResponse;
 import com.bkap.aispark.dto.ParentRegisterRequest;
@@ -24,9 +25,7 @@ import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AuthService;
 import com.bkap.aispark.service.PasswordResetService;
 import com.bkap.aispark.service.UserService;
-
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpHeaders;
 
@@ -34,6 +33,10 @@ import org.springframework.http.HttpHeaders;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthApi {
+
+    @Value("${fe.login.redirect}")
+    private String feLoginRedirect;
+
     @Autowired
     private PasswordResetTokenRepository tokenRepo;
     @Autowired
@@ -120,7 +123,7 @@ public class AuthApi {
     public ResponseEntity<?> logout(
             @CookieValue(name = "refresh_token", required = false) String refreshToken,
             HttpServletResponse response
-    ){
+    ) {
         if (refreshToken != null) {
             refreshTokenService.findByToken(refreshToken).ifPresent(token -> {
                 refreshTokenService.revokeToken(token);
@@ -140,8 +143,6 @@ public class AuthApi {
 
         return ResponseEntity.ok(Map.of("message", "Đăng xuất thành công"));
     }
-
-
 
 
     @GetMapping("/me")
@@ -216,12 +217,30 @@ public class AuthApi {
     }
 
     @GetMapping("/verify")
-    public void verifyUser(@RequestParam String email, @RequestParam String token,
-                           HttpServletResponse response) throws IOException {
-        authService.verifyUserByLink(email, token); // gọi Service đúng cách
-        // redirect về frontend login
-        response.sendRedirect("http://bkapai.vn/auth/login");
+    public ResponseEntity<?> verifyUser(
+            @RequestParam String email,
+            @RequestParam String token
+    ) {
+        try {
+            authService.verifyUserByLink(email, token);
+
+            String redirectUrl = feLoginRedirect + "?activated=success";
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(redirectUrl))
+                    .build();
+
+        } catch (Exception e) {
+
+            String redirectUrl = feLoginRedirect + "?activated=fail";
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(redirectUrl))
+                    .build();
+        }
     }
+
+
+
+
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(
@@ -235,7 +254,7 @@ public class AuthApi {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
-        String newAccess = jwtUtil.generateAccessToken(userId, user.getEmail(),user.getUsername(), user.getRole().name());
+        String newAccess = jwtUtil.generateAccessToken(userId, user.getEmail(), user.getUsername(), user.getRole().name());
 
         return ResponseEntity.ok(Map.of(
                 "accessToken", newAccess

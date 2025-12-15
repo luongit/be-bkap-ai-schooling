@@ -1,10 +1,12 @@
 package com.bkap.aispark.api.oauth.google;
+
 import com.bkap.aispark.entity.*;
 import com.bkap.aispark.repository.StudentRepository;
 import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AuthService;
+import com.bkap.aispark.service.StudentService;
 import com.bkap.aispark.service.oauth.google.GoogleOauthService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,7 +14,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 
 @RestController
@@ -28,6 +33,9 @@ public class GoogleOAuthController {
     private StudentRepository studentRepository;
 
     @Autowired
+    private StudentService studentService;
+
+    @Autowired
     private AuthService authService;
 
     @Autowired
@@ -39,9 +47,34 @@ public class GoogleOAuthController {
     @Value("${fe.login.redirect}")
     private String feLoginRedirect;
 
-    @GetMapping("/google")
+    // GIẢI PHÁP: Dùng JavaScript redirect thay vì HTTP redirect
+    @GetMapping(value = "/google", produces = MediaType.TEXT_HTML_VALUE)
     public void redirectToGoogle(HttpServletResponse response) throws IOException {
-        response.sendRedirect(googleOAuthService.buildLoginUrl());
+        String loginUrl = googleOAuthService.buildLoginUrl();
+
+        System.out.println("=== GOOGLE OAUTH REDIRECT (JS) ===");
+        System.out.println("Login URL: " + loginUrl);
+        System.out.println("===================================");
+
+        // Trả về HTML với JavaScript redirect
+        response.setContentType("text/html; charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        PrintWriter out = response.getWriter();
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("    <meta charset='UTF-8'>");
+        out.println("    <title>Redirecting to Google...</title>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("    <p>Redirecting to Google login...</p>");
+        out.println("    <script>");
+        out.println("        window.location.href = '" + loginUrl + "';");
+        out.println("    </script>");
+        out.println("</body>");
+        out.println("</html>");
+        out.flush();
     }
 
     @GetMapping("/google/callback")
@@ -69,7 +102,6 @@ public class GoogleOAuthController {
             return;
         }
 
-
         Student student = studentRepository.findByEmail(email).orElse(null);
 
         String username = email.split("@")[0].replaceAll("[^a-zA-Z0-9._-]", "");
@@ -81,13 +113,13 @@ public class GoogleOAuthController {
             student.setUsername(username);
             student.setEmail(email);
             student.setDefaultPassword("GOOGLE_USER");
-            student.setCode(authService.generateStudentCodeByYear());
+            student.setCode(studentService.generateStudentCode());
             student.setIsActive(true);
 
             student = studentRepository.save(student);
         }
 
-        //  Luôn tạo user mapping
+        // Luôn tạo user mapping
         user = new User();
         user.setEmail(email);
         user.setUsername(username);
@@ -97,7 +129,6 @@ public class GoogleOAuthController {
         user.setObjectId(student.getId());
         user.setIsActive(true);
 
-
         userRepository.save(user);
 
         UserCredit credit = new UserCredit();
@@ -106,7 +137,7 @@ public class GoogleOAuthController {
         credit.setExpiredDate(null);
         userCreditRepository.save(credit);
 
-        // ------ JWT ------
+        // JWT
         String jwt = jwtUtil.generateAccessToken(
                 user.getId(),
                 user.getEmail(),
@@ -117,5 +148,4 @@ public class GoogleOAuthController {
         // Redirect FE
         response.sendRedirect(feLoginRedirect + "?token=" + jwt);
     }
-
 }

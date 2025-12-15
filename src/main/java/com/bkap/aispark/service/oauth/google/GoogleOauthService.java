@@ -21,13 +21,21 @@ public class GoogleOauthService {
 
     // Tao URL de chuyen huong sang Google Login
     public String buildLoginUrl() {
-        return "https://accounts.google.com/o/oauth2/v2/auth"
+        // Log để debug
+        System.out.println("Client ID: " + clientId);
+        System.out.println("Redirect URI: " + redirectUri);
+
+        // IMPORTANT: Đảm bảo URL này KHÔNG bị IIS rewrite
+        String authUrl = "https://accounts.google.com/o/oauth2/v2/auth"
                 + "?client_id=" + clientId
-                + "&redirect_uri=" + redirectUri
+                + "&redirect_uri=" + java.net.URLEncoder.encode(redirectUri, java.nio.charset.StandardCharsets.UTF_8)
                 + "&response_type=code"
                 + "&scope=openid%20email%20profile"
                 + "&access_type=offline"
                 + "&prompt=select_account%20consent";
+
+        System.out.println("Generated Auth URL: " + authUrl);
+        return authUrl;
     }
 
 
