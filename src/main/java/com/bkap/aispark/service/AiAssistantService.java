@@ -4,7 +4,9 @@ import com.bkap.aispark.dto.AssistantCreateRequest;
 import com.bkap.aispark.dto.AssistantResponse;
 import com.bkap.aispark.dto.ProfileDTO;
 import com.bkap.aispark.entity.AiAssistant;
+import com.bkap.aispark.entity.AiAssistantDocument;
 import com.bkap.aispark.entity.AiCategory;
+import com.bkap.aispark.repository.AiAssistantDocumentRepository;
 import com.bkap.aispark.repository.AiAssistantRepository;
 import com.bkap.aispark.repository.AiCategoryRepository;
 import org.springframework.stereotype.Service;
@@ -20,15 +22,27 @@ public class AiAssistantService {
     private final AiCategoryRepository categoryRepo;
     private final R2StorageService r2;
     private final ProfileService profileService;
+    private final AiAssistantDocumentRepository docRepo;
+    private final TextExtractorService textExtractor;
+    private final DocumentSummarizerService summarizer;
 
-    public AiAssistantService(AiAssistantRepository assistantRepo,
-                              AiCategoryRepository categoryRepo,
-                              R2StorageService r2,
-                              ProfileService profileService) {
+    public AiAssistantService(
+            AiAssistantRepository assistantRepo,
+            AiCategoryRepository categoryRepo,
+            R2StorageService r2,
+            ProfileService profileService,
+            AiAssistantDocumentRepository docRepo,
+            TextExtractorService textExtractor,
+            DocumentSummarizerService summarizer
+    ) {
         this.assistantRepo = assistantRepo;
         this.categoryRepo = categoryRepo;
         this.r2 = r2;
         this.profileService = profileService;
+
+        this.docRepo = docRepo;
+        this.textExtractor = textExtractor;
+        this.summarizer = summarizer;
     }
 
  
@@ -131,5 +145,67 @@ public class AiAssistantService {
     // (tuỳ, nếu còn chỗ khác đang dùng)
     public List<AiAssistant> getAllAssistantsRaw() {
         return assistantRepo.findAll();
+    }
+
+    public AiAssistant createAssistantWithFiles(
+            AssistantCreateRequest dto,
+            MultipartFile avatar,
+            MultipartFile[] knowledgeFiles
+    ) throws Exception {
+
+        if (assistantRepo.existsByName(dto.getName())) {
+            throw new RuntimeException("Tên trợ lý đã tồn tại, vui lòng chọn tên khác!");
+        }
+
+        AiCategory category = categoryRepo.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        AiAssistant assistant = AiAssistant.builder()
+                .name(dto.getName())
+                .description(dto.getDescription())
+                .systemPrompt(dto.getSystemPrompt())
+                .model("gpt-4o") 
+                .category(category)
+                .authorId(dto.getAuthorId())
+                .isPublished(dto.getIsPublished() != null ? dto.getIsPublished() : false)
+                .code("ast-" + System.currentTimeMillis())
+                .build();
+
+        assistant.setPublicSlug(generateUniqueSlug(dto.getName()));
+
+        if (avatar != null && !avatar.isEmpty()) {
+            String url = r2.uploadFile(avatar);
+            assistant.setAvatarUrl(url);
+        }
+
+        assistant = assistantRepo.save(assistant);
+
+        // xử lý file 
+        if (knowledgeFiles != null) {
+            for (MultipartFile f : knowledgeFiles) {
+                if (f == null || f.isEmpty()) continue;
+
+                String rawText = textExtractor.extract(f);
+
+                // Nếu dài quá thì tóm tắt 1 lần
+                String summary = null;
+                if (rawText != null && rawText.length() > 12_000) { 
+                    summary = summarizer.summarizeOnce(assistant.getModel(), rawText);
+                }
+
+                AiAssistantDocument doc = AiAssistantDocument.builder()
+                        .assistantId(assistant.getId())
+                        .fileName(f.getOriginalFilename())
+                        .fileType(f.getContentType())
+                        .fileSize(f.getSize())
+                        .rawText(rawText)
+                        .summaryText(summary)
+                        .build();
+
+                docRepo.save(doc);
+            }
+        }
+
+        return assistant;
     }
 }

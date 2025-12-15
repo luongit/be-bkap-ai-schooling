@@ -46,7 +46,12 @@ public class AiAssistant {
 
     private Boolean isPublished = false;
 
+    @Builder.Default
+    @Column(nullable = false)
     private Long views = 0L;
+
+    @Builder.Default
+    @Column(nullable = false)
     private Long used = 0L;
 
     private LocalDateTime createdAt = LocalDateTime.now();
