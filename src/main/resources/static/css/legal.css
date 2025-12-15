@@ -1,0 +1,31 @@
+/* assets/legal.css */
+:root {
+  --primary: #0a58ca;
+  --text: #222;
+  --muted: #666;
+  --bg: #fff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 16px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+h1, h2 { color: var(--primary); }
+
+a { color: var(--primary); }
+
+footer {
+  margin-top: 40px;
+  font-size: 14px;
+  color: var(--muted);
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+}
