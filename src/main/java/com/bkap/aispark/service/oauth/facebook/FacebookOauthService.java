@@ -27,11 +27,12 @@ public class FacebookOauthService {
                 + "?client_id=" + appId
                 + "&redirect_uri=" + redirectUri
                 + "&response_type=code"
-                + "&scope=email,public_profile";
+                + "&scope=email," +
+                "public_profile";
     }
 
 
-    // Đổi code → Access Token
+    //  Access Token
     public String exchangeCodeForToken(String code) {
 
         String url =

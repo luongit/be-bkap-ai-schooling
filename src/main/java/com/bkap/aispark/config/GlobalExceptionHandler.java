@@ -13,7 +13,7 @@ public class GlobalExceptionHandler {
         ex.printStackTrace(); // log chi tiết ra console
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Lỗi server: " + ex.getMessage());
+                .body("Lỗi: " + ex.getMessage());
     }
 
 }

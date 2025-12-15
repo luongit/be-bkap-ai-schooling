@@ -1,10 +1,6 @@
 package com.bkap.aispark.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "parents")
@@ -13,26 +9,28 @@ public class Parent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(unique = true, nullable = false)
+    private String code;
     private String name;
     private String phone;
     private String email;
     private String address;
 
-    // ✅ Bắt buộc: Constructor rỗng cho JPA
+    // Bắt buộc: Constructor rỗng cho JPA
     public Parent() {
     }
 
-    // ✅ Constructor có tham số (của bạn)
-    public Parent(String address, String email, Long id, String name, String phone) {
+    // Constructor có tham số (của bạn)
+    public Parent(String address,String code , String email, Long id, String name, String phone) {
         this.address = address;
         this.email = email;
         this.id = id;
+        this.code =code;
         this.name = name;
         this.phone = phone;
     }
 
-    // ✅ Getter & Setter
+    //  Getter & Setter
     public Long getId() {
         return id;
     }
@@ -71,5 +69,10 @@ public class Parent {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getCode() {return code;}
+    public void setCode(String code) {
+        this.code = code;
     }
 }

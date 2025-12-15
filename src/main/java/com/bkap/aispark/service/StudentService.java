@@ -72,10 +72,13 @@ public class StudentService {
         return saved;
     }
 
-    private String generateStudentCode() {
-        int year = Year.now().getValue();
-        String uuidPart = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-        return "HS" + year + "-" + uuidPart;
+    // ----------------- SINH MÃ HỌC SINH -----------------
+    public String generateStudentCode() {
+        String code;
+        do {
+            code = "HS" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        } while (studentRepository.existsByCode(code));
+        return code;
     }
 
     public Optional<Student> getByIdStudent(Long id) {

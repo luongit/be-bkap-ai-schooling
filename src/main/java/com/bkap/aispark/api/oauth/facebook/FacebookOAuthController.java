@@ -6,6 +6,7 @@ import com.bkap.aispark.repository.UserCreditRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.AuthService;
+import com.bkap.aispark.service.StudentService;
 import com.bkap.aispark.service.oauth.facebook.FacebookOauthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 
 @RestController
@@ -24,6 +26,7 @@ public class FacebookOAuthController {
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final AuthService authService;
+    private final StudentService studentService;
     private final JwtUtil jwtUtil;
     private final UserCreditRepository userCreditRepository;
 
@@ -31,21 +34,44 @@ public class FacebookOAuthController {
     private String feLoginRedirect;
 
 
-    //  Redirect sang Facebook Login
-    @GetMapping("/facebook")
+
+    @GetMapping(value = "/facebook", produces = "text/html")
     public void redirectToFacebook(HttpServletResponse response) throws IOException {
-        response.sendRedirect(facebookService.buildLoginUrl());
+        String loginUrl = facebookService.buildLoginUrl();
+
+        System.out.println("=== FACEBOOK OAUTH REDIRECT (JS) ===");
+        System.out.println("Login URL: " + loginUrl);
+        System.out.println("===================================");
+
+
+        response.setContentType("text/html; charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_OK);
+
+        PrintWriter out = response.getWriter();
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("    <meta charset='UTF-8'>");
+        out.println("    <title>Redirecting to Facebook...</title>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("    <p>Redirecting to Facebook login...</p>");
+        out.println("    <script>");
+        out.println("        window.location.href = '" + loginUrl + "';");
+        out.println("    </script>");
+        out.println("</body>");
+        out.println("</html>");
+        out.flush();
     }
 
 
-    //  Facebook gọi callback trả code
     @GetMapping("/facebook/callback")
     public void facebookCallback(
             @RequestParam("code") String code,
             HttpServletResponse response
     ) throws IOException {
 
-        // Đổi code → access token
+
         String accessToken = facebookService.exchangeCodeForToken(code);
 
         // Lấy thông tin user từ Facebook Graph API
@@ -55,7 +81,7 @@ public class FacebookOAuthController {
         String fullName = (String) info.get("name");
         String username = email.split("@")[0];
 
-        // --- CASE 1: User đã tồn tại trong hệ thống ---
+        // User đã tồn tại trong hệ thống ---
         User existingUser = userRepository.findByEmail(email).orElse(null);
 
         if (existingUser != null) {
@@ -69,7 +95,7 @@ public class FacebookOAuthController {
             return;
         }
 
-        // --- User chưa tồn tại → check Student ---
+        //  check Student ---
         Student student = studentRepository.findByEmail(email).orElse(null);
 
         if (student == null) {
@@ -78,12 +104,11 @@ public class FacebookOAuthController {
             student.setUsername(username);
             student.setEmail(email);
             student.setDefaultPassword("FACEBOOK_USER");
-            student.setCode(authService.generateStudentCodeByYear());
+            student.setCode(studentService.generateStudentCode());
             student.setIsActive(true);
             student = studentRepository.save(student);
         }
 
-        // ---  Tạo mới User mapping ---
         User newUser = new User();
         newUser.setEmail(email);
         newUser.setUsername(username);
@@ -95,14 +120,12 @@ public class FacebookOAuthController {
 
         newUser = userRepository.save(newUser);
 
-        // --- CASE 4: Cấp credit mặc định ---
         UserCredit credit = new UserCredit();
         credit.setUser(newUser);
         credit.setCredit(3000);
         credit.setExpiredDate(null);
         userCreditRepository.save(credit);
 
-        // --- CASE 5: Sinh JWT ---
         String jwt = jwtUtil.generateAccessToken(
                 newUser.getId(),
                 newUser.getEmail(),
@@ -110,7 +133,7 @@ public class FacebookOAuthController {
                 newUser.getRole().name()
         );
 
-        // --- CASE 6: Redirect về FE ---
+
         response.sendRedirect(feLoginRedirect + "?token=" + jwt);
     }
 }

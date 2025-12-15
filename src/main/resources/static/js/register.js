@@ -18,6 +18,27 @@ function selectRole(role) {
     document.getElementById("parentForm").classList.toggle("hidden", role !== "parent");
 }
 
+
+// Toast thong bao
+function showToast(message, type = 'success') {
+    let backgroundColor = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+
+    if (type === 'error') {
+        backgroundColor = 'linear-gradient(135deg, #f43f5e, #e11d48 100%)';
+    } else if (type === 'warning') {
+        backgroundColor = 'linear-gradient(135deg, #f59e0b, #d97706 100%)';
+    }
+
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor,
+        stopOnFocus: true,
+    }).showToast();
+}
+
 function goBack() {
     selectedRole = null;
     document.getElementById("step1").classList.remove("hidden");
@@ -37,17 +58,19 @@ function clearError(id, errId) {
 // map lỗi
 document.addEventListener("input", e => {
     const ids = {
-        sUsername:"sUsernameErr", sFullName:"sFullNameErr",
-        sBirthdate:"sBirthdateErr", sEmail:"sEmailErr", sPhone:"sPhoneErr",
-        sPassword:"sPassErr", sConfirm:"sConfirmErr",
+        sUsername: "sUsernameErr", sFullName: "sFullNameErr",
+        sBirthdate: "sBirthdateErr", sEmail: "sEmailErr", sPhone: "sPhoneErr",
+        sPassword: "sPassErr", sConfirm: "sConfirmErr",
 
-        pUsername:"pUsernameErr", pFullName:"pFullNameErr", pAddress:"pAddressErr",
-        pEmail:"pEmailErr", pPhone:"pPhoneErr",
-        pPassword:"pPassErr", pConfirm:"pConfirmErr"
+        pUsername: "pUsernameErr", pName: "pNameErr",
+        pAddress: "pAddressErr",
+        pEmail: "pEmailErr", pPhone: "pPhoneErr",
+        pPassword: "pPassErr", pConfirm: "pConfirmErr"
     };
 
     if (ids[e.target.id]) clearError(e.target.id, ids[e.target.id]);
 });
+
 
 function validateNotEmpty(id, errId, msg) {
     const v = document.getElementById(id).value.trim();
@@ -91,7 +114,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     const old = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý đăng ký...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
 
     msg.innerText = "";
     msg.className = "form-msg";
@@ -108,7 +131,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
     } else {
         ok &= validateNotEmpty("pUsername","pUsernameErr","Không được để trống!");
-        ok &= validateNotEmpty("pFullName","pFullNameErr","Không được để trống!");
+        ok &= validateNotEmpty("pName","pNameErr","Không được để trống!");
         ok &= validateNotEmpty("pAddress","pAddressErr","Không được để trống!");
         ok &= validateNotEmpty("pEmail","pEmailErr","Không được để trống!") && validateEmail("pEmail","pEmailErr");
         ok &= validateNotEmpty("pPhone","pPhoneErr","Không được để trống!") && validatePhone("pPhone","pPhoneErr");
@@ -134,7 +157,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         }
         : {
             username: pUsername.value.trim(),
-            fullName: pFullName.value.trim(),
+            name: pName.value.trim(),
             address: pAddress.value.trim(),
             email: pEmail.value.trim(),
             phone: pPhone.value.trim(),
@@ -164,8 +187,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
         msg.innerText = "Đăng ký tài khoản thành công!";
         msg.classList.add("success");
-
-        setTimeout(()=>window.location.href="/auth/login",1000);
+        showToast("Đăng ký tài khoản thành công! Vui lòng kiểm tra email để kích hoạt.", "success");
+        setTimeout(() => window.location.href = "/auth/login", 2000);
 
     } catch (err) {
         msg.innerText = "Lỗi: " + err.message;

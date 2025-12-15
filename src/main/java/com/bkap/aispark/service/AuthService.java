@@ -3,31 +3,31 @@ package com.bkap.aispark.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.bkap.aispark.entity.*;
+import com.bkap.aispark.repository.UserCreditRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import java.security.SecureRandom;
 import com.bkap.aispark.dto.LoginResponse;
 import com.bkap.aispark.dto.ParentRegisterRequest;
 import com.bkap.aispark.dto.StudentRegisterRequest;
-import com.bkap.aispark.entity.ObjectType;
-import com.bkap.aispark.entity.Parent;
-import com.bkap.aispark.entity.Student;
-import com.bkap.aispark.entity.User;
-import com.bkap.aispark.entity.UserRole;
 import com.bkap.aispark.repository.ParentRepository;
 import com.bkap.aispark.repository.StudentRepository;
 import com.bkap.aispark.repository.UserRepository;
 import com.bkap.aispark.security.JwtUtil;
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 
 @Service
 public class AuthService {
+
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     @Autowired
     private UserRepository userRepository;
@@ -36,7 +36,13 @@ public class AuthService {
     private StudentRepository studentRepository;
 
     @Autowired
+    private  StudentService studentService;
+
+    @Autowired
     private ParentRepository parentRepository;
+
+    @Autowired
+    private ParentService parentService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -46,6 +52,9 @@ public class AuthService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    private UserCreditRepository userCreditRepository;
 
     public boolean checkPassword(String raw, String encoded) {
         return passwordEncoder.matches(raw, encoded);
@@ -62,7 +71,7 @@ public class AuthService {
     }
 
     private void sendVerificationEmail(String toEmail, String token) {
-        String link = "http://bkapai.vn/api/auth/verify?email=" + toEmail + "&token=" + token;
+        String link = baseUrl + "/api/auth/verify?email=" + toEmail + "&token=" + token;
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -71,41 +80,33 @@ public class AuthService {
             helper.setSubject("BKAP AI - Xác minh tài khoản");
 
             String htmlMsg = """
-                        <div style="font-family: Arial, sans-serif; text-align: center; background-color: #f7f7f7; padding: 30px;">
-                            <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; display: inline-block; max-width: 500px;">
-                                <h2 style="color: #333333;">Xin chào,</h2>
-                                <p style="color: #555555; font-size: 16px;">
-                                    Vui lòng nhấn vào nút bên dưới để kích hoạt tài khoản của bạn:
-                                </p>
-                                <a href="%s"
-                                   style="display: inline-block; margin-top: 20px; background-color: #007BFF; color: white;
-                                          padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                                    Xác minh tài khoản
-                                </a>
-                                <p style="color: #999999; font-size: 13px; margin-top: 20px;">
-                                    Liên kết sẽ hết hạn sau 15 phút.
-                                </p>
-                            </div>
-                        </div>
-                    """
-                    .formatted(link);
+                <div style="font-family: Arial, sans-serif; text-align: center; background-color: #f7f7f7; padding: 30px;">
+                    <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; display: inline-block; max-width: 500px;">
+                        <h2 style="color: #333333;">Xin chào,</h2>
+                        <p style="color: #555555; font-size: 16px;">
+                            Vui lòng nhấn vào nút bên dưới để kích hoạt tài khoản của bạn:
+                        </p>
+                        <a href="%s"
+                           style="display: inline-block; margin-top: 20px; background-color: #007BFF; color: white;
+                                  padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                            Xác minh tài khoản
+                        </a>
+                        <p style="color: #999999; font-size: 13px; margin-top: 20px;">
+                            Liên kết sẽ hết hạn sau 15 phút.
+                        </p>
+                    </div>
+                </div>
+                """.formatted(link);
 
             helper.setText(htmlMsg, true);
             mailSender.send(message);
+
         } catch (MessagingException e) {
             throw new RuntimeException("Lỗi gửi email xác minh", e);
         }
-
     }
 
-    // ----------------- SINH MÃ HỌC SINH -----------------
-    private String generateStudentCode() {
-        String code;
-        do {
-            code = "HS" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
-        } while (studentRepository.existsByCode(code));
-        return code;
-    }
+
 
     // ----------------- REGISTER STUDENT -----------------
     @Transactional
@@ -129,12 +130,12 @@ public class AuthService {
 
         // Tạo Student entity
         Student student = new Student();
-        student.setCode(generateStudentCode());
+        student.setCode(studentService.generateStudentCode());  // Gọi phương thức từ StudentService
         student.setFullName(req.getFullName());
         student.setBirthdate(req.getBirthdate());
         student.setPhone(req.getPhone());
         student.setEmail(req.getEmail());
-        student.setDefaultPassword(req.getPassword()); // đảm bảo cột này trong DB cho phép null nếu bạn không cần
+        student.setDefaultPassword(req.getPassword());
         student.setUsername(req.getUsername());
         student.setHobbies(req.getHobbies());
         Student savedStudent = studentRepository.save(student);
@@ -157,8 +158,13 @@ public class AuthService {
         userRepository.save(user);
         sendVerificationEmail(user.getEmail(), token);
 
+        // Thêm credit 3000 vào tài khoản
+        UserCredit credit = new UserCredit(user, 3000, null);
+        userCreditRepository.save(credit);
+
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
     }
+
 
     // ----------------- REGISTER PARENT -----------------
     @Transactional
@@ -180,6 +186,7 @@ public class AuthService {
         }
 
         Parent parent = new Parent();
+        parent.setCode(parentService.generateParentCode());
         parent.setName(req.getName());
         parent.setPhone(req.getPhone());
         parent.setEmail(req.getEmail());
@@ -201,6 +208,9 @@ public class AuthService {
         user.setCodeExpiry(LocalDateTime.now().plusMinutes(15));
         userRepository.save(user);
         sendVerificationEmail(user.getEmail(), token);
+
+        UserCredit credit = new UserCredit(user, 3000, null);
+        userCreditRepository.save(credit);
 
         return "Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.";
     }
@@ -271,21 +281,6 @@ public class AuthService {
                 refreshToken
         );
     }
-    // Ham tao sinh id hoc sinh khi login bang gg
-    public String generateStudentCodeByYear() {
-        int year = java.time.LocalDate.now().getYear();
 
-        // Lấy code lớn nhất theo năm
-        String maxCode = studentRepository.findMaxCodeByYear(year);
-
-        int nextNumber = 1;
-        if (maxCode != null) {
-            String lastDigits = maxCode.substring(6);
-            nextNumber = Integer.parseInt(lastDigits) + 1;
-        }
-
-        // Format thành HS20250001
-        return String.format("HS%d%04d", year, nextNumber);
-    }
 
 }
