@@ -23,14 +23,18 @@ public class AiAssistantApi {
     }
 
     // API to create a new assistant
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<AiAssistant> createAssistant(
+    @PostMapping(value = "/create-with-files", consumes = {"multipart/form-data"})
+    public ResponseEntity<AiAssistant> createAssistantWithFiles(
             @RequestPart("dto") AssistantCreateRequest dto,
-            @RequestPart(value = "avatar", required = false) MultipartFile avatar) throws Exception {
-
-        AiAssistant assistant = aiAssistantService.createAssistant(dto, avatar);
+            @RequestPart(value = "avatar", required = false) MultipartFile avatar,
+            @RequestPart(value = "knowledgeFiles", required = false) MultipartFile[] knowledgeFiles
+    ) throws Exception {
+   
+        AiAssistant assistant = aiAssistantService.createAssistantWithFiles(dto, avatar, knowledgeFiles);
         return ResponseEntity.ok(assistant);
     }
+    
+
 
 
     // API to get a list of all assistants
