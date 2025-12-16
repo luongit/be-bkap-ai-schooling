@@ -50,4 +50,11 @@ public class AiAssistantApi {
         AiAssistant assistant = aiAssistantService.getById(id);
         return ResponseEntity.ok(assistant);
     }
+    
+    @PatchMapping("/{id}/view")
+    public ResponseEntity<Void> increaseView(@PathVariable Integer id) {
+        aiAssistantService.increaseView(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
