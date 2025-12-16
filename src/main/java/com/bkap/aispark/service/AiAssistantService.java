@@ -9,6 +9,9 @@ import com.bkap.aispark.entity.AiCategory;
 import com.bkap.aispark.repository.AiAssistantDocumentRepository;
 import com.bkap.aispark.repository.AiAssistantRepository;
 import com.bkap.aispark.repository.AiCategoryRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -103,15 +106,10 @@ public class AiAssistantService {
 
 
     public AiAssistant getById(Integer id) {
-        AiAssistant assistant = assistantRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Assistant not found"));
-        
-        // Tăng views mỗi khi xem chi tiết
-        assistant.setViews(assistant.getViews() + 1);
-        assistantRepo.save(assistant);
-
-        return assistant;
+        return assistantRepo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Assistant not found"));
     }
+
 
   
     public List<AssistantResponse> getAllAssistantResponses() {
@@ -208,4 +206,10 @@ public class AiAssistantService {
 
         return assistant;
     }
+    
+    @Transactional
+    public void increaseView(Integer id) {
+        assistantRepo.incrementView(id);
+    }
+
 }
