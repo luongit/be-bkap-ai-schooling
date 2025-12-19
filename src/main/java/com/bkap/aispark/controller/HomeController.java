@@ -50,5 +50,9 @@ public class HomeController {
     public String terms() {
         return "terms";
     }
+   @GetMapping("/book")
+	public String book() {
+		return "book";
+	}
 
 }
