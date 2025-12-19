@@ -38,6 +38,10 @@ public class HomeController {
 	public String chatbot() {
 		return "chatbot";
 	}
+	@GetMapping("/book")
+	public String book() {
+		return "book";
+	}
 
 
 }
