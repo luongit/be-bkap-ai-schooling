@@ -5,43 +5,54 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class HomeController {
-	@GetMapping({ "", "/" })
-	public String home() {
-		return "forward:/index.html";
-	}
-	
+    @GetMapping({"", "/"})
+    public String home() {
+        return "forward:/index.html";
+    }
 
-	@GetMapping({ "/excel" })
-	public String excel() {
-		return "test_excel";
-	}
 
-	@GetMapping("/auth/login")
-	public String loginPage() {
-		return "login";
-	}
+    @GetMapping({"/excel"})
+    public String excel() {
+        return "test_excel";
+    }
 
-	@GetMapping("/otp")
-	public String verify() {
-		return "forgot-password";
-	}
+    @GetMapping("/auth/login")
+    public String loginPage() {
+        return "login";
+    }
+    
+    @GetMapping("/otp")
+    public String verify() {
+        return "forgot-password";
+    }
+    
+    @GetMapping("/register")
+    public String registerPage() {
+        return "register";
+    }
+  
+    @GetMapping("/video")
+    public String videoPage() {
+        return "upload";
+    }
 
-	@GetMapping("/register")
-	public String registerPage() {
-		return "register";
-	}
-	@GetMapping("/video")
-	public String videoPage() {
-		return "upload";
-	}
-	@GetMapping("/chatbot")
-	public String chatbot() {
-		return "chatbot";
-	}
-	@GetMapping("/book")
+    @GetMapping("/chatbot")
+    public String chatbot() {
+        return "chatbot";
+    }
+
+    @GetMapping("/privacy-policy")
+    public String privacyPolicy() {
+        return "privacy-policy";
+    }
+
+    @GetMapping("/terms")
+    public String terms() {
+        return "terms";
+    }
+   @GetMapping("/book")
 	public String book() {
 		return "book";
 	}
-
 
 }

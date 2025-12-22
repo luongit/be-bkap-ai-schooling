@@ -39,7 +39,7 @@ public class R2StorageService {
     @Value("${cloudflare.r2.endpoint}")
     private String endpoint;
 
-    // Giữ nguyên như bạn muốn — không đưa vào config
+    // baseURL
     private final String publicBaseUrl = "https://pub-73166ad3cfdb4cacae1a32467e7110c0.r2.dev";
 
     private S3Client buildClient() {
@@ -55,9 +55,7 @@ public class R2StorageService {
                 .build();
     }
 
-    /* ======================================================
-            UPLOAD (Giữ nguyên code của bạn)
-    ====================================================== */
+    //upload
     public String uploadFile(MultipartFile file) throws IOException {
         String cleanName = file.getOriginalFilename().replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
         String fileName = UUID.randomUUID() + "_" + cleanName;
@@ -84,9 +82,7 @@ public class R2StorageService {
         return publicBaseUrl + "/" + fileName;
     }
 
-    /* ======================================================
-            DELETE FILE – BẠN CHƯA CÓ! (Thêm mới)
-    ====================================================== */
+    // xóa
     public void deleteFile(String fileUrl) {
 
         if (fileUrl == null || fileUrl.isBlank()) return;
@@ -111,4 +107,21 @@ public class R2StorageService {
             System.err.println("❌ Lỗi xoá file R2: " + e.getMessage());
         }
     }
+    //up truyện
+    public String uploadBytes(byte[] bytes, String key, String contentType) {
+
+        S3Client s3 = buildClient();
+
+        s3.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(contentType)
+                        .build(),
+                RequestBody.fromBytes(bytes)
+        );
+
+        return publicBaseUrl + "/" + key;
+    }
+
 }
