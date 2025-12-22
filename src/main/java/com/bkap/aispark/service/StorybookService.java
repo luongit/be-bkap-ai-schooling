@@ -1,14 +1,11 @@
 package com.bkap.aispark.service;
 
 import com.bkap.aispark.async.StorybookGenerateJob;
-import com.bkap.aispark.entity.Storybook;
-import com.bkap.aispark.entity.StorybookPage;
-import com.bkap.aispark.entity.StorybookStatus;
-import com.bkap.aispark.repository.StorybookPageRepository;
-import com.bkap.aispark.repository.StorybookRepository;
+import com.bkap.aispark.entity.*;
+import com.bkap.aispark.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
@@ -16,34 +13,44 @@ import java.util.List;
 public class StorybookService {
 
     private final StorybookRepository storybookRepository;
-    private final StorybookPageRepository storybookPageRepository;
-    private final StorybookGenerateJob storybookGenerateJob;
+    private final StorybookPageRepository pageRepository;
+    private final StorybookAiConfigRepository aiConfigRepository;
+    private final StorybookGenerateJob generateJob;
 
-    // tạo
-    public Storybook createDraft(Storybook storybook) {
-        return storybookRepository.save(storybook);
+    @Transactional
+    public Storybook createDraft(Storybook storybook, StorybookAiConfig aiConfig) {
+        if (storybook.getOriginalPrompt() == null || storybook.getOriginalPrompt().trim().isEmpty()) {
+            throw new IllegalArgumentException("Original prompt is required");
+        }
+
+        storybook.setStatus(StorybookStatus.DRAFT);
+        Storybook saved = storybookRepository.save(storybook);
+
+        aiConfig.setStorybookId(saved.getId());
+        aiConfigRepository.save(aiConfig);
+
+        return saved;
     }
 
-    // ===== GENERATE =====
-    public void generate(Long storybookId) {
-        Storybook storybook = storybookRepository.findById(storybookId)
-                .orElseThrow(() -> new RuntimeException("Storybook not found"));
+    public void generate(Long storybookId, Integer currentUserId) {
+        Storybook storybook = getById(storybookId);
+        if (!storybook.getUserId().equals(currentUserId)) {
+            throw new RuntimeException("Access denied");
+        }
 
         storybook.setStatus(StorybookStatus.GENERATING);
         storybookRepository.save(storybook);
 
-        storybookGenerateJob.generateAsync(storybookId);
+        generateJob.generateAsync(storybookId);
     }
 
-    // đọc 
     public Storybook getById(Long id) {
         return storybookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Storybook not found"));
     }
 
     public List<StorybookPage> getPages(Long storybookId) {
-        return storybookPageRepository
-                .findByStorybookIdOrderByPageNumberAsc(storybookId);
+        return pageRepository.findByStorybookIdOrderByPageNumberAsc(storybookId);
     }
 
     public List<Storybook> getByUser(Integer userId) {

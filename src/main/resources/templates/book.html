@@ -104,6 +104,8 @@
 
 <div class="container">
     <h1 id="story-title">Đang tải...</h1>
+    <button onclick="exportPdf()">📄 Export PDF</button>
+    
     <p id="story-description"></p>
     <div id="story-status" class="status"></div>
 
@@ -207,6 +209,15 @@
             renderPage();
         }
     });
+    function exportPdf() {
+        fetch(`${API_BASE}/${STORYBOOK_ID}/export/pdf`, {
+            method: "POST"
+        })
+        .then(res => res.text())
+        .then(url => {
+            window.open(url, "_blank");
+        });
+    }
 </script>
 
 </body>
