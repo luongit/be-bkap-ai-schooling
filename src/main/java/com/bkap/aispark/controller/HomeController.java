@@ -20,17 +20,17 @@ public class HomeController {
     public String loginPage() {
         return "login";
     }
-    
+
     @GetMapping("/otp")
     public String verify() {
         return "forgot-password";
     }
-    
+
     @GetMapping("/register")
     public String registerPage() {
         return "register";
     }
-  
+
     @GetMapping("/video")
     public String videoPage() {
         return "upload";
