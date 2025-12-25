@@ -35,3 +35,9 @@ build/
 src/main/resources/application.properties
 src/main/resources/application-prod.properties
 src/main/resources/application-dev.properties
+
+
+# Ignore tất cả các thư mục con của resources
+/src/main/resources/*
+# Nhưng giữ lại các file Java và thư mục src (chỉ đẩy mã nguồn)
+!src/main/java/
