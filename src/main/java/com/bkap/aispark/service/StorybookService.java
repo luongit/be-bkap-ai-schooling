@@ -1,11 +1,13 @@
 package com.bkap.aispark.service;
 
 import com.bkap.aispark.async.StorybookGenerateJob;
+import com.bkap.aispark.dto.CreateStorybookRequest;
 import com.bkap.aispark.entity.*;
 import com.bkap.aispark.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -18,29 +20,45 @@ public class StorybookService {
     private final StorybookGenerateJob generateJob;
 
     @Transactional
-    public Storybook createDraft(Storybook storybook, StorybookAiConfig aiConfig) {
-        if (storybook.getOriginalPrompt() == null || storybook.getOriginalPrompt().trim().isEmpty()) {
+    public Storybook createDraft(CreateStorybookRequest req) {
+
+        if (req.getOriginalPrompt() == null || req.getOriginalPrompt().isBlank()) {
             throw new IllegalArgumentException("Original prompt is required");
         }
 
-        storybook.setStatus(StorybookStatus.DRAFT);
+        Storybook storybook = Storybook.builder()
+                .userId(req.getUserId())
+                .originalPrompt(req.getOriginalPrompt())
+                .status(StorybookStatus.DRAFT)
+                .build();
+
         Storybook saved = storybookRepository.save(storybook);
 
-        aiConfig.setStorybookId(saved.getId());
-        aiConfigRepository.save(aiConfig);
+        StorybookAiConfig config = StorybookAiConfig.builder()
+                .storybookId(saved.getId())
+                .textModel(req.getTextModel())
+                .imageModel(req.getImageModel())
+                .ttsModel(req.getTtsModel())
+                .build();
+
+        aiConfigRepository.save(config);
 
         return saved;
     }
 
     public void generate(Long storybookId, Integer currentUserId) {
+
         Storybook storybook = getById(storybookId);
+
         if (!storybook.getUserId().equals(currentUserId)) {
             throw new RuntimeException("Access denied");
         }
 
-        storybook.setStatus(StorybookStatus.GENERATING);
-        storybookRepository.save(storybook);
+        if (storybook.getStatus() == StorybookStatus.GENERATING) {
+            throw new RuntimeException("Storybook is already generating");
+        }
 
+        // CHỈ trigger async
         generateJob.generateAsync(storybookId);
     }
 

@@ -5,7 +5,6 @@ import com.bkap.aispark.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +20,12 @@ public class StorybookGenerateService {
     private final GeminiClientService geminiClient;
     private final R2StorageService r2StorageService;
 
-    @Transactional
     public void generate(Long storybookId) {
 
         Storybook storybook = storybookRepository.findById(storybookId)
                 .orElseThrow(() -> new RuntimeException("Storybook not found"));
 
+        // set GENERATING ở đây (CHỈ 1 NƠI)
         storybook.setStatus(StorybookStatus.GENERATING);
         storybookRepository.save(storybook);
 
@@ -34,8 +33,7 @@ public class StorybookGenerateService {
                 .orElseThrow(() -> new RuntimeException("AI config not found"));
 
         try {
-            //text
-
+            //TEXT
             StoryGenerationResult result =
                     geminiClient.generateStructuredStory(storybook, config);
 
@@ -45,9 +43,9 @@ public class StorybookGenerateService {
             if (result.getDescription() != null) {
                 storybook.setDescription(result.getDescription());
             }
+            storybookRepository.save(storybook);
 
-            // text + img = page
-
+            //CREATE PAGE
             List<StorybookPage> pages = new ArrayList<>();
 
             for (int i = 0; i < result.getPages().size(); i++) {
@@ -65,8 +63,7 @@ public class StorybookGenerateService {
 
             pageRepository.saveAll(pages);
 
-            // img -> upR2
-
+            //IMG R2
             for (StorybookPage page : pages) {
 
                 byte[] imageBytes =
@@ -91,25 +88,24 @@ public class StorybookGenerateService {
 
             pageRepository.saveAll(pages);
 
-            // TTS -> upR2
-
+            //. TTS (WAV)  R2
             for (StorybookPage page : pages) {
 
                 byte[] audioBytes =
-                        geminiClient.generateTts(
+                        geminiClient.generateTtsWav(
                                 page.getTextContent(),
                                 config
                         );
 
                 String audioKey =
                         "storybook/audio/" + storybookId +
-                        "/page-" + page.getPageNumber() + ".pcm";
+                        "/page-" + page.getPageNumber() + ".wav";
 
                 String audioUrl =
                         r2StorageService.uploadBytes(
                                 audioBytes,
                                 audioKey,
-                                "audio/L16"
+                                "audio/wav"
                         );
 
                 page.setAudioUrl(audioUrl);
@@ -117,9 +113,7 @@ public class StorybookGenerateService {
 
             pageRepository.saveAll(pages);
 
-            // finish
-
-            storybook.setTotalPages(pages.size());
+            
             storybook.setStatus(StorybookStatus.COMPLETED);
             storybookRepository.save(storybook);
 
