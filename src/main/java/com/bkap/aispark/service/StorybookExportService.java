@@ -7,13 +7,7 @@ import com.bkap.aispark.repository.StorybookExportRepository;
 import com.bkap.aispark.repository.StorybookPageRepository;
 import com.bkap.aispark.repository.StorybookRepository;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.Image;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
+import com.lowagie.text.*;
 import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfWriter;
 
@@ -21,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream; 
 import java.util.List;
 
 @Service
@@ -47,12 +42,27 @@ public class StorybookExportService {
             PdfWriter.getInstance(doc, out);
             doc.open();
 
-            /* ===== FONT (hỗ trợ tiếng Việt) ===== */
-            Font titleFont = new Font(Font.HELVETICA, 20, Font.BOLD);
-            Font descFont  = new Font(Font.HELVETICA, 12);
-            Font textFont  = new Font(Font.HELVETICA, 13);
+         
+            // 1. Đọc file font từ thư mục src/main/resources/fonts/
+            InputStream fontStream = getClass().getResourceAsStream("/fonts/Roboto-Regular.ttf");
+            if (fontStream == null) {
+                throw new RuntimeException("Font file không tìm thấy trong resources/fonts/Roboto-Regular.ttf");
+            }
+            byte[] fontBytes = fontStream.readAllBytes();
 
+            // 2. Tạo BaseFont từ mảng byte để nhúng vào PDF
+            BaseFont bf = BaseFont.createFont(
+                    "Roboto-Regular.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    true,
+                    fontBytes,
+                    null
+            );
 
+            Font titleFont = new Font(bf, 20, Font.BOLD);
+            Font descFont  = new Font(bf, 12);
+            Font textFont  = new Font(bf, 13);
 
             /* ===== TITLE ===== */
             Paragraph title = new Paragraph(storybook.getTitle(), titleFont);
@@ -80,8 +90,8 @@ public class StorybookExportService {
                         doc.add(img);
                         doc.add(Chunk.NEWLINE);
                     } catch (Exception ex) {
-                        // Không cho export fail chỉ vì ảnh lỗi
                         doc.add(new Paragraph("[Không tải được ảnh]", descFont));
+                        doc.add(Chunk.NEWLINE);
                     }
                 }
 
@@ -92,7 +102,6 @@ public class StorybookExportService {
                     doc.add(text);
                 }
 
-                // New page trừ trang cuối
                 if (i < pages.size() - 1) {
                     doc.newPage();
                 }
@@ -102,7 +111,7 @@ public class StorybookExportService {
 
             byte[] pdfBytes = out.toByteArray();
 
-            /* ===== Upload lên R2 ===== */
+            /* ===== Upload R2 ===== */
             String key = "storybook/exports/" + storybookId + "/storybook.pdf";
 
             String pdfUrl = r2StorageService.uploadBytes(
@@ -123,7 +132,9 @@ public class StorybookExportService {
             return pdfUrl;
 
         } catch (Exception e) {
-            throw new RuntimeException("Export PDF failed", e);
+            // Log lỗi chi tiết ra console để dễ debug
+            e.printStackTrace(); 
+            throw new RuntimeException("Export PDF failed: " + e.getMessage(), e);
         }
     }
 }
