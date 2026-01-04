@@ -1,4 +1,4 @@
-package com.bkap.aispark.entity;
+package com.bkap.aispark.entity.Storybook;
 
 import lombok.*;
 import java.util.List;

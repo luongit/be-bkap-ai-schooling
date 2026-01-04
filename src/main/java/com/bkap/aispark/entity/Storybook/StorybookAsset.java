@@ -1,4 +1,4 @@
-package com.bkap.aispark.entity;
+package com.bkap.aispark.entity.Storybook;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,12 +6,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "storybook_ai_configs")
+@Table(name = "storybook_assets")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StorybookAiConfig {
+public class StorybookAsset {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,15 +20,17 @@ public class StorybookAiConfig {
     @Column(name = "storybook_id", nullable = false)
     private Long storybookId;
 
-    private String textProvider;
-    private String textModel;
+    @Column(name = "page_id")
+    private Long pageId;
 
-    private String imageProvider;
-    private String imageModel;
+    @Column(name = "asset_type", nullable = false)
+    private String assetType;
 
-    private String ttsProvider;
-    private String ttsModel;
-    private String ttsVoice;
+    @Column(name = "file_url", nullable = false)
+    private String fileUrl;
+
+    private Long fileSize;
+    private String mimeType;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

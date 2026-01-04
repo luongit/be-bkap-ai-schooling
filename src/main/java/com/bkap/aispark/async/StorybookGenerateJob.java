@@ -1,9 +1,10 @@
 package com.bkap.aispark.async;
 
-import com.bkap.aispark.service.StorybookGenerateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import com.bkap.aispark.service.Storybook.StorybookGenerateService;
 
 @Component
 @RequiredArgsConstructor

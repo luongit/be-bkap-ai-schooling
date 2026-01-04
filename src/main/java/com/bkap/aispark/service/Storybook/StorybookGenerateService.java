@@ -1,7 +1,18 @@
-package com.bkap.aispark.service;
+package com.bkap.aispark.service.Storybook;
 
 import com.bkap.aispark.entity.*;
+import com.bkap.aispark.entity.Storybook.StoryGenerationResult;
+import com.bkap.aispark.entity.Storybook.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookAiConfig;
+import com.bkap.aispark.entity.Storybook.StorybookPage;
+import com.bkap.aispark.entity.Storybook.StorybookStatus;
 import com.bkap.aispark.repository.*;
+import com.bkap.aispark.repository.Storybook.StorybookAiConfigRepository;
+import com.bkap.aispark.repository.Storybook.StorybookPageRepository;
+import com.bkap.aispark.repository.Storybook.StorybookRepository;
+import com.bkap.aispark.service.GeminiClientService;
+import com.bkap.aispark.service.R2StorageService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

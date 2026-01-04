@@ -1,5 +1,5 @@
-package com.bkap.aispark.dto;
-import com.bkap.aispark.entity.StorybookStatus;
+package com.bkap.aispark.dto.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

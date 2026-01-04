@@ -1,12 +1,12 @@
-package com.bkap.aispark.service;
+package com.bkap.aispark.service.Storybook;
 
-import com.bkap.aispark.entity.Storybook;
-import com.bkap.aispark.entity.StorybookExport;
-import com.bkap.aispark.entity.StorybookPage;
-import com.bkap.aispark.repository.StorybookExportRepository;
-import com.bkap.aispark.repository.StorybookPageRepository;
-import com.bkap.aispark.repository.StorybookRepository;
-
+import com.bkap.aispark.entity.Storybook.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookExport;
+import com.bkap.aispark.entity.Storybook.StorybookPage;
+import com.bkap.aispark.repository.Storybook.StorybookExportRepository;
+import com.bkap.aispark.repository.Storybook.StorybookPageRepository;
+import com.bkap.aispark.repository.Storybook.StorybookRepository;
+import com.bkap.aispark.service.R2StorageService;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfWriter;

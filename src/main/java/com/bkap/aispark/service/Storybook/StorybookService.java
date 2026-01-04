@@ -1,14 +1,23 @@
-package com.bkap.aispark.service;
+package com.bkap.aispark.service.Storybook;
 
-import com.bkap.aispark.async.StorybookGenerateJob;
-import com.bkap.aispark.dto.CreateStorybookRequest;
-import com.bkap.aispark.entity.*;
-import com.bkap.aispark.repository.*;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.bkap.aispark.async.StorybookGenerateJob;
+import com.bkap.aispark.dto.CreateStorybookRequest;
+import com.bkap.aispark.dto.Storybook.StorybookHistoryResponse;
+import com.bkap.aispark.entity.Storybook.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookAiConfig;
+import com.bkap.aispark.entity.Storybook.StorybookPage;
+import com.bkap.aispark.entity.Storybook.StorybookStatus;
+import com.bkap.aispark.repository.Storybook.StorybookAiConfigRepository;
+import com.bkap.aispark.repository.Storybook.StorybookPageRepository;
+import com.bkap.aispark.repository.Storybook.StorybookRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -74,4 +83,20 @@ public class StorybookService {
     public List<Storybook> getByUser(Integer userId) {
         return storybookRepository.findByUserId(userId);
     }
+    @Transactional(readOnly = true)
+public List<StorybookHistoryResponse> getHistoryByUser(Integer userId) {
+
+    return storybookRepository.findByUserId(userId)
+            .stream()
+            .map(sb -> new StorybookHistoryResponse(
+                    sb.getId(),
+                    sb.getTitle(),
+                    sb.getOriginalPrompt(),
+                    sb.getStatus().name(),
+                    sb.getTotalPages(),
+                    sb.getCreatedAt()
+            ))
+            .collect(Collectors.toList());
+}
+
 }
