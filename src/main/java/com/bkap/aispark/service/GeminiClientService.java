@@ -1,8 +1,8 @@
 package com.bkap.aispark.service;
 
-import com.bkap.aispark.entity.Storybook;
-import com.bkap.aispark.entity.StorybookAiConfig;
-import com.bkap.aispark.entity.StoryGenerationResult;
+import com.bkap.aispark.entity.Storybook.StoryGenerationResult;
+import com.bkap.aispark.entity.Storybook.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookAiConfig;
 import com.google.genai.Client;
 import com.google.genai.types.*;
 import com.google.gson.Gson;

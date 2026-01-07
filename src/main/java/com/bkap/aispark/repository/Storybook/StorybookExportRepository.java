@@ -1,7 +1,8 @@
-package com.bkap.aispark.repository;
+package com.bkap.aispark.repository.Storybook;
 
-import com.bkap.aispark.entity.StorybookExport;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.bkap.aispark.entity.Storybook.StorybookExport;
 
 public interface StorybookExportRepository
         extends JpaRepository<StorybookExport, Long> {

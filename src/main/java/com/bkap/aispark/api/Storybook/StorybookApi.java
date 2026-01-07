@@ -1,16 +1,22 @@
-package com.bkap.aispark.api;
-
-import com.bkap.aispark.dto.CreateStorybookRequest;
-import com.bkap.aispark.dto.StorybookStatusResponse;
-import com.bkap.aispark.entity.Storybook;
-import com.bkap.aispark.entity.StorybookPage;
-import com.bkap.aispark.service.StorybookExportService;
-import com.bkap.aispark.service.StorybookService;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+package com.bkap.aispark.api.Storybook;
 
 import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.bkap.aispark.dto.CreateStorybookRequest;
+import com.bkap.aispark.dto.Storybook.StorybookStatusResponse;
+import com.bkap.aispark.entity.Storybook.Storybook;
+import com.bkap.aispark.entity.Storybook.StorybookPage;
+import com.bkap.aispark.service.Storybook.StorybookExportService;
+import com.bkap.aispark.service.Storybook.StorybookService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/storybooks")
@@ -78,4 +84,5 @@ public class StorybookApi {
     public String exportPdf(@PathVariable Long id) {
         return exportService.exportPdf(id);
     }
+    
 }
