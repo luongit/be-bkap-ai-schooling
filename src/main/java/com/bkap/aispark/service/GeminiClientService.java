@@ -21,7 +21,7 @@ public class GeminiClientService {
 
     private final Gson gson = new Gson();
 
-    /* ================= CLIENT ================= */
+   
 
     private Client createClient() {
         return Client.builder()
@@ -29,7 +29,7 @@ public class GeminiClientService {
                 .build();
     }
 
-    /* ================= TEXT (STORY) ================= */
+  
 
     public StoryGenerationResult generateStructuredStory(
             Storybook storybook,
@@ -59,21 +59,42 @@ public class GeminiClientService {
                         }
                       ]
                     }
+
+                    QUAN TRỌNG:
+                    - Không dùng dấu " chưa escape
+                    - Không dùng ký tự đặc biệt
+                    - Không xuống dòng trong text_content
+                    - JSON phải hợp lệ tuyệt đối
                     """.formatted(storybook.getOriginalPrompt());
 
             GenerateContentResponse response =
                     client.models.generateContent(
-                            config.getTextModel(), // gemini-1.5-flash
+                            config.getTextModel(), 
                             prompt,
                             null
                     );
 
-            String json = cleanJson(response.text());
-            return gson.fromJson(json, StoryGenerationResult.class);
+            String raw = cleanJson(response.text());
+
+            try {
+                return gson.fromJson(raw, StoryGenerationResult.class);
+            }
+            catch (Exception ex) {
+
+                System.err.println("❌ RAW JSON FROM GEMINI:");
+                System.err.println(raw);
+
+                String fixed = sanitizeJson(raw);
+
+                System.err.println("🛠 FIXED JSON:");
+                System.err.println(fixed);
+
+                return gson.fromJson(fixed, StoryGenerationResult.class);
+            }
         }
     }
 
-    /* ================= IMAGE (NANO BANANA) ================= */
+    
 
     public byte[] generateImageBytes(
             String imagePrompt,
@@ -89,7 +110,7 @@ public class GeminiClientService {
 
             GenerateContentResponse response =
                     client.models.generateContent(
-                            config.getImageModel(), // gemini-2.5-flash-image
+                            config.getImageModel(),
                             imagePrompt,
                             genConfig
                     );
@@ -106,7 +127,7 @@ public class GeminiClientService {
         }
     }
 
-    /* ================= TTS (AUDIO → WAV) ================= */
+   
 
     public byte[] generateTtsWav(
             String text,
@@ -136,7 +157,7 @@ public class GeminiClientService {
 
             GenerateContentResponse response =
                     client.models.generateContent(
-                            config.getTtsModel(), // gemini-1.5-flash
+                            config.getTtsModel(),
                             text,
                             genConfig
                     );
@@ -156,6 +177,7 @@ public class GeminiClientService {
             }
 
             throw new RuntimeException("No audio generated from Gemini");
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to convert PCM to WAV", e);
         }
@@ -210,13 +232,39 @@ public class GeminiClientService {
         };
     }
 
+    /*JSon*/
+
     private String cleanJson(String raw) {
+
         raw = raw.replaceAll("```json|```", "").trim();
+
         int s = raw.indexOf('{');
         int e = raw.lastIndexOf('}');
+
         if (s >= 0 && e > s) {
             return raw.substring(s, e + 1);
         }
+
         throw new RuntimeException("Invalid JSON from Gemini");
+    }
+
+    /* JSON SANITIZE FIX */
+
+    private String sanitizeJson(String json) {
+
+        // remove control chars
+        json = json.replaceAll("[\\x00-\\x1F]", " ");
+
+        // escape "
+        json = json.replaceAll("(?<!\\\\)\"", "\\\\\"");
+
+        // normalize newlines
+        json = json.replace("\n", "\\n");
+
+        // ensure braces
+        if (!json.startsWith("{")) json = "{" + json;
+        if (!json.endsWith("}")) json = json + "}";
+
+        return json;
     }
 }
