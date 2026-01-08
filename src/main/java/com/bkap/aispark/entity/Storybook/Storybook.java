@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "storybooks")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -43,11 +44,22 @@ public class Storybook {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // ===== PROGRESS DETAIL =====
+    @Enumerated(EnumType.STRING)
+    private StorybookPhase progressPhase;
+
+    private Integer progressCurrentPage;
+    private Integer progressTotalPages;
+
+    @Column(columnDefinition = "text")
+    private String progressMessage;
+
     @PrePersist
     void prePersist() {
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
-        if (status == null) status = StorybookStatus.DRAFT;
+        if (status == null)
+            status = StorybookStatus.DRAFT;
     }
 
     @PreUpdate

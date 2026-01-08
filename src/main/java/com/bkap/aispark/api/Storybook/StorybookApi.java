@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.dto.CreateStorybookRequest;
+import com.bkap.aispark.dto.Storybook.StorybookProgressResponse;
 import com.bkap.aispark.dto.Storybook.StorybookStatusResponse;
 import com.bkap.aispark.entity.Storybook.Storybook;
 import com.bkap.aispark.entity.Storybook.StorybookPage;
@@ -45,8 +46,20 @@ public class StorybookApi {
         Storybook sb = storybookService.getById(id);
         return new StorybookStatusResponse(
                 sb.getStatus(),
-                sb.getTotalPages()
-        );
+                sb.getTotalPages());
+    }
+
+    @GetMapping("/{id}/progress")
+    public StorybookProgressResponse progress(@PathVariable Long id) {
+
+        Storybook sb = storybookService.getById(id);
+
+        return new StorybookProgressResponse(
+                sb.getStatus(),
+                sb.getProgressPhase(),
+                sb.getProgressCurrentPage(),
+                sb.getProgressTotalPages(),
+                sb.getProgressMessage());
     }
 
     // ================= STATUS =================
@@ -57,8 +70,7 @@ public class StorybookApi {
 
         return new StorybookStatusResponse(
                 sb.getStatus(),
-                sb.getTotalPages()
-        );
+                sb.getTotalPages());
     }
 
     // ================= GET STORYBOOK =================
@@ -84,5 +96,5 @@ public class StorybookApi {
     public String exportPdf(@PathVariable Long id) {
         return exportService.exportPdf(id);
     }
-    
+
 }

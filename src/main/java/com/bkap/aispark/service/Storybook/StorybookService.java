@@ -83,20 +83,20 @@ public class StorybookService {
     public List<Storybook> getByUser(Integer userId) {
         return storybookRepository.findByUserId(userId);
     }
-    @Transactional(readOnly = true)
-public List<StorybookHistoryResponse> getHistoryByUser(Integer userId) {
 
-    return storybookRepository.findByUserId(userId)
-            .stream()
-            .map(sb -> new StorybookHistoryResponse(
-                    sb.getId(),
-                    sb.getTitle(),
-                    sb.getOriginalPrompt(),
-                    sb.getStatus().name(),
-                    sb.getTotalPages(),
-                    sb.getCreatedAt()
-            ))
-            .collect(Collectors.toList());
-}
+    @Transactional(readOnly = true)
+    public List<StorybookHistoryResponse> getHistoryByUser(Integer userId) {
+
+        return storybookRepository.findByUserId(userId)
+                .stream()
+                .map(sb -> new StorybookHistoryResponse(
+                        sb.getId(),
+                        sb.getTitle(),
+                        sb.getOriginalPrompt(),
+                        sb.getStatus().name(),
+                        sb.getTotalPages(),
+                        sb.getCreatedAt()))
+                .collect(Collectors.toList());
+    }
 
 }
