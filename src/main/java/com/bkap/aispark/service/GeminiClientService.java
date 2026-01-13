@@ -1,17 +1,23 @@
 package com.bkap.aispark.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import com.bkap.aispark.entity.Storybook.StoryGenerationResult;
 import com.bkap.aispark.entity.Storybook.Storybook;
 import com.bkap.aispark.entity.Storybook.StorybookAiConfig;
 import com.google.genai.Client;
-import com.google.genai.types.*;
+import com.google.genai.types.GenerateContentConfig;
+import com.google.genai.types.GenerateContentResponse;
+import com.google.genai.types.Part;
+import com.google.genai.types.PrebuiltVoiceConfig;
+import com.google.genai.types.SpeechConfig;
+import com.google.genai.types.VoiceConfig;
 import com.google.gson.Gson;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.List;
 
 @Component
 public class GeminiClientService {
@@ -47,7 +53,8 @@ public class GeminiClientService {
                     - Văn phong nhẹ nhàng, phù hợp trẻ em
                     - Mỗi trang 1 đoạn ngắn
                     - Image prompt viết bằng TIẾNG ANH, chi tiết, phù hợp tranh thiếu nhi
-
+                        - Không được tạo ít hơn 8 trang
+                        - Không được tạo nhiều hơn 10 trang
                     CHỈ TRẢ VỀ JSON (không thêm chữ):
                     {
                       "title": "Tiêu đề",

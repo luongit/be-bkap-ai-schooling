@@ -137,4 +137,91 @@ public class StorybookExportService {
             throw new RuntimeException("Export PDF failed: " + e.getMessage(), e);
         }
     }
+    public byte[] exportPdfBytes(Long storybookId) {
+
+    Storybook storybook = storybookRepository.findById(storybookId)
+            .orElseThrow(() -> new RuntimeException("Storybook not found"));
+
+    List<StorybookPage> pages =
+            pageRepository.findByStorybookIdOrderByPageNumberAsc(storybookId);
+
+    try {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        Document doc = new Document(PageSize.A4, 36, 36, 48, 36);
+        PdfWriter.getInstance(doc, out);
+        doc.open();
+
+        InputStream fontStream =
+                getClass().getResourceAsStream("/fonts/Roboto-Regular.ttf");
+        if (fontStream == null) {
+            throw new RuntimeException("Font Roboto-Regular.ttf not found");
+        }
+
+        byte[] fontBytes = fontStream.readAllBytes();
+
+        BaseFont bf = BaseFont.createFont(
+                "Roboto-Regular.ttf",
+                BaseFont.IDENTITY_H,
+                BaseFont.EMBEDDED,
+                true,
+                fontBytes,
+                null
+        );
+
+        Font titleFont = new Font(bf, 20, Font.BOLD);
+        Font descFont  = new Font(bf, 12);
+        Font textFont  = new Font(bf, 13);
+
+        // ===== TITLE =====
+        Paragraph title = new Paragraph(storybook.getTitle(), titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        doc.add(title);
+        doc.add(Chunk.NEWLINE);
+
+        if (storybook.getDescription() != null) {
+            Paragraph desc = new Paragraph(storybook.getDescription(), descFont);
+            desc.setAlignment(Element.ALIGN_CENTER);
+            doc.add(desc);
+            doc.add(Chunk.NEWLINE);
+        }
+
+        // ===== PAGES =====
+        for (int i = 0; i < pages.size(); i++) {
+            StorybookPage page = pages.get(i);
+
+            if (page.getImageUrl() != null && !page.getImageUrl().isBlank()) {
+                try {
+                    Image img = Image.getInstance(page.getImageUrl());
+                    img.scaleToFit(420, 420);
+                    img.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(img);
+                    doc.add(Chunk.NEWLINE);
+                } catch (Exception ex) {
+                    doc.add(new Paragraph("[Không tải được ảnh]", descFont));
+                    doc.add(Chunk.NEWLINE);
+                }
+            }
+
+            if (page.getTextContent() != null && !page.getTextContent().isBlank()) {
+                Paragraph text = new Paragraph(page.getTextContent(), textFont);
+                text.setLeading(0, 1.6f);
+                doc.add(text);
+            }
+
+            if (i < pages.size() - 1) {
+                doc.newPage();
+            }
+        }
+
+        doc.close(); // 🔥 BẮT BUỘC
+
+        return out.toByteArray();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException("Export PDF failed", e);
+    }
+}
+
 }

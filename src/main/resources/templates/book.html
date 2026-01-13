@@ -1,235 +1,131 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Storybook AI</title>
+<meta charset="UTF-8" />
+<title>{{title}}</title>
 
 <style>
+/* =====================
+   PAGE SETUP
+===================== */
+@page {
+  size: A4;
+  margin: 0;
+}
+
 body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f4f6f8;
-    padding: 20px;
-}
-.container {
-    max-width: 820px;
-    margin: auto;
-    background: #fff;
-    padding: 22px;
-    border-radius: 14px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-}
-h1 { text-align:center; }
-
-textarea {
-    width:100%;
-    height:120px;
-    font-size:16px;
-    padding:12px;
-    border-radius:10px;
+  margin: 0;
+  font-family: "Georgia", "Times New Roman", serif;
+  background: #fff;
 }
 
-.actions {
-    text-align:center;
-    margin:14px 0;
-}
-.actions button {
-    padding:10px 18px;
-    border:none;
-    border-radius:10px;
-    background:#4f46e5;
-    color:#fff;
-    cursor:pointer;
-}
-.actions button:disabled {
-    background:#c7c7c7;
+/* =====================
+   BOOK SPREAD
+===================== */
+.spread {
+  width: 210mm;
+  height: 297mm;
+  display: flex;
+  page-break-after: always;
 }
 
-.status {
-    text-align:center;
-    font-weight:600;
-    margin-bottom:10px;
+/* =====================
+   LEFT PAGE – IMAGE
+===================== */
+.page-image {
+  width: 50%;
+  background: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18mm;
+  box-sizing: border-box;
 }
-.status.generating { color:#f59e0b; }
-.status.completed { color:#16a34a; }
-.status.failed { color:#dc2626; }
-.status.draft { color:#6b7280; }
 
-.story img {
-    width:100%;
-    max-height:420px;
-    object-fit:contain;
-    background:#eee;
-    border-radius:10px;
+.page-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
 }
+
+/* =====================
+   RIGHT PAGE – TEXT
+===================== */
 .page-text {
-    margin-top:15px;
-    font-size:18px;
-    line-height:1.6;
+  width: 50%;
+  padding: 22mm 20mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  color: #111;
+  font-size: 15pt;
+  line-height: 1.65;
+  text-align: justify;
 }
-audio { width:100%; margin-top:12px; }
 
-.controls {
-    display:flex;
-    justify-content:space-between;
-    margin-top:16px;
+/* Dropcap */
+.page-text p::first-letter {
+  float: left;
+  font-size: 300%;
+  line-height: 1;
+  padding-right: 8px;
+  padding-top: 4px;
+  font-weight: bold;
+}
+
+/* =====================
+   TITLE PAGE
+===================== */
+.cover {
+  width: 210mm;
+  height: 297mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+}
+
+.cover h1 {
+  font-size: 32pt;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.cover p {
+  font-size: 16pt;
+  color: #555;
+  text-align: center;
+  max-width: 70%;
 }
 </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h1 id="title">Storybook AI</h1>
-
-    <!-- CREATE -->
-    <textarea id="prompt"
-        placeholder="Nhập ý tưởng truyện, ví dụ: Một chú mèo nhỏ khám phá khu rừng thần tiên...">
-    </textarea>
-
-    <div class="actions">
-        <button onclick="createStorybook()">➕ Tạo Storybook</button>
-        <button id="generateBtn" onclick="generateStory()" disabled>✨ Tạo truyện</button>
-        <button id="exportBtn" onclick="exportPdf()" disabled>📄 Export PDF</button>
-    </div>
-
-    <p id="desc" style="text-align:center;color:#666"></p>
-    <div id="status" class="status"></div>
-
-    <!-- VIEW -->
-    <div class="story">
-        <img id="img">
-        <div id="text" class="page-text"></div>
-        <audio id="audio" controls></audio>
-    </div>
-
-    <div class="controls">
-        <button onclick="prev()">⬅ Trước</button>
-        <span id="indicator">0 / 0</span>
-        <button onclick="next()">Sau ➡</button>
-    </div>
+<!-- =====================
+     COVER PAGE
+===================== -->
+<div class="cover">
+  <h1>{{title}}</h1>
+  <p>{{description}}</p>
 </div>
 
-<script>
-/* ===== CONFIG ===== */
-const API = "http://localhost:8080/api/storybooks";
+<!-- =====================
+     STORY PAGES
+===================== -->
 
-/* ===== STATE ===== */
-let storybookId = null;
-let pages = [];
-let idx = 0;
-let status = null;
+<!-- LẶP KHỐI NÀY CHO MỖI PAGE -->
+<div class="spread">
+  <div class="page-image">
+    <img src="{{imageUrl}}" />
+  </div>
 
-/* ===== API ===== */
-function api(url, opt = {}) {
-    return fetch(url, {
-        ...opt,
-        headers: { "Content-Type": "application/json" }
-    });
-}
-
-/* ===== CREATE ===== */
-function createStorybook() {
-    const prompt = document.getElementById("prompt").value.trim();
-    if (!prompt) {
-        alert("Nhập ý tưởng truyện!");
-        return;
-    }
-
-    api(API, {
-        method: "POST",
-        body: JSON.stringify({
-            originalPrompt: prompt,
-
-            // ✅ MODEL ĐÚNG – KHÔNG DÙNG 2.0
-            textModel: "gemini-2.5-flash",
-            imageModel: "gemini-2.5-flash-image",   // ✅ FIX 404 Ở ĐÂY
-            ttsModel: "gemini-2.5-flash-preview-tts"
-        })
-    })
-    .then(r => r.json())
-    .then(sb => {
-        storybookId = sb.id;
-        document.getElementById("title").innerText = "Storybook #" + sb.id;
-        document.getElementById("generateBtn").disabled = false;
-        renderStatus(sb.status);
-        alert("Đã tạo Storybook. Bấm 'Tạo truyện'.");
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Lỗi tạo storybook");
-    });
-}
-
-/* ===== GENERATE ===== */
-function generateStory() {
-    if (!storybookId) return;
-
-    api(`${API}/${storybookId}/generate`, { method:"POST" })
-        .then(r => r.json())
-        .then(res => {
-            status = res.status;
-            renderStatus(status);
-            pollStatus();
-        });
-}
-
-/* ===== STATUS POLLING ===== */
-function pollStatus() {
-    const timer = setInterval(() => {
-        api(`${API}/${storybookId}/status`)
-            .then(r => r.json())
-            .then(res => {
-                status = res.status;
-                renderStatus(status);
-
-                if (status === "COMPLETED" || status === "FAILED") {
-                    clearInterval(timer);
-                    if (status === "COMPLETED") {
-                        document.getElementById("exportBtn").disabled = false;
-                        loadPages();
-                    }
-                }
-            });
-    }, 3000);
-}
-
-/* ===== LOAD ===== */
-function loadPages() {
-    api(`${API}/${storybookId}/pages`)
-        .then(r => r.json())
-        .then(data => {
-            pages = data || [];
-            idx = 0;
-            renderPage();
-        });
-}
-
-/* ===== RENDER ===== */
-function renderStatus(s) {
-    const el = document.getElementById("status");
-    el.innerText = "Trạng thái: " + s;
-    el.className = "status " + s.toLowerCase();
-}
-
-function renderPage() {
-    if (!pages.length) return;
-    const p = pages[idx];
-    document.getElementById("img").src = p.imageUrl || "";
-    document.getElementById("text").innerText = p.textContent || "";
-    document.getElementById("audio").src = p.audioUrl || "";
-    document.getElementById("indicator").innerText =
-        `${idx + 1} / ${pages.length}`;
-}
-
-function prev(){ if(idx > 0){ idx--; renderPage(); } }
-function next(){ if(idx < pages.length - 1){ idx++; renderPage(); } }
-
-/* ===== EXPORT ===== */
-function exportPdf() {
-    api(`${API}/${storybookId}/export/pdf`, { method:"POST" })
-        .then(r => r.text())
-        .then(url => window.open(url));
-}
-</script>
+  <div class="page-text">
+    <p>{{textContent}}</p>
+  </div>
+</div>
+<!-- END PAGE -->
 
 </body>
 </html>

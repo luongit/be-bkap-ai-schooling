@@ -2,6 +2,7 @@ package com.bkap.aispark.api.Storybook;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +17,9 @@ import com.bkap.aispark.entity.Storybook.Storybook;
 import com.bkap.aispark.entity.Storybook.StorybookPage;
 import com.bkap.aispark.service.Storybook.StorybookExportService;
 import com.bkap.aispark.service.Storybook.StorybookService;
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -92,9 +95,18 @@ public class StorybookApi {
     }
 
     // ================= EXPORT PDF =================
-    @PostMapping("/{id}/export/pdf")
-    public String exportPdf(@PathVariable Long id) {
-        return exportService.exportPdf(id);
-    }
+@PostMapping("/{id}/export/pdf")
+public ResponseEntity<byte[]> exportPdf(@PathVariable Long id) {
 
+    byte[] pdfBytes = exportService.exportPdfBytes(id);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=storybook-" + id + ".pdf"
+        )
+        .contentLength(pdfBytes.length)
+        .body(pdfBytes);
+}
 }
