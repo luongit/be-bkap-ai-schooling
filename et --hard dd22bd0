@@ -1,0 +1,17 @@
+[33m11f976c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: pull --ff-only origin master: Fast-forward
+[33mdd22bd0[m HEAD@{1}: checkout: moving from master to master
+[33mdd22bd0[m HEAD@{2}: commit: add extraction
+[33mb7b8ac0[m HEAD@{3}: checkout: moving from master to master
+[33mb7b8ac0[m HEAD@{4}: checkout: moving from master to master
+[33mb7b8ac0[m HEAD@{5}: pull --ff-only origin master: Fast-forward
+[33m3047940[m HEAD@{6}: reset: moving to HEAD
+[33m3047940[m HEAD@{7}: checkout: moving from master to master
+[33m3047940[m HEAD@{8}: checkout: moving from truong to master
+[33m87b1831[m[33m ([m[1;31morigin/truong[m[33m, [m[1;32mtruong[m[33m)[m HEAD@{9}: checkout: moving from master to truong
+[33m3047940[m HEAD@{10}: checkout: moving from truong to master
+[33m87b1831[m[33m ([m[1;31morigin/truong[m[33m, [m[1;32mtruong[m[33m)[m HEAD@{11}: checkout: moving from master to truong
+[33m3047940[m HEAD@{12}: commit: add extraction and note match ailearning os
+[33m3b67c70[m HEAD@{13}: checkout: moving from master to master
+[33m3b67c70[m HEAD@{14}: pull --ff-only origin master: Fast-forward
+[33mcab6957[m HEAD@{15}: checkout: moving from master to master
+[33mcab6957[m HEAD@{16}: clone: from https://github.com/luongit/be-bkap-ai-schooling
