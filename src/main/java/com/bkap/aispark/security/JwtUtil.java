@@ -31,17 +31,16 @@ public class JwtUtil {
         System.out.println("JWTUtil key loaded: " + key.hashCode());
     }
 
-    // ==========================
+
     //  Generate Access Token
-    // ==========================
+   
 
     public String generateAccessToken(Long userId, String email, String username, String role) {
         return buildToken(userId, email, username, role, "access", ACCESS_TOKEN_EXPIRATION);
     }
 
-    // ==========================
     //  Generate Refresh Token
-    // ==========================
+ 
     public String generateRefreshToken(Long userId, String email, boolean rememberMe) {
 
         long expiry = rememberMe
@@ -51,9 +50,8 @@ public class JwtUtil {
         return buildToken(userId, email, null, null, "refresh", expiry);
     }
 
-    // ==========================
     //  Build Token Chung
-    // ==========================
+ 
     private String buildToken(Long userId, String email, String username, String role, String type, long ttlMillis) {
 
         JwtBuilder builder = Jwts.builder()
@@ -73,9 +71,9 @@ public class JwtUtil {
         return builder.compact();
     }
 
-    // ==========================
+
     //  Validate Token
-    // ==========================
+
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
@@ -85,9 +83,9 @@ public class JwtUtil {
         }
     }
 
-    // ==========================
+  
     //  Helpers lấy thông tin
-    // ==========================
+ 
     public String getEmail(String token) {
         return parseClaims(token).getSubject();
     }
@@ -112,9 +110,7 @@ public class JwtUtil {
         return "refresh".equals(parseClaims(token).get("type", String.class));
     }
 
-    // ==========================
-    //  Parse Claims
-    // ==========================
+  
     private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key)
