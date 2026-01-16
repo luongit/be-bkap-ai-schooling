@@ -1,31 +1,28 @@
 package com.bkap.aispark.service.teach;
 
-import com.bkap.aispark.entity.teach.Lesson;
-import com.bkap.aispark.entity.teach.LessonFile;
-import com.bkap.aispark.entity.teach.LessonTeacher;
-import com.bkap.aispark.entity.teach.TeacherGrade;
-import com.bkap.aispark.entity.teach.enums.LessonFileType;
-import com.bkap.aispark.entity.teach.enums.LessonStatus;
-import com.bkap.aispark.repository.teach.LessonFileRepository;
-import com.bkap.aispark.repository.teach.LessonRepository;
-import com.bkap.aispark.repository.teach.LessonTeacherRepository;
-import com.bkap.aispark.repository.teach.TeacherGradeRepository;
-
-// Import R2 Service
-import com.bkap.aispark.service.R2StorageService;
-
-import com.bkap.aispark.dto.teach.LessonFileResponse;
-import com.bkap.aispark.dto.teach.TeacherLessonContentResponse;
-import com.bkap.aispark.dto.teach.TeacherLessonResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
+import com.bkap.aispark.dto.teach.LessonFileResponse;
+import com.bkap.aispark.dto.teach.TeacherLessonContentResponse;
+import com.bkap.aispark.dto.teach.TeacherLessonResponse;
+import com.bkap.aispark.entity.teach.Lesson;
+import com.bkap.aispark.entity.teach.LessonFile;
+import com.bkap.aispark.entity.teach.LessonTeacher;
+import com.bkap.aispark.entity.teach.enums.LessonFileType;
+import com.bkap.aispark.entity.teach.enums.LessonStatus;
+import com.bkap.aispark.repository.teach.LessonFileRepository;
+import com.bkap.aispark.repository.teach.LessonPermissionRepository;
+import com.bkap.aispark.repository.teach.LessonRepository;
+import com.bkap.aispark.repository.teach.LessonTeacherRepository;
+import com.bkap.aispark.repository.teach.TeacherGradeRepository;
+import com.bkap.aispark.service.R2StorageService;
 
 @Service
 public class TeacherLessonService {
@@ -46,6 +43,8 @@ public class TeacherLessonService {
     @Autowired
     private R2StorageService r2StorageService;
 
+    @Autowired
+    private LessonPermissionRepository lessonPermissionRepository;
 
     /**
      * Upload tài liệu đính kèm cho bài giảng (PDF, ZIP, DOC...)
@@ -118,7 +117,7 @@ public class TeacherLessonService {
     public void deleteLessonFile(Long fileId, Long teacherId) {
         LessonFile file = lessonFileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File không tồn tại!"));
-        
+
         // Check quyền trên bài giảng chứa file này
         checkPermission(file.getLesson().getId(), teacherId);
 
@@ -129,30 +128,29 @@ public class TeacherLessonService {
         lessonFileRepository.delete(file);
     }
 
+    public List<TeacherLessonResponse> teacherLessonByAssignedGrades(
+            Long teacherId, String keyword, Integer grade, Integer teachingMonth) {
 
+        List<Lesson> lessons = lessonPermissionRepository.findLessonsForTeacher(teacherId);
 
-    public List<TeacherLessonResponse> teacherLessonByAssignedGrades(Long teacherId, String keyword, Integer grade, Integer teachingMonth) {
-        List<Integer> assignedGrades = teacherGradeRepository.findByTeacherId(teacherId)
-                        .stream().map(TeacherGrade::getGrade).toList();
-        
-        if (assignedGrades.isEmpty()) return List.of();
-
-        List<Integer> gradesToQuery = (grade == null) ? assignedGrades
-                        : assignedGrades.contains(grade) ? List.of(grade) : List.of();
-
-        if (gradesToQuery.isEmpty()) return List.of();
-
-        List<Lesson> lessons = lessonRepository.findByGradeInAndLessonStatus(gradesToQuery, LessonStatus.ACTIVE);
+        if (grade != null) {
+            lessons = lessons.stream()
+                    .filter(l -> grade.equals(l.getGrade()))
+                    .toList();
+        }
 
         if (teachingMonth != null) {
-            lessons = lessons.stream().filter(l -> teachingMonth.equals(l.getTeachingMonth())).toList();
+            lessons = lessons.stream()
+                    .filter(l -> teachingMonth.equals(l.getTeachingMonth()))
+                    .toList();
         }
 
         if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-            lessons = lessons.stream().filter(l -> 
-                l.getCode().toLowerCase().contains(kw) || l.getName().toLowerCase().contains(kw)
-            ).toList();
+            String kw = keyword.toLowerCase();
+            lessons = lessons.stream()
+                    .filter(l -> l.getCode().toLowerCase().contains(kw)
+                            || l.getName().toLowerCase().contains(kw))
+                    .toList();
         }
 
         return lessons.stream().map(this::toResponse).toList();
@@ -160,8 +158,8 @@ public class TeacherLessonService {
 
     public List<TeacherLessonResponse> teacherAssignedLessonList(Long teacherId, String keyword, Integer grade) {
         List<LessonTeacher> assignments = (grade == null)
-                        ? lessonTeacherRepository.findByTeacherId(teacherId)
-                        : lessonTeacherRepository.findByTeacherIdAndLesson_Grade(teacherId, grade);
+                ? lessonTeacherRepository.findByTeacherId(teacherId)
+                : lessonTeacherRepository.findByTeacherIdAndLesson_Grade(teacherId, grade);
 
         List<Lesson> lessons = assignments.stream()
                 .map(LessonTeacher::getLesson)
@@ -170,9 +168,9 @@ public class TeacherLessonService {
 
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase(Locale.ROOT);
-            lessons = lessons.stream().filter(l -> 
-                l.getCode().toLowerCase().contains(kw) || l.getName().toLowerCase().contains(kw)
-            ).toList();
+            lessons = lessons.stream()
+                    .filter(l -> l.getCode().toLowerCase().contains(kw) || l.getName().toLowerCase().contains(kw))
+                    .toList();
         }
 
         return lessons.stream().map(this::toResponse).toList();
@@ -185,7 +183,7 @@ public class TeacherLessonService {
         checkPermission(lessonId, teacherId);
 
         List<LessonFileResponse> files = lessonFileRepository.findByLessonId(lessonId)
-                        .stream().map(this::toFileResponse).toList();
+                .stream().map(this::toFileResponse).toList();
 
         TeacherLessonContentResponse res = new TeacherLessonContentResponse();
         res.setId(lesson.getId());
@@ -200,13 +198,23 @@ public class TeacherLessonService {
         return res;
     }
 
-    
-
     private void checkPermission(Long lessonId, Long teacherId) {
-        Lesson lesson = lessonRepository.findById(lessonId).orElseThrow();
-        boolean hasPermission = lessonTeacherRepository.existsByLessonIdAndTeacherId(lessonId, teacherId)
-                || teacherGradeRepository.findByTeacherId(teacherId)
-                .stream().anyMatch(g -> g.getGrade().equals(lesson.getGrade()));
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại"));
+
+        // CẦN: giáo viên dạy grade này
+        boolean validGrade = teacherGradeRepository
+                .existsByTeacherIdAndGrade(teacherId, lesson.getGrade());
+
+        if (!validGrade) {
+            throw new RuntimeException("Giáo viên không thuộc grade này");
+        }
+
+        // ĐỦ: được admin cấp quyền bài
+        boolean hasPermission = lessonPermissionRepository
+                .existsByLessonIdAndTeacherIdAndCanViewTrue(
+                        lessonId, teacherId);
 
         if (!hasPermission) {
             throw new RuntimeException("Không có quyền thao tác trên bài giảng này!");
@@ -215,12 +223,16 @@ public class TeacherLessonService {
 
     private LessonFileType detectFileType(MultipartFile file) {
         String contentType = file.getContentType();
-        if (contentType == null) return LessonFileType.PDF; // Default or Other
+        if (contentType == null)
+            return LessonFileType.PDF; // Default or Other
 
-        if (contentType.contains("pdf")) return LessonFileType.PDF;
-        if (contentType.contains("zip") || contentType.contains("rar") || contentType.contains("compressed")) return LessonFileType.ZIP;
-        if (contentType.contains("html")) return LessonFileType.HTML;
-        
+        if (contentType.contains("pdf"))
+            return LessonFileType.PDF;
+        if (contentType.contains("zip") || contentType.contains("rar") || contentType.contains("compressed"))
+            return LessonFileType.ZIP;
+        if (contentType.contains("html"))
+            return LessonFileType.HTML;
+
         return LessonFileType.PDF; // Fallback
     }
 
@@ -234,7 +246,7 @@ public class TeacherLessonService {
         res.setCoverImage(lesson.getCoverImage());
         return res;
     }
-    
+
     private LessonFileResponse toFileResponse(LessonFile f) {
         LessonFileResponse r = new LessonFileResponse();
         r.setId(f.getId());
