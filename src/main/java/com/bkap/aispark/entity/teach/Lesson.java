@@ -3,6 +3,7 @@ package com.bkap.aispark.entity.teach;
 import com.bkap.aispark.entity.teach.enums.LessonStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,6 +18,10 @@ public class Lesson {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
+
     @Column(nullable = false, unique = true, length = 50)
     private String code;
 
@@ -29,6 +34,9 @@ public class Lesson {
     @Column(name = "teaching_month", nullable = false)
     private Integer teachingMonth;
 
+    @Column(name = "lesson_order", nullable = false)
+    private Integer lessonOrder = 0;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -36,8 +44,8 @@ public class Lesson {
     private String coverImage;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = false)
-    private LessonStatus lessonStatus;
+    @Column(name = "lesson_status", length = 20, nullable = false)
+    private LessonStatus lessonStatus = LessonStatus.ACTIVE;
 
     @Column(nullable = false)
     private Integer version = 1;
@@ -52,11 +60,28 @@ public class Lesson {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
+
+        if (this.version == null) {
+            this.version = 1;
+        }
+
+        if (this.lessonOrder == null) {
+            this.lessonOrder = 0;
+        }
+
+        if (this.lessonStatus == null) {
+            this.lessonStatus = LessonStatus.ACTIVE;
+        }
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
-        this.version++;
+
+        if (this.version == null) {
+            this.version = 1;
+        } else {
+            this.version++;
+        }
     }
 }

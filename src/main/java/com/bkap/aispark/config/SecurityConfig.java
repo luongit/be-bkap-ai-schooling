@@ -38,22 +38,34 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Cho phép FE nhúng file /uploads vào iframe
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable())
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives(
+                                        "frame-ancestors 'self' http://localhost:3000 http://localhost:5173 https://bkapai.vn"
+                                )
+                        )
+                )
+
                 .authorizeHttpRequests(auth -> auth
-                        // .requestMatchers("/api/auth/**").permitAll() // login/register thoải mái
-                        // .anyRequest().authenticated()
-                        // còn lại cần token
-                        .requestMatchers("/favicon/**","/favicon.ico", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(
+                                "/favicon/**",
+                                "/favicon.ico",
+                                "/css/**",
+                                "/js/**",
+                                "/uploads/**"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/journalism/create/**").hasAnyRole("SYSTEM_ADMIN", "ADMIN", "TEACHER")
-
+                        .requestMatchers("/api/journalism/create/**")
+                        .hasAnyRole("SYSTEM_ADMIN", "ADMIN", "TEACHER")
                         .anyRequest().permitAll()
-
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

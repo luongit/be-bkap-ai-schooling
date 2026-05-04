@@ -1,34 +1,33 @@
 package com.bkap.aispark.service.teach;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.bkap.aispark.dto.teach.LessonFileResponse;
 import com.bkap.aispark.dto.teach.TeacherLessonContentResponse;
 import com.bkap.aispark.dto.teach.TeacherLessonResponse;
+import com.bkap.aispark.entity.teach.Course;
 import com.bkap.aispark.entity.teach.Lesson;
 import com.bkap.aispark.entity.teach.LessonFile;
-import com.bkap.aispark.entity.teach.LessonTeacher;
-import com.bkap.aispark.entity.teach.enums.LessonFileType;
+import com.bkap.aispark.entity.teach.TeacherGrade;
+import com.bkap.aispark.entity.teach.enums.CourseStatus;
 import com.bkap.aispark.entity.teach.enums.LessonStatus;
+import com.bkap.aispark.repository.teach.CourseRepository;
 import com.bkap.aispark.repository.teach.LessonFileRepository;
-import com.bkap.aispark.repository.teach.LessonPermissionRepository;
 import com.bkap.aispark.repository.teach.LessonRepository;
-import com.bkap.aispark.repository.teach.LessonTeacherRepository;
 import com.bkap.aispark.repository.teach.TeacherGradeRepository;
-import com.bkap.aispark.service.R2StorageService;
+import com.bkap.aispark.entity.Teacher;
+import com.bkap.aispark.repository.TeacherRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class TeacherLessonService {
 
     @Autowired
-    private LessonTeacherRepository lessonTeacherRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
     private LessonRepository lessonRepository;
@@ -38,102 +37,194 @@ public class TeacherLessonService {
 
     @Autowired
     private LessonFileRepository lessonFileRepository;
-
-    // INJECT R2 SERVICE VÀO ĐÂY
+    
+    
     @Autowired
-    private R2StorageService r2StorageService;
-
-    @Autowired
-    private LessonPermissionRepository lessonPermissionRepository;
+    private TeacherRepository teacherRepository;
 
     /**
-     * Upload tài liệu đính kèm cho bài giảng (PDF, ZIP, DOC...)
-     * File sẽ tự động vào folder "bkap/teach/" do cấu hình bên R2Service
+     * Luồng mới:
+     * Giáo viên xem danh sách Course theo khối được phân công.
+     *
+     * FE gọi:
+     * GET /api/teacher/courses
      */
-    @Transactional
-    public LessonFileResponse uploadLessonMaterial(Long lessonId, Long teacherId, MultipartFile file) {
-        // 1. Check quyền giáo viên với bài giảng này
-        checkPermission(lessonId, teacherId);
+    public List<Course> teacherCoursesByAssignedGrades(
+            Long teacherId,
+            String keyword,
+            Integer grade,
+            Integer teachingMonth
+    ) {
+        List<Integer> assignedGrades = getAssignedGrades(teacherId);
 
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại!"));
-
-        try {
-            // 2. Upload lên R2
-            String fileUrl = r2StorageService.uploadFile(file);
-
-            // 3. Lưu thông tin vào DB
-            LessonFile lessonFile = new LessonFile();
-            lessonFile.setLesson(lesson);
-            lessonFile.setFileName(file.getOriginalFilename());
-            lessonFile.setFilePath(fileUrl); // Link R2
-            lessonFile.setFileSize(file.getSize());
-            lessonFile.setFileType(detectFileType(file)); // Hàm tự viết bên dưới
-            lessonFile.setIsRoot(false); // Mặc định không phải root
-
-            lessonFileRepository.save(lessonFile);
-
-            // 4. Convert sang Response để trả về ngay cho FE hiển thị
-            return toFileResponse(lessonFile);
-
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi upload file lên R2: " + e.getMessage());
+        if (assignedGrades.isEmpty()) {
+            return List.of();
         }
-    }
 
-    /**
-     * Upload ảnh bìa (Cover Image) cho bài giảng
-     */
-    @Transactional
-    public String uploadLessonCover(Long lessonId, Long teacherId, MultipartFile file) {
-        checkPermission(lessonId, teacherId);
+        List<Course> courses = courseRepository
+                .findByCourseStatusOrderByGradeAscTeachingMonthAscSortOrderAscIdAsc(
+                        CourseStatus.ACTIVE
+                );
 
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại!"));
-
-        try {
-            // Upload lên R2
-            String coverUrl = r2StorageService.uploadFile(file);
-
-            // Xóa ảnh bìa cũ trên R2 nếu có (để tiết kiệm dung lượng)
-            if (lesson.getCoverImage() != null) {
-                r2StorageService.deleteFile(lesson.getCoverImage());
-            }
-
-            // Update DB
-            lesson.setCoverImage(coverUrl);
-            lessonRepository.save(lesson);
-
-            return coverUrl;
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi upload ảnh bìa: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Xóa file tài liệu
-     */
-    @Transactional
-    public void deleteLessonFile(Long fileId, Long teacherId) {
-        LessonFile file = lessonFileRepository.findById(fileId)
-                .orElseThrow(() -> new RuntimeException("File không tồn tại!"));
-
-        // Check quyền trên bài giảng chứa file này
-        checkPermission(file.getLesson().getId(), teacherId);
-
-        // Xóa trên R2
-        r2StorageService.deleteFile(file.getFilePath());
-
-        // Xóa trong DB
-        lessonFileRepository.delete(file);
-    }
-
-    public List<TeacherLessonResponse> teacherLessonByAssignedGrades(
-            Long teacherId, String keyword, Integer grade, Integer teachingMonth) {
-
-        List<Lesson> lessons = lessonPermissionRepository.findLessonsForTeacher(teacherId);
+        courses = courses.stream()
+                .filter(c -> assignedGrades.contains(c.getGrade()))
+                .toList();
 
         if (grade != null) {
+            if (!assignedGrades.contains(grade)) {
+                return List.of();
+            }
+
+            courses = courses.stream()
+                    .filter(c -> grade.equals(c.getGrade()))
+                    .toList();
+        }
+
+        if (teachingMonth != null) {
+            courses = courses.stream()
+                    .filter(c -> teachingMonth.equals(c.getTeachingMonth()))
+                    .toList();
+        }
+
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.toLowerCase(Locale.ROOT);
+
+            courses = courses.stream()
+                    .filter(c ->
+                            containsIgnoreCase(c.getName(), kw)
+                                    || containsIgnoreCase(c.getDescription(), kw)
+                    )
+                    .toList();
+        }
+
+        return courses;
+    }
+
+    /**
+     * Luồng mới:
+     * Giáo viên xem chi tiết Course.
+     *
+     * FE gọi:
+     * GET /api/teacher/courses/{courseId}
+     */
+    public Course getCourseDetail(Long teacherId, Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Khóa học không tồn tại!"));
+
+        if (course.getCourseStatus() != CourseStatus.ACTIVE) {
+            throw new RuntimeException("Khóa học đang bị ẩn!");
+        }
+
+        checkCoursePermission(course, teacherId);
+
+        return course;
+    }
+
+    /**
+     * Luồng cũ:
+     * Lấy tất cả Lesson mà giáo viên được xem theo khối.
+     *
+     * FE cũ gọi:
+     * GET /api/teacher/lessons
+     */
+    public List<TeacherLessonResponse> teacherLessonByAssignedGrades(
+            Long teacherId,
+            String keyword,
+            Integer grade,
+            Integer teachingMonth
+    ) {
+        List<Integer> assignedGrades = getAssignedGrades(teacherId);
+
+        if (assignedGrades.isEmpty()) {
+            return List.of();
+        }
+
+        List<Integer> gradesToQuery;
+
+        if (grade == null) {
+            gradesToQuery = assignedGrades;
+        } else if (assignedGrades.contains(grade)) {
+            gradesToQuery = List.of(grade);
+        } else {
+            return List.of();
+        }
+
+        List<Lesson> lessons = lessonRepository.findByGradeInAndLessonStatus(
+                gradesToQuery,
+                LessonStatus.ACTIVE
+        );
+
+        if (teachingMonth != null) {
+            lessons = lessons.stream()
+                    .filter(l -> teachingMonth.equals(l.getTeachingMonth()))
+                    .toList();
+        }
+
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.toLowerCase(Locale.ROOT);
+
+            lessons = lessons.stream()
+                    .filter(l ->
+                            containsIgnoreCase(l.getCode(), kw)
+                                    || containsIgnoreCase(l.getName(), kw)
+                                    || containsIgnoreCase(getCourseName(l), kw)
+                    )
+                    .toList();
+        }
+
+        return lessons.stream()
+                .sorted(
+                        Comparator
+                                .comparing((Lesson l) -> l.getCourse() != null ? l.getCourse().getId() : 0L)
+                                .thenComparing(l -> l.getLessonOrder() != null ? l.getLessonOrder() : 0)
+                                .thenComparing(Lesson::getId)
+                )
+                .map(this::toResponse)
+                .toList();
+    }
+
+    /**
+     * Luồng mới:
+     * Course -> Lesson.
+     *
+     * Giáo viên vào 1 Course thì chỉ thấy Lesson thuộc khối mình phụ trách.
+     *
+     * FE gọi:
+     * GET /api/teacher/courses/{courseId}/lessons
+     */
+    public List<TeacherLessonResponse> teacherLessonsByCourse(
+            Long teacherId,
+            Long courseId,
+            Integer grade,
+            Integer teachingMonth,
+            String keyword
+    ) {
+        List<Integer> assignedGrades = getAssignedGrades(teacherId);
+
+        if (assignedGrades.isEmpty()) {
+            return List.of();
+        }
+
+        Course course = getCourseDetail(teacherId, courseId);
+
+        if (!assignedGrades.contains(course.getGrade())) {
+            return List.of();
+        }
+
+        List<Lesson> lessons = lessonRepository.findByCourseIdAndLessonStatusOrderByLessonOrderAscIdAsc(
+                courseId,
+                LessonStatus.ACTIVE
+        );
+
+        lessons = lessons.stream()
+                .filter(l -> assignedGrades.contains(l.getGrade()))
+                .toList();
+
+        if (grade != null) {
+            if (!assignedGrades.contains(grade)) {
+                return List.of();
+            }
+
             lessons = lessons.stream()
                     .filter(l -> grade.equals(l.getGrade()))
                     .toList();
@@ -146,116 +237,171 @@ public class TeacherLessonService {
         }
 
         if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase();
-            lessons = lessons.stream()
-                    .filter(l -> l.getCode().toLowerCase().contains(kw)
-                            || l.getName().toLowerCase().contains(kw))
-                    .toList();
-        }
-
-        return lessons.stream().map(this::toResponse).toList();
-    }
-
-    public List<TeacherLessonResponse> teacherAssignedLessonList(Long teacherId, String keyword, Integer grade) {
-        List<LessonTeacher> assignments = (grade == null)
-                ? lessonTeacherRepository.findByTeacherId(teacherId)
-                : lessonTeacherRepository.findByTeacherIdAndLesson_Grade(teacherId, grade);
-
-        List<Lesson> lessons = assignments.stream()
-                .map(LessonTeacher::getLesson)
-                .filter(l -> l.getLessonStatus() == LessonStatus.ACTIVE)
-                .toList();
-
-        if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase(Locale.ROOT);
+
             lessons = lessons.stream()
-                    .filter(l -> l.getCode().toLowerCase().contains(kw) || l.getName().toLowerCase().contains(kw))
+                    .filter(l ->
+                            containsIgnoreCase(l.getCode(), kw)
+                                    || containsIgnoreCase(l.getName(), kw)
+                    )
                     .toList();
         }
 
-        return lessons.stream().map(this::toResponse).toList();
+        return lessons.stream()
+                .sorted(
+                        Comparator
+                                .comparing((Lesson l) -> l.getLessonOrder() != null ? l.getLessonOrder() : 0)
+                                .thenComparing(Lesson::getId)
+                )
+                .map(this::toResponse)
+                .toList();
     }
 
+    /**
+     * Lesson -> File.
+     *
+     * Khi mở chi tiết Lesson thì BE vẫn check quyền theo grade.
+     *
+     * FE gọi:
+     * GET /api/teacher/lessons/{lessonId}
+     */
     public TeacherLessonContentResponse getLessonContent(Long lessonId, Long teacherId) {
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại !"));
+                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại!"));
 
-        checkPermission(lessonId, teacherId);
+        checkPermission(lesson, teacherId);
 
         List<LessonFileResponse> files = lessonFileRepository.findByLessonId(lessonId)
-                .stream().map(this::toFileResponse).toList();
+                .stream()
+                .map(this::toFileResponse)
+                .toList();
 
         TeacherLessonContentResponse res = new TeacherLessonContentResponse();
+
         res.setId(lesson.getId());
         res.setCode(lesson.getCode());
         res.setName(lesson.getName());
         res.setGrade(lesson.getGrade());
         res.setTeachingMonth(lesson.getTeachingMonth());
+        res.setLessonOrder(lesson.getLessonOrder());
         res.setDescription(lesson.getDescription());
         res.setCoverImage(lesson.getCoverImage());
+        res.setLessonStatus(lesson.getLessonStatus());
         res.setFiles(files);
 
         return res;
     }
 
-    private void checkPermission(Long lessonId, Long teacherId) {
+    private List<Integer> getAssignedGrades(Long teacherId) {
+        List<Integer> gradesFromPermission = teacherGradeRepository.findByTeacherId(teacherId)
+                .stream()
+                .map(TeacherGrade::getGrade)
+                .distinct()
+                .toList();
 
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new RuntimeException("Bài giảng không tồn tại"));
-
-        // CẦN: giáo viên dạy grade này
-        boolean validGrade = teacherGradeRepository
-                .existsByTeacherIdAndGrade(teacherId, lesson.getGrade());
-
-        if (!validGrade) {
-            throw new RuntimeException("Giáo viên không thuộc grade này");
+        if (!gradesFromPermission.isEmpty()) {
+            return gradesFromPermission;
         }
 
-        // ĐỦ: được admin cấp quyền bài
-        boolean hasPermission = lessonPermissionRepository
-                .existsByLessonIdAndTeacherIdAndCanViewTrue(
-                        lessonId, teacherId);
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"));
 
-        if (!hasPermission) {
-            throw new RuntimeException("Không có quyền thao tác trên bài giảng này!");
+        if (teacher.getHomeroomClass() == null) {
+            return List.of();
+        }
+
+        Integer homeroomGrade = extractGradeFromClassName(
+                teacher.getHomeroomClass().getName()
+        );
+
+        if (homeroomGrade == null) {
+            return List.of();
+        }
+
+        return List.of(homeroomGrade);
+    }
+    private void checkPermission(Lesson lesson, Long teacherId) {
+        List<Integer> assignedGrades = getAssignedGrades(teacherId);
+
+        if (!assignedGrades.contains(lesson.getGrade())) {
+            throw new RuntimeException("Bạn không phụ trách khối này, không có quyền xem nội dung!");
         }
     }
 
-    private LessonFileType detectFileType(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType == null)
-            return LessonFileType.PDF; // Default or Other
+    private void checkCoursePermission(Course course, Long teacherId) {
+        List<Integer> assignedGrades = getAssignedGrades(teacherId);
 
-        if (contentType.contains("pdf"))
-            return LessonFileType.PDF;
-        if (contentType.contains("zip") || contentType.contains("rar") || contentType.contains("compressed"))
-            return LessonFileType.ZIP;
-        if (contentType.contains("html"))
-            return LessonFileType.HTML;
-
-        return LessonFileType.PDF; // Fallback
+        if (!assignedGrades.contains(course.getGrade())) {
+            throw new RuntimeException("Bạn không phụ trách khối này, không có quyền xem khóa học!");
+        }
     }
 
     private TeacherLessonResponse toResponse(Lesson lesson) {
         TeacherLessonResponse res = new TeacherLessonResponse();
+
         res.setId(lesson.getId());
         res.setCode(lesson.getCode());
         res.setName(lesson.getName());
         res.setGrade(lesson.getGrade());
         res.setTeachingMonth(lesson.getTeachingMonth());
+        res.setLessonOrder(lesson.getLessonOrder());
+        res.setDescription(lesson.getDescription());
         res.setCoverImage(lesson.getCoverImage());
+        res.setLessonStatus(lesson.getLessonStatus());
+
         return res;
     }
 
     private LessonFileResponse toFileResponse(LessonFile f) {
         LessonFileResponse r = new LessonFileResponse();
+
         r.setId(f.getId());
-        r.setFileType(f.getFileType().name());
+
+        if (f.getFileType() != null) {
+            r.setFileType(f.getFileType().name());
+        }
+
         r.setFileName(f.getFileName());
         r.setFilePath(f.getFilePath());
         r.setFolderPath(f.getFolderPath());
         r.setFileSize(f.getFileSize());
         r.setIsRoot(f.getIsRoot());
+
         return r;
+    }
+
+    private boolean containsIgnoreCase(String value, String keywordLowerCase) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(keywordLowerCase);
+    }
+
+    private String getCourseName(Lesson lesson) {
+        if (lesson.getCourse() == null) {
+            return null;
+        }
+
+        return lesson.getCourse().getName();
+    }
+    private Integer extractGradeFromClassName(String className) {
+        if (className == null || className.isBlank()) {
+            return null;
+        }
+
+        String normalized = className.trim().toLowerCase();
+
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(?:lớp\\s*)?(\\d{1,2})")
+                .matcher(normalized);
+
+        if (!matcher.find()) {
+            return null;
+        }
+
+        Integer grade = Integer.parseInt(matcher.group(1));
+
+        if (grade < 1 || grade > 12) {
+            return null;
+        }
+
+        return grade;
     }
 }

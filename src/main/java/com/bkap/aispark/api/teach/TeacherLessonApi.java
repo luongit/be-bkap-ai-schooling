@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/teacher/lessons")
+@RequestMapping("/api/teachers/lessons")
 public class TeacherLessonApi {
 
     @Autowired
@@ -29,7 +29,9 @@ public class TeacherLessonApi {
     @Autowired
     private TeacherRepository teacherRepository;
 
-    
+    /**
+     * API: Lấy danh sách bài giảng theo khối được phân công
+     */
     @GetMapping
     public ResponseEntity<List<TeacherLessonResponse>> getAssignedLessons(
             HttpServletRequest request,
@@ -37,24 +39,7 @@ public class TeacherLessonApi {
             @RequestParam(required = false) Integer grade,
             @RequestParam(required = false) Integer month
     ) {
-        String token = extractToken(request);
-
-        if (!jwtUtil.validateToken(token)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        String role = jwtUtil.getRole(token);
-        if (!"TEACHER".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền giáo viên");
-        }
-
-        String email = jwtUtil.getEmail(token);
-
-        Long teacherId = teacherRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên theo email"))
-                .getId();
-
-
+        Long teacherId = getTeacherIdFromToken(request);
 
         List<TeacherLessonResponse> lessons =
                 teacherLessonService.teacherLessonByAssignedGrades(
@@ -64,6 +49,23 @@ public class TeacherLessonApi {
         return ResponseEntity.ok(lessons);
     }
 
+    /**
+     * API: Lấy chi tiết tài liệu của một bài giảng
+     */
+    @GetMapping("/{lessonId}")
+    public ResponseEntity<TeacherLessonContentResponse> getLessonDetail(
+            HttpServletRequest request,
+            @PathVariable Long lessonId
+    ) {
+        Long teacherId = getTeacherIdFromToken(request);
+
+        TeacherLessonContentResponse content =
+                teacherLessonService.getLessonContent(lessonId, teacherId);
+
+        return ResponseEntity.ok(content);
+    }
+
+    // --- HELPER METHODS ---
 
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -75,11 +77,8 @@ public class TeacherLessonApi {
         }
         return header.substring(7);
     }
-    @GetMapping("/{lessonId}")
-    public ResponseEntity<TeacherLessonContentResponse> getLessonDetail(
-            HttpServletRequest request,
-            @PathVariable Long lessonId
-    ) {
+
+    private Long getTeacherIdFromToken(HttpServletRequest request) {
         String token = extractToken(request);
 
         if (!jwtUtil.validateToken(token)) {
@@ -92,14 +91,9 @@ public class TeacherLessonApi {
         }
 
         String email = jwtUtil.getEmail(token);
-        Long teacherId = teacherRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên"))
+
+        return teacherRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên theo email"))
                 .getId();
-
-        TeacherLessonContentResponse content =
-                teacherLessonService.getLessonContent(lessonId, teacherId);
-
-        return ResponseEntity.ok(content);
     }
-
 }

@@ -10,4 +10,6 @@ public interface TeacherGradeRepository extends JpaRepository<TeacherGrade, Long
     void deleteByTeacherIdAndGrade(Long teacherId, Integer grade);
 
     boolean existsByTeacherIdAndGrade(Long teacherId, Integer grade);
+ // Tìm danh sách khối mà giáo viên phụ trách
+
 }
