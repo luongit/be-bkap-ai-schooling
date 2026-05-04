@@ -228,19 +228,20 @@
 			<version>1.3.30</version>
 		</dependency>
 
-
+        
+        <dependency>
+    <groupId>com.github.junrar</groupId>
+    <artifactId>junrar</artifactId>
+    <version>7.5.5</version>
+</dependency>
+        
 		<!-- Dùng cho streaming API (reactive, WebClient) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
-
-
-		<dependency>
-			<groupId>com.bkap</groupId>
-			<artifactId>AI</artifactId>
-			<version>1.0</version>
-		</dependency>
+		
+	
 	</dependencies>
 	<build>
 		<plugins>

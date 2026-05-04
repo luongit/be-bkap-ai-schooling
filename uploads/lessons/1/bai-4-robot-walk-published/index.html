@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!-- Created with iSpring --><!-- 964 604 --><!--version 11.9.0.4 --><!--type html --><!--mainFolder ./ --><!--content book -->
+<!--
+Copyright 2012 Mozilla Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Adobe CMap resources are covered by their own copyright but the same license:
+
+    Copyright 1990-2015 Adobe Systems Incorporated.
+
+See https://github.com/adobe-type-tools/cmap-resources
+-->
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+	<meta name="format-detection" content="telephone=no"/>
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+	<meta name="msapplication-tap-highlight" content="no"/>
+	<title>Bài 4 Robot Walk</title>
+	<link rel="stylesheet" href="data/css/viewer.css"/>
+	<script src="data/js/browsersupport.js"></script>
+	<script src="data/js/viewer.js"></script>
+	
+	
+	<script>
+		var book = "eNqFVF1u4zYQvgohYNEXR4i3tuv4jZJoWxtFMiQ5rlEsBEpmbDaKKJBUsmocoEfZp71Ib9KTdPQTuykS9EUiP858nJlvhs+G5jpnxsyw/vrO0QiFIhUabWh+bwyMku5ZxP9gypj99mwoWMHianI5GI8uvw4MSYt9gwwHo1++vgCgaK6B6sqyxz8TxyFD53I0tMaWM5zPsTOeXs0/O9PpFJgPVHkio/ktk4qLwphpWbEWXlGlnoTcGbM7mivA+HAK588GcRIcXScrHEWbIHQSx8VesEhc/xZ7rnPGPWwRD6KIDwyVPRlihWaS7dATVYgXmZCSZdpEq5xRxZCWNaJ7ygsTQvvgnlda0jCdibVAomQF0geuUCrE/exjipWHbbIMPIeEQHRKtLW3sW+3/DYtMpZ3oBdgsG1/rn8OwRN0x4v933/+6MyCawDhMzBWVoJtm0SRa7meG28TOyQ4BpONGy8bcsmobsrA9QHxqJRAg9gjzSuqQQb02MvxHtM6DIkfQ1ILAkxuoZjUkDZDRfWQQknEXbvLKqhtoVHTO+/xLII4SHzyawwkC9HUr+Vg3/7HZRWS2zcupWSPXFTq326Ok1hBcH2Dw+tkSXBXaLxrqoUsEOeBynv1jm3cxbM5gJK1qH6SDEGlGrcB0rRs73v1R2mlNdQKwmi3/03a7PkXwUkwuhcd+HphlMTYaobubUwO3kYnpx2te3gZrMMzfugvuHH9dUzO+EPXvs1J4MfLDo/g4AstzOOcpebxhkrziEvZrOrjl6pg8MnrI6725jFipTaPAYzF0ReP5tFhWc/nB0mwjj3Xb4T3ofo0zVmjdyZgGArdh9nb9KnZb86arjlFuoIqoU8t5K9vLBJ+6oxCYkOHedtGG+KA4e+V0qgQT93x2se32AUSjyQW9n2YjF63rahQRqF9OXtqh1AhUeR11+YUbViKoFuhuc2PmdzYI70iqKzSnKtDPyii0pDsXc4LaLqc1inN7pGqylJI3fFtSRSTENQ7pVgzBc8ESGi8wDMqhYbnZi7Fgy3KGrrq9LjdwYbJZg6bh5NcEYLnw9GFM5+MLsaXQ+vC+jyZXkyd0XQ6x3g8mUzgRq7awV1BLC4UeS/b4T1xSrhbSBZpGPXXh5UVjWY4y5hSPOU51/WN2LHe5+UfWgHpQQ==";
+
+		document.addEventListener("DOMContentLoaded", function() {
+			PdfViewer.checkMobileIntegration(book);
+
+			var viewerInitCallback = function(viewer) {
+				
+			};
+
+			var startupApplication = function(initViewerState) {
+				var fileOpenParams = {"type":"fileName","filePath":"data\/book.pdf"};
+				PdfViewer.open(fileOpenParams, document.body, book, viewerInitCallback, initViewerState);
+			};
+
+			(function(startupFunc) {
+				if (startupFunc)
+				{
+					startupFunc(startupApplication);
+				}
+				else
+				{
+					startupApplication();
+				}
+			})();
+		});
+	</script>
+<style id="lms-force-white-background">
+    html,
+    body,
+    .pageViewer {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+    }
+</style>
+<script id="lms-force-white-background-script">
+    (function () {
+        function forceWhitePageViewer() {
+            var els = document.querySelectorAll('.pageViewer');
+            els.forEach(function(el) {
+                el.style.setProperty('background', '#ffffff', 'important');
+                el.style.setProperty('background-color', '#ffffff', 'important');
+            });
+        }
+
+        setTimeout(forceWhitePageViewer, 100);
+        setTimeout(forceWhitePageViewer, 500);
+        setTimeout(forceWhitePageViewer, 1000);
+        setTimeout(forceWhitePageViewer, 2000);
+
+        window.addEventListener('load', forceWhitePageViewer);
+
+        if (window.MutationObserver) {
+            var observer = new MutationObserver(forceWhitePageViewer);
+            window.addEventListener('load', function () {
+                if (document.body) {
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['style', 'class']
+                    });
+                }
+            });
+        }
+    })();
+</script>
+</head>
+<body></body>
+</html>

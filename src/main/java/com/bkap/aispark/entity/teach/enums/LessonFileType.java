@@ -4,5 +4,6 @@ public enum LessonFileType {
     PDF,
     ZIP,
     RAR,
-    HTML
+    HTML,
+    WORD,
 }
