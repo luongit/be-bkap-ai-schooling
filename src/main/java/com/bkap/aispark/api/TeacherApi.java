@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bkap.aispark.dto.TeacherDTO;
@@ -32,6 +34,7 @@ public class TeacherApi {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<Teacher> addTeacher(@RequestBody Teacher teacher) {
         Teacher saved = teacherService.addTeacher(teacher);
         return ResponseEntity.ok(saved);
@@ -45,6 +48,7 @@ public class TeacherApi {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<TeacherDTO> updateTeacher(
             @PathVariable Long id,
             @RequestBody TeacherRequestDTO dto) {
@@ -66,21 +70,21 @@ public class TeacherApi {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<Void> deleteTeacher(@PathVariable Long id) {
         boolean deleted = teacherService.deleteTeacher(id);
         return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/check-email")
-    public ResponseEntity<?> checkEmail(@org.springframework.web.bind.annotation.RequestParam String email) {
+    public ResponseEntity<?> checkEmail(@RequestParam String email) {
         boolean exists = teacherService.existsByEmail(email);
         return ResponseEntity.ok().body(java.util.Collections.singletonMap("exists", exists));
     }
 
     @GetMapping("/check-code")
-    public ResponseEntity<?> checkCode(@org.springframework.web.bind.annotation.RequestParam String code) {
+    public ResponseEntity<?> checkCode(@RequestParam String code) {
         boolean exists = teacherService.existsByCode(code);
         return ResponseEntity.ok().body(java.util.Collections.singletonMap("exists", exists));
     }
-
 }

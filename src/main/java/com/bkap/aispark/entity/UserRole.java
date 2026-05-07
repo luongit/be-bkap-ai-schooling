@@ -6,5 +6,6 @@ public enum UserRole {
     SCHOOL_ADMIN,
     STUDENT,
     TEACHER,
-    SYSTEM_ADMIN
+    SYSTEM_ADMIN,
+    SYSTEM
 }

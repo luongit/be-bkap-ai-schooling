@@ -51,6 +51,12 @@ public class TeacherService {
         // Tạo user tương ứng
         User user = new User();
         user.setEmail(saved.getEmail());
+        String email = saved.getEmail();
+        String username = email != null && email.contains("@")
+                ? email.substring(0, email.indexOf("@"))
+                : email;
+
+        user.setUsername(username);
         user.setPhone(saved.getPhone());
         user.setPassword(passwordEncoder.encode("123456")); // Mã hóa
         user.setRole(UserRole.TEACHER);

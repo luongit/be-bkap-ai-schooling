@@ -51,7 +51,7 @@ public class AdminTeacherGradeService {
                 ? List.of()
                 : request.getGrades()
                         .stream()
-                        .filter(g -> g != null && g >= 1 && g <= 12)
+                        .filter(this::isValidTeacherGrade)
                         .distinct()
                         .sorted()
                         .toList();
@@ -71,6 +71,17 @@ public class AdminTeacherGradeService {
         teacherGradeRepository.saveAll(newGrades);
 
         return toResponse(teacher);
+    }
+
+    private boolean isValidTeacherGrade(Integer grade) {
+        if (grade == null) {
+            return false;
+        }
+
+        return (grade >= 0 && grade <= 12)
+                || grade == 101
+                || grade == 102
+                || grade == 103;
     }
 
     private AdminTeacherGradeResponse toResponse(Teacher teacher) {

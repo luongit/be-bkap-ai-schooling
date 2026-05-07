@@ -41,3 +41,5 @@ src/main/resources/application-dev.properties
 /src/main/resources/*
 # Nhưng giữ lại các file Java và thư mục src (chỉ đẩy mã nguồn)
 !src/main/java/
+
+uploads/

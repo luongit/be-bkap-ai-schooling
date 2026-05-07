@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class SchoolApi {
 
     // Them 1 truong
     @PostMapping
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<CreateSchoolResponse> createSchool(@RequestBody Schools school) {
         CreateSchoolResponse resp = schoolService.createSchoolWithAdmin(school);
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
@@ -52,6 +54,7 @@ public class SchoolApi {
 
     // Sua thong tin truong qua ID
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<Schools> updateSchool(@PathVariable Long id, @RequestBody Schools schoolDetails) {
         return schoolRepository.findById(id)
                 .map(school -> {
@@ -64,6 +67,7 @@ public class SchoolApi {
 
     // Xoa 1 trường qua id
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ResponseEntity<Void> deleteSchool(@PathVariable Long id) {
         return schoolRepository.findById(id)
                 .map(school -> {
@@ -72,5 +76,4 @@ public class SchoolApi {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
-
 }

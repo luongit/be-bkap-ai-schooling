@@ -2,6 +2,7 @@ package com.bkap.aispark.api.teach;
 
 import com.bkap.aispark.security.JwtUtil;
 import com.bkap.aispark.service.teach.AdminLessonFileService;
+import com.bkap.aispark.service.teach.ExtractionProgressService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -18,6 +19,9 @@ public class AdminLessonFileApi {
 
     @Autowired
     private AdminLessonFileService adminLessonFileService;
+
+    @Autowired
+    private ExtractionProgressService progressService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -110,5 +114,16 @@ public class AdminLessonFileApi {
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
         }
+    }
+
+    // API mới để hỏi thăm tiến trình
+    @GetMapping("/{lessonId}/extract-progress")
+    public ResponseEntity<?> getExtractionProgress(
+            HttpServletRequest request,
+            @PathVariable Long lessonId
+    ) {
+        checkAdminRole(request);
+        int progress = progressService.getProgress(lessonId);
+        return ResponseEntity.ok(progress);
     }
 }

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.security.access.prepost.PreAuthorize; 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,7 +22,6 @@ import com.bkap.aispark.repository.ClassesRepository;
 import com.bkap.aispark.repository.SchoolsRepository;
 
 @RestController
-
 @RequestMapping("api/class")
 public class ClassApi {
 
@@ -30,6 +31,7 @@ public class ClassApi {
     @Autowired
     private SchoolsRepository schoolsRepository;
 
+    // Xem danh sách: Ai cũng có thể xem (nếu đã đăng nhập)
     @GetMapping
     public List<ClassesDTO> getAll() {
         return classesRepository.findAll()
@@ -38,7 +40,7 @@ public class ClassApi {
                 .collect(Collectors.toList());
     }
 
-    // Lấy lớp theo id
+   
     @GetMapping("/{id}")
     public ClassesDTO getById(@PathVariable Long id) {
         Classes clazz = classesRepository.findById(id)
@@ -46,8 +48,9 @@ public class ClassApi {
         return new ClassesDTO(clazz);
     }
 
-    // Thêm lớp mới
+
     @PostMapping
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public ClassesDTO create(@RequestBody ClassesDTO dto) {
         Schools school = schoolsRepository.findById(dto.getSchoolId())
                 .orElseThrow(() -> new RuntimeException("School not found with id " + dto.getSchoolId()));
@@ -60,8 +63,10 @@ public class ClassApi {
         return new ClassesDTO(saved);
     }
 
-    // Sửa lớp theo id
+    // Sửa lớp theo id: Chỉ SYSTEM hoặc SCHOOL_ADMIN được phép
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
+    
     public ClassesDTO update(@PathVariable Long id, @RequestBody ClassesDTO dto) {
         Classes clazz = classesRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Class not found with id " + id));
@@ -78,8 +83,9 @@ public class ClassApi {
         return new ClassesDTO(updated);
     }
 
-    // Xóa lớp theo id
+    // Xóa lớp theo id: Chỉ SYSTEM hoặc SCHOOL_ADMIN được phép
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM', 'SCHOOL_ADMIN', 'SYSTEM_ADMIN')")
     public String delete(@PathVariable Long id) {
         Classes clazz = classesRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Class not found with id " + id));
