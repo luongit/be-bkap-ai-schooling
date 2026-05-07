@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,9 +43,11 @@ public class UserApi {
                         "error", "UNAUTHORIZED",
                         "message", "Missing or invalid Authorization header"));
             }
+
             String token = authHeader.substring(7);
             Long userId = jwtUtil.getUserId(token);
             int credits = creditService.getRemainingCredit(userId);
+
             return ResponseEntity.ok(Map.of("credit", credits));
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of(
@@ -55,11 +58,13 @@ public class UserApi {
 
     // --- API quản lý user ---
     @GetMapping
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM' ,'SCHOOL_ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN', 'SCHOOL_ADMIN')")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
@@ -67,39 +72,53 @@ public class UserApi {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM', 'SCHOOL_ADMIN')")
+    public ResponseEntity<User> createUser(
+            @RequestBody User user,
             @RequestHeader("X-User-Id") Long actorId) {
         return ResponseEntity.ok(userService.createUser(actorId, user));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM',  'SCHOOL_ADMIN')")
+    public ResponseEntity<User> updateUser(
+            @PathVariable Long id,
             @RequestBody User updatedUser,
             @RequestHeader("X-User-Id") Long actorId) {
         return ResponseEntity.ok(userService.updateUser(actorId, id, updatedUser));
     }
 
     @PostMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivateUser(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM',  'SCHOOL_ADMIN')")
+    public ResponseEntity<Void> deactivateUser(
+            @PathVariable Long id,
             @RequestHeader("X-User-Id") Long actorId) {
         userService.deactivateUser(actorId, id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<Void> activateUser(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM',  'SCHOOL_ADMIN')")
+    public ResponseEntity<Void> activateUser(
+            @PathVariable Long id,
             @RequestHeader("X-User-Id") Long actorId) {
         userService.activateUser(actorId, id);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM',  'SCHOOL_ADMIN')")
+    public ResponseEntity<Map<String, String>> deleteUser(
+            @PathVariable Long id,
             @RequestHeader("X-User-Id") Long actorId,
             @RequestHeader("Authorization") String authHeader) {
         try {
-            String token = authHeader != null && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
+            String token = authHeader != null && authHeader.startsWith("Bearer ")
+                    ? authHeader.substring(7)
+                    : null;
+
             boolean deleted = userService.deleteUser(actorId, id, token);
+
             if (deleted) {
                 return ResponseEntity.ok(Map.of("message", "Xóa người dùng thành công"));
             } else {
@@ -113,7 +132,9 @@ public class UserApi {
     }
 
     @PostMapping("/{id}/resend-email")
-    public ResponseEntity<Map<String, String>> resendEmail(@PathVariable Long id,
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMIN','SYSTEM',  'SCHOOL_ADMIN')")
+    public ResponseEntity<Map<String, String>> resendEmail(
+            @PathVariable Long id,
             @RequestHeader("X-User-Id") Long actorId) {
         try {
             userService.resendAccountEmail(actorId, id);
@@ -122,5 +143,4 @@ public class UserApi {
             return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
         }
     }
-
 }

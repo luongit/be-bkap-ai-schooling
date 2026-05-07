@@ -20,7 +20,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.bkap.aispark.security.JwtFilter;
 
-
 @EnableMethodSecurity(prePostEnabled = true)
 @Configuration
 public class SecurityConfig {
@@ -33,7 +32,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Cho phép login API không cần token, còn lại phải check JWT
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
@@ -44,7 +42,7 @@ public class SecurityConfig {
                         .frameOptions(frameOptions -> frameOptions.disable())
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
-                                        "frame-ancestors 'self' http://localhost:3000 http://localhost:5173 https://bkapai.vn"
+                                        "frame-ancestors 'self' http://localhost:3000 http://localhost:5173 https://lms.bkapai.vn"
                                 )
                         )
                 )
@@ -57,37 +55,44 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/uploads/**"
                         ).permitAll()
+
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/journalism/create/**")
                         .hasAnyRole("SYSTEM_ADMIN", "ADMIN", "TEACHER")
+
                         .anyRequest().permitAll()
                 )
+
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://bkapai.vn",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://lms.bkapai.vn"
         ));
-        config.setAllowedMethods(List.of("GET", "POST","PATCH", "PUT", "DELETE", "OPTIONS"));
+
+        config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
-        //  cho phep cookie di qua
+        // Cho phép cookie đi qua
         config.setAllowCredentials(true);
 
-        // Cho FE reading Set-Cookie
+        // Cho FE đọc Set-Cookie nếu backend có trả cookie
         config.setExposedHeaders(List.of("Set-Cookie"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+
         return source;
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

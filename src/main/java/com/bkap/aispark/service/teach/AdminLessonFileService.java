@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -29,13 +28,11 @@ import java.nio.file.*;
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 @Service
 public class AdminLessonFileService {
 
-    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 200L * 1024 * 1024;
 
     @Autowired
     private LessonRepository lessonRepository;
@@ -43,8 +40,14 @@ public class AdminLessonFileService {
     @Autowired
     private LessonFileRepository lessonFileRepository;
 
+    @Autowired
+    private LessonExtractionService extractionService; // Gọi luồng ngầm
+
     @Value("${upload.lesson-dir:uploads/lessons}")
     private String localLessonUploadDir;
+
+    @Value("${upload.lesson-url:/uploads/lessons}")
+    private String lessonUploadUrl;
 
     @Transactional
     public LessonFileResponse uploadLessonMaterial(Long lessonId, MultipartFile file) {
@@ -53,7 +56,7 @@ public class AdminLessonFileService {
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new RuntimeException("Tệp vượt quá 50MB! Vui lòng thử lại.");
+            throw new RuntimeException("Tệp vượt quá 200MB! Vui lòng thử lại.");
         }
 
         Lesson lesson = lessonRepository.findById(lessonId)
@@ -100,7 +103,7 @@ public class AdminLessonFileService {
 
             long size = getPathSize(targetLocation);
 
-            String webPath = "/" + localLessonUploadDir + "/" + lesson.getId() + "/" + slugName;
+            String webPath = lessonUploadUrl + "/" + lesson.getId() + "/" + slugName;
 
             LessonFile lessonFile = new LessonFile();
             lessonFile.setLesson(lesson);
@@ -119,6 +122,64 @@ public class AdminLessonFileService {
         }
     }
 
+//    private LessonFileResponse extractCompressedAndSaveLocal(
+//            Lesson lesson,
+//            MultipartFile file,
+//            LessonFileType fileType,
+//            String slugName
+//    ) {
+//        try {
+//            Path lessonDir = getLessonDir(lesson.getId());
+//            Files.createDirectories(lessonDir);
+//
+//            String folderSlug = slugName.replaceAll("(?i)\\.(zip|rar)$", "");
+//            Path extractDir = lessonDir.resolve(folderSlug).normalize();
+//
+//            if (!extractDir.startsWith(lessonDir)) {
+//                throw new IOException("Đường dẫn thư mục giải nén không hợp lệ!");
+//            }
+//
+//            if (!Files.exists(extractDir)) {
+//                Files.createDirectories(extractDir);
+//            }
+//
+//            Path compressedPath = lessonDir.resolve(slugName).normalize();
+//
+//            if (!compressedPath.startsWith(lessonDir)) {
+//                throw new IOException("Đường dẫn file nén không hợp lệ!");
+//            }
+//
+//            // Lưu file ZIP/RAR gốc
+//            Files.copy(file.getInputStream(), compressedPath, StandardCopyOption.REPLACE_EXISTING);
+//
+//            String folderWebPath = lessonUploadUrl + "/" + lesson.getId() + "/" + folderSlug;
+//            String compressedWebPath = lessonUploadUrl + "/" + lesson.getId() + "/" + slugName;
+//
+//            // Chuyển việc giải nén cho luồng ngầm thực hiện
+//            extractionService.processExtractionAsync(
+//                    lesson, compressedPath, extractDir, fileType, folderSlug, folderWebPath, this
+//            );
+//
+//            // Lưu file nén gốc vào DB ngay lập tức và trả về
+//            long size = getPathSize(compressedPath);
+//            LessonFile lessonFile = new LessonFile();
+//            lessonFile.setLesson(lesson);
+//            lessonFile.setFileName(slugName);
+//            lessonFile.setFilePath(compressedWebPath);
+//            lessonFile.setFolderPath(null);
+//            lessonFile.setFileSize(size);
+//            lessonFile.setFileType(fileType);
+//            lessonFile.setIsRoot(false);
+//
+//            LessonFile saved = lessonFileRepository.save(lessonFile);
+//            return toFileResponse(saved);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new RuntimeException("Lỗi lưu file nén gốc: " + e.getMessage(), e);
+//        }
+//    }
+    
     private LessonFileResponse extractCompressedAndSaveLocal(
             Lesson lesson,
             MultipartFile file,
@@ -131,50 +192,43 @@ public class AdminLessonFileService {
 
             String folderSlug = slugName.replaceAll("(?i)\\.(zip|rar)$", "");
             Path extractDir = lessonDir.resolve(folderSlug).normalize();
-
-            if (!extractDir.startsWith(lessonDir)) {
-                throw new IOException("Đường dẫn thư mục giải nén không hợp lệ!");
-            }
-
-            if (!Files.exists(extractDir)) {
-                Files.createDirectories(extractDir);
-            }
-
             Path compressedPath = lessonDir.resolve(slugName).normalize();
 
-            if (!compressedPath.startsWith(lessonDir)) {
-                throw new IOException("Đường dẫn file nén không hợp lệ!");
-            }
-
+            // 1. Lưu file nén vật lý
             Files.copy(file.getInputStream(), compressedPath, StandardCopyOption.REPLACE_EXISTING);
 
-            if (fileType == LessonFileType.ZIP) {
-                unzip(compressedPath, extractDir);
-            } else if (fileType == LessonFileType.RAR) {
-                unrar(compressedPath, extractDir);
-            }
+            String folderWebPath = lessonUploadUrl + "/" + lesson.getId() + "/" + folderSlug;
+            String compressedWebPath = lessonUploadUrl + "/" + lesson.getId() + "/" + slugName;
 
-            normalizeExtractedFolder(extractDir);
-            forceWhiteBackgroundForHtmlPackage(extractDir);
+            // 2. Lưu bản ghi file nén vào DB để lấy ID (nhằm mục đích xóa sau này)
+            long size = getPathSize(compressedPath);
+            LessonFile zipRecord = new LessonFile();
+            zipRecord.setLesson(lesson);
+            zipRecord.setFileName(slugName);
+            zipRecord.setFilePath(compressedWebPath);
+            zipRecord.setFileSize(size);
+            zipRecord.setFileType(fileType);
+            zipRecord.setIsRoot(false);
+            
+            LessonFile savedZip = lessonFileRepository.save(zipRecord);
 
-            String folderWebPath = "/" + localLessonUploadDir + "/" + lesson.getId() + "/" + folderSlug;
-            long folderSize = getPathSize(extractDir);
+            // 3. Gọi luồng giải nén ngầm (Đủ 8 tham số)
+            extractionService.processExtractionAsync(
+                    lesson, 
+                    compressedPath, 
+                    extractDir, 
+                    fileType, 
+                    folderSlug, 
+                    folderWebPath, 
+                    this, 
+                    savedZip.getId() // Truyền ID sang để xóa
+            );
 
-            LessonFile lessonFile = new LessonFile();
-            lessonFile.setLesson(lesson);
-            lessonFile.setFileType(fileType);
-            lessonFile.setFileName(folderSlug);
-            lessonFile.setFilePath(folderWebPath);
-            lessonFile.setFolderPath(folderWebPath);
-            lessonFile.setFileSize(folderSize);
-            lessonFile.setIsRoot(true);
-
-            LessonFile saved = lessonFileRepository.save(lessonFile);
-            return toFileResponse(saved);
+            return toFileResponse(savedZip);
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Lỗi giải nén bài giảng: " + e.getMessage(), e);
+            throw new RuntimeException("Lỗi xử lý file: " + e.getMessage(), e);
         }
     }
 
@@ -202,12 +256,11 @@ public class AdminLessonFileService {
 
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            String coverUrl = "/" + localLessonUploadDir + "/" + lesson.getId() + "/covers/" + slugName;
+            String coverUrl = lessonUploadUrl + "/" + lesson.getId() + "/covers/" + slugName;
 
             if (lesson.getCoverImage() != null) {
                 try {
-                    String oldPathStr = lesson.getCoverImage().replaceFirst("^/", "");
-                    Files.deleteIfExists(Paths.get(oldPathStr).toAbsolutePath().normalize());
+                    deleteFileByPublicUrl(lesson.getCoverImage());
                 } catch (Exception ignored) {
                 }
             }
@@ -283,43 +336,48 @@ public class AdminLessonFileService {
         throw new RuntimeException("Không hỗ trợ định dạng tệp vừa tải!");
     }
 
-    private void unzip(Path zipFile, Path targetDir) throws IOException {
+    // Đã sửa thành PUBLIC và nhận thêm tham số progressService
+ // Đã sửa lại khối catch để bắt mọi lỗi mã hóa và kích hoạt phương án dự phòng
+    public void unzip(Path zipFile, Path targetDir, Long lessonId, ExtractionProgressService progressService) throws IOException {
         try {
-            unzipWithCharset(zipFile, targetDir, StandardCharsets.UTF_8);
-        } catch (IllegalArgumentException e) {
+            // Lần thử 1: Chuẩn quốc tế UTF-8
+            unzipWithCharset(zipFile, targetDir, StandardCharsets.UTF_8, lessonId, progressService);
+        } catch (Exception e) { 
+            // ĐỔI THÀNH Exception: Bắt cả ZipException (lỗi header) và IllegalArgumentException
             System.err.println("⚠️ Không giải nén ZIP bằng UTF-8 được, thử CP437: " + e.getMessage());
-            resetDirectory(targetDir);
+            resetDirectory(targetDir); // Dọn dẹp thư mục nếu file bung dở
 
             try {
-                unzipWithCharset(zipFile, targetDir, Charset.forName("CP437"));
-            } catch (IllegalArgumentException ex) {
+                // Lần thử 2: Bảng mã chuẩn của Windows cho file ZIP
+                unzipWithCharset(zipFile, targetDir, Charset.forName("CP437"), lessonId, progressService);
+            } catch (Exception ex) {
                 System.err.println("⚠️ Không giải nén ZIP bằng CP437 được, thử windows-1258: " + ex.getMessage());
                 resetDirectory(targetDir);
-                unzipWithCharset(zipFile, targetDir, Charset.forName("windows-1258"));
+                
+                // Lần thử 3: Bảng mã tiếng Việt của Windows
+                unzipWithCharset(zipFile, targetDir, Charset.forName("windows-1258"), lessonId, progressService);
             }
         }
     }
-
-    private void unzipWithCharset(Path zipFile, Path targetDir, Charset charset) throws IOException {
+    // Tối ưu đọc file bằng ZipFile và tính phần trăm giải nén
+    private void unzipWithCharset(Path zipFile, Path targetDir, Charset charset, Long lessonId, ExtractionProgressService progressService) throws IOException {
         Path safeTargetDir = targetDir.toAbsolutePath().normalize();
         Files.createDirectories(safeTargetDir);
 
-        try (ZipInputStream zis = new ZipInputStream(
-                new BufferedInputStream(Files.newInputStream(zipFile)),
-                charset
-        )) {
-            ZipEntry entry;
+        try (java.util.zip.ZipFile zf = new java.util.zip.ZipFile(zipFile.toFile(), charset)) {
+            int totalFiles = zf.size();
+            int currentFile = 0;
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zf.entries();
 
-            while ((entry = zis.getNextEntry()) != null) {
+            while (entries.hasMoreElements()) {
+                java.util.zip.ZipEntry entry = entries.nextElement();
                 String entryName = entry.getName();
 
                 if (entryName == null || entryName.trim().isEmpty()) {
-                    zis.closeEntry();
                     continue;
                 }
 
                 entryName = entryName.replace("\\", "/").trim();
-
                 Path newPath = safeTargetDir.resolve(entryName).normalize();
 
                 if (!newPath.startsWith(safeTargetDir)) {
@@ -333,15 +391,23 @@ public class AdminLessonFileService {
                         Files.createDirectories(newPath.getParent());
                     }
 
-                    Files.copy(zis, newPath, StandardCopyOption.REPLACE_EXISTING);
+                    try (java.io.InputStream is = zf.getInputStream(entry)) {
+                        Files.copy(is, newPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
                 }
 
-                zis.closeEntry();
+                currentFile++;
+                // Báo cáo tiến trình (90% công việc là giải nén)
+                if (progressService != null && lessonId != null) {
+                    int percent = (int) (((double) currentFile / totalFiles) * 85) + 1; 
+                    progressService.updateProgress(lessonId, percent);
+                }
             }
         }
     }
 
-    private void unrar(Path rarFile, Path targetDir) throws IOException {
+    // Đã sửa thành PUBLIC
+    public void unrar(Path rarFile, Path targetDir) throws IOException {
         Path safeTargetDir = targetDir.toAbsolutePath().normalize();
         Files.createDirectories(safeTargetDir);
 
@@ -358,7 +424,6 @@ public class AdminLessonFileService {
                 }
 
                 rawName = rawName.replace("\\", "/").trim();
-
                 Path outPath = safeTargetDir.resolve(rawName).normalize();
 
                 if (!outPath.startsWith(safeTargetDir)) {
@@ -383,7 +448,8 @@ public class AdminLessonFileService {
         }
     }
 
-    private void normalizeExtractedFolder(Path extractDir) throws IOException {
+    // Đã sửa thành PUBLIC
+    public void normalizeExtractedFolder(Path extractDir) throws IOException {
         Path indexFile;
 
         try (var stream = Files.walk(extractDir, 10)) {
@@ -443,17 +509,16 @@ public class AdminLessonFileService {
         }
     }
 
-    private void forceWhiteBackgroundForHtmlPackage(Path extractDir) {
+    // Đã sửa thành PUBLIC, tối ưu đa luồng xử lý nền trắng
+    public void forceWhiteBackgroundForHtmlPackage(Path extractDir) {
         try (var stream = Files.walk(extractDir)) {
-            stream.filter(Files::isRegularFile).forEach(path -> {
+            stream.parallel().filter(Files::isRegularFile).forEach(path -> {
                 String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
 
                 try {
                     if (fileName.endsWith(".html") || fileName.endsWith(".htm")) {
                         injectWhiteBackgroundIntoHtml(path);
-                    }
-
-                    if (fileName.endsWith(".css")) {
+                    } else if (fileName.endsWith(".css")) {
                         appendWhiteBackgroundIntoCss(path);
                     }
                 } catch (Exception e) {
@@ -620,7 +685,8 @@ public class AdminLessonFileService {
         }
     }
 
-    private long getPathSize(Path path) {
+    // Đã sửa thành PUBLIC
+    public long getPathSize(Path path) {
         try {
             if (!Files.exists(path)) {
                 return 0L;
@@ -644,6 +710,30 @@ public class AdminLessonFileService {
             }
         } catch (Exception e) {
             return 0L;
+        }
+    }
+
+    private void deleteFileByPublicUrl(String publicUrl) throws IOException {
+        if (publicUrl == null || publicUrl.isBlank()) {
+            return;
+        }
+
+        String normalizedLessonUploadUrl = lessonUploadUrl.startsWith("/")
+                ? lessonUploadUrl
+                : "/" + lessonUploadUrl;
+
+        if (!publicUrl.startsWith(normalizedLessonUploadUrl)) {
+            return;
+        }
+
+        String relativePath = publicUrl.substring(normalizedLessonUploadUrl.length());
+        relativePath = relativePath.replaceFirst("^/+", "");
+
+        Path baseDir = Paths.get(localLessonUploadDir).toAbsolutePath().normalize();
+        Path targetPath = baseDir.resolve(relativePath).normalize();
+
+        if (targetPath.startsWith(baseDir)) {
+            Files.deleteIfExists(targetPath);
         }
     }
 

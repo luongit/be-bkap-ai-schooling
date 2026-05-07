@@ -42,6 +42,9 @@ public class AdminCourseLessonService {
     @Value("${upload.course-dir:uploads/courses}")
     private String localCourseUploadDir;
 
+    @Value("${upload.course-url:/uploads/courses}")
+    private String courseUploadUrl;
+
     public List<Course> getCourses() {
         return courseRepository.findAllByOrderByGradeAscTeachingMonthAscSortOrderAscIdAsc();
     }
@@ -201,12 +204,11 @@ public class AdminCourseLessonService {
 
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            String coverUrl = "/" + localCourseUploadDir + "/" + courseId + "/covers/" + slugName;
+            String coverUrl = courseUploadUrl + "/" + courseId + "/covers/" + slugName;
 
             if (course.getCoverImage() != null) {
                 try {
-                    String oldPathStr = course.getCoverImage().replaceFirst("^/", "");
-                    Files.deleteIfExists(Paths.get(oldPathStr).toAbsolutePath().normalize());
+                    deleteFileByPublicUrl(course.getCoverImage(), courseUploadUrl, localCourseUploadDir);
                 } catch (Exception ignored) {
                 }
             }
@@ -355,20 +357,31 @@ public class AdminCourseLessonService {
         }
 
         if (body.getGrade() == null) {
-            throw new RuntimeException("Khối lớp không được để trống");
+            throw new RuntimeException("Khối/cấp học không được để trống");
         }
 
         if (body.getTeachingMonth() == null) {
             throw new RuntimeException("Tháng dạy không được để trống");
         }
 
-        if (body.getGrade() < 1 || body.getGrade() > 12) {
-            throw new RuntimeException("Khối lớp không hợp lệ");
+        if (!isValidCourseGrade(body.getGrade())) {
+            throw new RuntimeException("Khối/cấp học không hợp lệ");
         }
 
         if (body.getTeachingMonth() < 1 || body.getTeachingMonth() > 12) {
             throw new RuntimeException("Tháng dạy không hợp lệ");
         }
+    }
+
+    private boolean isValidCourseGrade(Integer grade) {
+        if (grade == null) {
+            return false;
+        }
+
+        return (grade >= 0 && grade <= 12)
+                || grade == 101
+                || grade == 102
+                || grade == 103;
     }
 
     private void validateLessonRequest(AdminLessonRequest body) {
@@ -436,6 +449,30 @@ public class AdminCourseLessonService {
 
     private boolean containsIgnoreCase(String value, String keywordLowerCase) {
         return value != null && value.toLowerCase(Locale.ROOT).contains(keywordLowerCase);
+    }
+
+    private void deleteFileByPublicUrl(String publicUrl, String publicBaseUrl, String localBaseDir) throws IOException {
+        if (publicUrl == null || publicUrl.isBlank()) {
+            return;
+        }
+
+        String normalizedPublicBaseUrl = publicBaseUrl.startsWith("/")
+                ? publicBaseUrl
+                : "/" + publicBaseUrl;
+
+        if (!publicUrl.startsWith(normalizedPublicBaseUrl)) {
+            return;
+        }
+
+        String relativePath = publicUrl.substring(normalizedPublicBaseUrl.length());
+        relativePath = relativePath.replaceFirst("^/+", "");
+
+        Path baseDir = Paths.get(localBaseDir).toAbsolutePath().normalize();
+        Path targetPath = baseDir.resolve(relativePath).normalize();
+
+        if (targetPath.startsWith(baseDir)) {
+            Files.deleteIfExists(targetPath);
+        }
     }
 
     private String toSlugFilename(String filename) {
