@@ -5,7 +5,27 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class HomeController {
-    @GetMapping({"", "/"})
+    @GetMapping({
+        "/",
+        "/login",
+        "/profile/**",
+        "/teacher/**",
+        "/students/**",
+        "/journalism/**",
+        "/writing/**",
+        "/generate-image/**",
+        "/generate-video/**",
+        "/pricing/**",
+        "/voice-chat/**",
+        "/voice-report/**",
+        "/library/**",
+        "/login-required/**",
+        "/assistants/**",
+        "/storybook/**",
+        "/ontap/**",
+        "/slide/**",
+        "/**/{path:[^\\.]*}"
+    })
     public String home() {
         return "forward:/index.html";
     }

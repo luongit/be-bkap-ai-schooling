@@ -3,6 +3,7 @@ package com.bkap.aispark.service.teach;
 import com.bkap.aispark.dto.teach.LessonFileResponse;
 import com.bkap.aispark.dto.teach.TeacherLessonContentResponse;
 import com.bkap.aispark.dto.teach.TeacherLessonResponse;
+import com.bkap.aispark.entity.Teacher;
 import com.bkap.aispark.entity.teach.Course;
 import com.bkap.aispark.entity.teach.Lesson;
 import com.bkap.aispark.entity.teach.LessonFile;
@@ -13,9 +14,9 @@ import com.bkap.aispark.repository.teach.CourseRepository;
 import com.bkap.aispark.repository.teach.LessonFileRepository;
 import com.bkap.aispark.repository.teach.LessonRepository;
 import com.bkap.aispark.repository.teach.TeacherGradeRepository;
-import com.bkap.aispark.entity.Teacher;
 import com.bkap.aispark.repository.TeacherRepository;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,55 +50,40 @@ public class TeacherLessonService {
      * FE gọi:
      * GET /api/teacher/courses
      */
-    public List<Course> teacherCoursesByAssignedGrades(
+    public Page<Course> teacherCoursesByAssignedGrades(
             Long teacherId,
             String keyword,
             Integer grade,
-            Integer teachingMonth
+            Integer teachingMonth,
+            Pageable pageable
     ) {
         List<Integer> assignedGrades = getAssignedGrades(teacherId);
 
         if (assignedGrades.isEmpty()) {
-            return List.of();
+            return Page.empty();
         }
 
-        List<Course> courses = courseRepository
-                .findByCourseStatusOrderByGradeAscTeachingMonthAscSortOrderAscIdAsc(
-                        CourseStatus.ACTIVE
-                );
-
-        courses = courses.stream()
-                .filter(c -> assignedGrades.contains(c.getGrade()))
-                .toList();
-
+        List<Integer> gradesToQuery;
         if (grade != null) {
             if (!assignedGrades.contains(grade)) {
-                return List.of();
+                return Page.empty();
             }
-
-            courses = courses.stream()
-                    .filter(c -> grade.equals(c.getGrade()))
-                    .toList();
+            gradesToQuery = List.of(grade);
+        } else {
+            gradesToQuery = assignedGrades;
         }
 
-        if (teachingMonth != null) {
-            courses = courses.stream()
-                    .filter(c -> teachingMonth.equals(c.getTeachingMonth()))
-                    .toList();
-        }
+        String searchKeyword = (keyword != null && !keyword.isBlank())
+                ? "%" + keyword.toLowerCase().trim() + "%"
+                : null;
 
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-
-            courses = courses.stream()
-                    .filter(c ->
-                            containsIgnoreCase(c.getName(), kw)
-                                    || containsIgnoreCase(c.getDescription(), kw)
-                    )
-                    .toList();
-        }
-
-        return courses;
+        return courseRepository.searchCourses(
+                gradesToQuery,
+                teachingMonth,
+                searchKeyword,
+                CourseStatus.ACTIVE,
+                pageable
+        );
     }
 
     /**
@@ -127,60 +113,41 @@ public class TeacherLessonService {
      * FE cũ gọi:
      * GET /api/teacher/lessons
      */
-    public List<TeacherLessonResponse> teacherLessonByAssignedGrades(
+    public Page<TeacherLessonResponse> teacherLessonByAssignedGrades(
             Long teacherId,
             String keyword,
             Integer grade,
-            Integer teachingMonth
+            Integer teachingMonth,
+            Pageable pageable
     ) {
         List<Integer> assignedGrades = getAssignedGrades(teacherId);
 
         if (assignedGrades.isEmpty()) {
-            return List.of();
+            return Page.empty();
         }
 
         List<Integer> gradesToQuery;
-
         if (grade == null) {
             gradesToQuery = assignedGrades;
         } else if (assignedGrades.contains(grade)) {
             gradesToQuery = List.of(grade);
         } else {
-            return List.of();
+            return Page.empty();
         }
 
-        List<Lesson> lessons = lessonRepository.findByGradeInAndLessonStatus(
+        String searchKeyword = (keyword != null && !keyword.isBlank())
+                ? "%" + keyword.toLowerCase().trim() + "%"
+                : null;
+
+        Page<Lesson> lessonPage = lessonRepository.searchLessons(
                 gradesToQuery,
-                LessonStatus.ACTIVE
+                teachingMonth,
+                searchKeyword,
+                LessonStatus.ACTIVE,
+                pageable
         );
 
-        if (teachingMonth != null) {
-            lessons = lessons.stream()
-                    .filter(l -> teachingMonth.equals(l.getTeachingMonth()))
-                    .toList();
-        }
-
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-
-            lessons = lessons.stream()
-                    .filter(l ->
-                            containsIgnoreCase(l.getCode(), kw)
-                                    || containsIgnoreCase(l.getName(), kw)
-                                    || containsIgnoreCase(getCourseName(l), kw)
-                    )
-                    .toList();
-        }
-
-        return lessons.stream()
-                .sorted(
-                        Comparator
-                                .comparing((Lesson l) -> l.getCourse() != null ? l.getCourse().getId() : 0L)
-                                .thenComparing(l -> l.getLessonOrder() != null ? l.getLessonOrder() : 0)
-                                .thenComparing(Lesson::getId)
-                )
-                .map(this::toResponse)
-                .toList();
+        return lessonPage.map(this::toResponse);
     }
 
     /**
@@ -192,69 +159,30 @@ public class TeacherLessonService {
      * FE gọi:
      * GET /api/teacher/courses/{courseId}/lessons
      */
-    public List<TeacherLessonResponse> teacherLessonsByCourse(
+    public Page<TeacherLessonResponse> teacherLessonsByCourse(
             Long teacherId,
             Long courseId,
-            Integer grade,
-            Integer teachingMonth,
-            String keyword
+            Pageable pageable
     ) {
         List<Integer> assignedGrades = getAssignedGrades(teacherId);
 
         if (assignedGrades.isEmpty()) {
-            return List.of();
+            return Page.empty();
         }
 
         Course course = getCourseDetail(teacherId, courseId);
 
         if (!assignedGrades.contains(course.getGrade())) {
-            return List.of();
+            return Page.empty();
         }
 
-        List<Lesson> lessons = lessonRepository.findByCourseIdAndLessonStatusOrderByLessonOrderAscIdAsc(
+        Page<Lesson> lessonPage = lessonRepository.findByCourseIdAndLessonStatus(
                 courseId,
-                LessonStatus.ACTIVE
+                LessonStatus.ACTIVE,
+                pageable
         );
 
-        lessons = lessons.stream()
-                .filter(l -> assignedGrades.contains(l.getGrade()))
-                .toList();
-
-        if (grade != null) {
-            if (!assignedGrades.contains(grade)) {
-                return List.of();
-            }
-
-            lessons = lessons.stream()
-                    .filter(l -> grade.equals(l.getGrade()))
-                    .toList();
-        }
-
-        if (teachingMonth != null) {
-            lessons = lessons.stream()
-                    .filter(l -> teachingMonth.equals(l.getTeachingMonth()))
-                    .toList();
-        }
-
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-
-            lessons = lessons.stream()
-                    .filter(l ->
-                            containsIgnoreCase(l.getCode(), kw)
-                                    || containsIgnoreCase(l.getName(), kw)
-                    )
-                    .toList();
-        }
-
-        return lessons.stream()
-                .sorted(
-                        Comparator
-                                .comparing((Lesson l) -> l.getLessonOrder() != null ? l.getLessonOrder() : 0)
-                                .thenComparing(Lesson::getId)
-                )
-                .map(this::toResponse)
-                .toList();
+        return lessonPage.map(this::toResponse);
     }
 
     /**

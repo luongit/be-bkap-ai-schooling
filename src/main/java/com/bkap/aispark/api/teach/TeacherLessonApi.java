@@ -14,6 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @RestController
@@ -33,17 +37,24 @@ public class TeacherLessonApi {
      * API: Lấy danh sách bài giảng theo khối được phân công
      */
     @GetMapping
-    public ResponseEntity<List<TeacherLessonResponse>> getAssignedLessons(
+    public ResponseEntity<Page<TeacherLessonResponse>> getAssignedLessons(
             HttpServletRequest request,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer grade,
-            @RequestParam(required = false) Integer month
+            @RequestParam(required = false) Integer month,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Long teacherId = getTeacherIdFromToken(request);
 
-        List<TeacherLessonResponse> lessons =
+        // Mặc định sắp xếp theo grade, tháng, order
+        Pageable pageable = PageRequest.of(page, size, Sort.by("grade").ascending()
+                .and(Sort.by("teachingMonth").ascending())
+                .and(Sort.by("lessonOrder").ascending()));
+
+        Page<TeacherLessonResponse> lessons =
                 teacherLessonService.teacherLessonByAssignedGrades(
-                        teacherId, keyword, grade, month
+                        teacherId, keyword, grade, month, pageable
                 );
 
         return ResponseEntity.ok(lessons);

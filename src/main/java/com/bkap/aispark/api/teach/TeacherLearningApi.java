@@ -15,6 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @RestController
@@ -35,22 +39,37 @@ public class TeacherLearningApi {
      * Giáo viên phụ trách khối nào thì thấy Course thuộc khối đó.
      */
     @GetMapping("/courses")
-    public ResponseEntity<List<Course>> getTeacherCourses(
+    public ResponseEntity<Page<Course>> getTeacherCourses(
             HttpServletRequest request,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer grade,
-            @RequestParam(required = false, name = "month") Integer teachingMonth
+            @RequestParam(required = false, name = "month") Integer teachingMonth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Long teacherId = getTeacherIdFromToken(request);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("grade").ascending()
+                .and(Sort.by("teachingMonth").ascending())
+                .and(Sort.by("sortOrder").ascending()));
 
         return ResponseEntity.ok(
                 teacherLessonService.teacherCoursesByAssignedGrades(
                         teacherId,
                         keyword,
                         grade,
-                        teachingMonth
+                        teachingMonth,
+                        pageable
                 )
         );
+    }
+
+    @GetMapping("/courses/{courseId}")
+    public ResponseEntity<Course> getCourseDetail(
+            HttpServletRequest request,
+            @PathVariable Long courseId
+    ) {
+        Long teacherId = getTeacherIdFromToken(request);
+        return ResponseEntity.ok(teacherLessonService.getCourseDetail(teacherId, courseId));
     }
 
     /**
@@ -58,22 +77,20 @@ public class TeacherLearningApi {
      * Vào 1 Course thì chỉ thấy Lesson thuộc khối giáo viên phụ trách.
      */
     @GetMapping("/courses/{courseId}/lessons")
-    public ResponseEntity<List<TeacherLessonResponse>> getLessonsByCourse(
+    public ResponseEntity<Page<TeacherLessonResponse>> getLessonsByCourse(
             HttpServletRequest request,
             @PathVariable Long courseId,
-            @RequestParam(required = false) Integer grade,
-            @RequestParam(required = false, name = "month") Integer teachingMonth,
-            @RequestParam(required = false) String keyword
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Long teacherId = getTeacherIdFromToken(request);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lessonOrder").ascending());
 
         return ResponseEntity.ok(
                 teacherLessonService.teacherLessonsByCourse(
                         teacherId,
                         courseId,
-                        grade,
-                        teachingMonth,
-                        keyword
+                        pageable
                 )
         );
     }
@@ -99,20 +116,26 @@ public class TeacherLearningApi {
      * Lấy trực tiếp toàn bộ Lesson theo khối giáo viên.
      */
     @GetMapping("/lessons")
-    public ResponseEntity<List<TeacherLessonResponse>> getAssignedLessons(
+    public ResponseEntity<Page<TeacherLessonResponse>> getAssignedLessons(
             HttpServletRequest request,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer grade,
-            @RequestParam(required = false, name = "month") Integer teachingMonth
+            @RequestParam(required = false, name = "month") Integer teachingMonth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Long teacherId = getTeacherIdFromToken(request);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("grade").ascending()
+                .and(Sort.by("teachingMonth").ascending())
+                .and(Sort.by("lessonOrder").ascending()));
 
         return ResponseEntity.ok(
                 teacherLessonService.teacherLessonByAssignedGrades(
                         teacherId,
                         keyword,
                         grade,
-                        teachingMonth
+                        teachingMonth,
+                        pageable
                 )
         );
     }

@@ -41,7 +41,7 @@ public class AdminLessonFileService {
     private LessonFileRepository lessonFileRepository;
 
     @Autowired
-    private LessonExtractionService extractionService; // Gọi luồng ngầm
+    private LessonExtractionService extractionService; 
 
     @Value("${upload.lesson-dir:uploads/lessons}")
     private String localLessonUploadDir;
