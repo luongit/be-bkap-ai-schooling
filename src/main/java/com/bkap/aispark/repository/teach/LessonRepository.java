@@ -12,25 +12,28 @@ import java.util.List;
 
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
-    long count();
-
-    Page<Lesson> findByCodeContainingIgnoreCaseOrNameContainingIgnoreCase(
-            String code,
-            String name,
+    @Query("""
+        SELECT l FROM Lesson l
+        WHERE (:grades IS NULL OR l.grade IN :grades)
+          AND (:teachingMonth IS NULL OR l.teachingMonth = :teachingMonth)
+          AND (:keyword IS NULL OR (LOWER(l.name) LIKE :keyword OR LOWER(l.code) LIKE :keyword))
+          AND l.lessonStatus = :status
+    """)
+    Page<Lesson> searchLessons(
+            List<Integer> grades,
+            Integer teachingMonth,
+            String keyword,
+            LessonStatus status,
             Pageable pageable
     );
 
-    List<Lesson> findByGradeInAndLessonStatus(
-            List<Integer> grades,
-            LessonStatus lessonStatus
-    );
-
-    List<Lesson> findByGradeIn(List<Integer> grades);
-
-    List<Lesson> findByCourseIdAndLessonStatusOrderByLessonOrderAscIdAsc(
-            Long courseId,
-            LessonStatus lessonStatus
-    );
+    @Query("""
+        SELECT l FROM Lesson l
+        WHERE (:courseId IS NULL OR l.course.id = :courseId)
+          AND (:status IS NULL OR l.lessonStatus = :status)
+        ORDER BY l.lessonOrder ASC, l.id ASC
+    """)
+    List<Lesson> searchLessonsAdmin(Long courseId, LessonStatus status);
 
     @Query("""
         SELECT DISTINCT l.course
@@ -44,6 +47,14 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
             List<Integer> grades,
             LessonStatus lessonStatus
     );
+
+    Page<Lesson> findByCourseIdAndLessonStatus(Long courseId, LessonStatus status, Pageable pageable);
+
+    List<Lesson> findByCourseIdAndLessonStatusOrderByLessonOrderAscIdAsc(
+            Long courseId,
+            LessonStatus lessonStatus
+    );
+
     List<Lesson> findByCourseIdOrderByLessonOrderAscIdAsc(Long courseId);
     
 }

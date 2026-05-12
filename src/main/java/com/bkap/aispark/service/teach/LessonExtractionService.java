@@ -31,7 +31,7 @@ public class LessonExtractionService {
             String folderSlug, 
             String folderWebPath,
             AdminLessonFileService mainService,
-            Long zipFileId // Nhận ID để xóa rác
+            Long zipFileId 
     ) {
         Long lessonId = lesson.getId();
         try {

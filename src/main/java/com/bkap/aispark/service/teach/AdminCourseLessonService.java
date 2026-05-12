@@ -50,79 +50,19 @@ public class AdminCourseLessonService {
     }
 
     public List<Course> getCourses(Integer grade, Integer teachingMonth, String keyword) {
-        List<Course> courses;
+        String searchKw = (keyword != null && !keyword.isBlank())
+                ? "%" + keyword.toLowerCase().trim() + "%"
+                : null;
 
-        if (grade != null && teachingMonth != null) {
-            courses = courseRepository.findByGradeAndTeachingMonthOrderBySortOrderAscIdAsc(
-                    grade,
-                    teachingMonth
-            );
-        } else if (grade != null) {
-            courses = courseRepository.findByGradeOrderByTeachingMonthAscSortOrderAscIdAsc(
-                    grade
-            );
-        } else {
-            courses = courseRepository.findAllByOrderByGradeAscTeachingMonthAscSortOrderAscIdAsc();
-        }
-
-        if (teachingMonth != null && grade == null) {
-            courses = courses.stream()
-                    .filter(c -> teachingMonth.equals(c.getTeachingMonth()))
-                    .toList();
-        }
-
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-
-            courses = courses.stream()
-                    .filter(c ->
-                            containsIgnoreCase(c.getName(), kw)
-                                    || containsIgnoreCase(c.getDescription(), kw)
-                    )
-                    .toList();
-        }
-
-        return courses;
+        return courseRepository.searchCoursesAdmin(grade, teachingMonth, searchKw, null);
     }
 
     public List<Course> getActiveCourses(Integer grade, Integer teachingMonth, String keyword) {
-        List<Course> courses;
+        String searchKw = (keyword != null && !keyword.isBlank())
+                ? "%" + keyword.toLowerCase().trim() + "%"
+                : null;
 
-        if (grade != null && teachingMonth != null) {
-            courses = courseRepository.findByGradeAndTeachingMonthAndCourseStatusOrderBySortOrderAscIdAsc(
-                    grade,
-                    teachingMonth,
-                    CourseStatus.ACTIVE
-            );
-        } else if (grade != null) {
-            courses = courseRepository.findByGradeAndCourseStatusOrderByTeachingMonthAscSortOrderAscIdAsc(
-                    grade,
-                    CourseStatus.ACTIVE
-            );
-        } else {
-            courses = courseRepository.findByCourseStatusOrderByGradeAscTeachingMonthAscSortOrderAscIdAsc(
-                    CourseStatus.ACTIVE
-            );
-        }
-
-        if (teachingMonth != null && grade == null) {
-            courses = courses.stream()
-                    .filter(c -> teachingMonth.equals(c.getTeachingMonth()))
-                    .toList();
-        }
-
-        if (keyword != null && !keyword.isBlank()) {
-            String kw = keyword.toLowerCase(Locale.ROOT);
-
-            courses = courses.stream()
-                    .filter(c ->
-                            containsIgnoreCase(c.getName(), kw)
-                                    || containsIgnoreCase(c.getDescription(), kw)
-                    )
-                    .toList();
-        }
-
-        return courses;
+        return courseRepository.searchCoursesAdmin(grade, teachingMonth, searchKw, CourseStatus.ACTIVE);
     }
 
     @Transactional
@@ -232,25 +172,15 @@ public class AdminCourseLessonService {
     }
 
     public List<TeacherLessonResponse> getLessonsByCourse(Long courseId) {
-        return lessonRepository
-                .findByCourseIdAndLessonStatusOrderByLessonOrderAscIdAsc(
-                        courseId,
-                        LessonStatus.ACTIVE
-                )
+        return lessonRepository.searchLessonsAdmin(courseId, LessonStatus.ACTIVE)
                 .stream()
                 .map(this::toLessonResponse)
                 .toList();
     }
 
     public List<TeacherLessonResponse> getAllLessonsByCourse(Long courseId) {
-        return lessonRepository
-                .findByCourseIdOrderByLessonOrderAscIdAsc(courseId)
+        return lessonRepository.searchLessonsAdmin(courseId, null)
                 .stream()
-                .sorted(
-                        Comparator
-                                .comparing((Lesson l) -> l.getLessonOrder() != null ? l.getLessonOrder() : 0)
-                                .thenComparing(Lesson::getId)
-                )
                 .map(this::toLessonResponse)
                 .toList();
     }
